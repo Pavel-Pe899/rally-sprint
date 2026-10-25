@@ -1556,7 +1556,9 @@ function spokenBatch(list) {
 const canvas = $('scene');
 let renderer;
 try {
-  renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  // iOS: plátno si drží poslední obraz (jinak Safari občas na snímek ukázal vymazané, tedy černé plátno)
+  const ios0 = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: ios0 });
 } catch (e) {
   document.body.insertAdjacentHTML('beforeend', '<div id="fatal">Tento prohlížeč neumí WebGL, takže 3D hru nespustí. Zkus Safari, Chrome nebo Firefox.</div>');
   return;
@@ -5320,6 +5322,12 @@ function engineLoop(sr, rpm, load) {
   return { data: out, rpm: (120 * sr * N) / L };
 }
 
+// iOS po přepnutí do jiné aplikace zvuk pozastaví („suspended“ nebo „interrupted“) a sám ho neobnoví: hra ho obnoví
+// po návratu a znovu při každém dotyku, dokud zase nehraje (iOS obnovení často povolí jen z gesta)
+const audioWake = () => { const c = Sound.ctx; if (c && c.state !== 'running' && c.state !== 'closed') c.resume().catch(() => {}); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) audioWake(); else { try { speechSynthesis.cancel(); } catch (e) { /* nic */ } } });
+window.addEventListener('pageshow', audioWake); window.addEventListener('focus', audioWake);
+for (const ev of ['pointerdown', 'touchend', 'keydown']) document.addEventListener(ev, audioWake, { passive: true, capture: true });
 const Sound = {
   ctx: null, on: saved.sound, loops: [],
   // smyčky se počítají po kouscích ještě před startem, aby první rozjezd necukl
@@ -5335,7 +5343,7 @@ const Sound = {
     setTimeout(step, 30);
   },
   init() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    if (this.ctx) { if (this.ctx.state !== 'running' && this.ctx.state !== 'closed') this.ctx.resume().catch(() => {}); return; }
     try {
       const C = window.AudioContext || window.webkitAudioContext;
       const ctx = new C(); this.ctx = ctx;
@@ -7457,7 +7465,7 @@ function setPaused(p) {
   overlay.pause.hidden = !p;
   if (p) { Sound.silence(); Voice.stop(); $('bResume').focus(); }
   // diagnostika (problikávání obrazu): snímky za sekundu, rozlišení, kolikrát se přestavěl obraz, ztráty grafiky
-  if (p) $('diagLine').textContent = `Diagnostika: ${Math.round(lastFps)} snímků/s · rozlišení ${pixelRatio} (displej ${window.devicePixelRatio || 1}) · přestavění obrazu ${resizeCount} · ztráta grafiky ${ctxLost} · kvalita ${Q().name} · ${window.innerWidth}×${window.innerHeight}`;
+  if (p) $('diagLine').textContent = `Diagnostika: ${Math.round(lastFps)} snímků/s · rozlišení ${pixelRatio} (displej ${window.devicePixelRatio || 1}) · přestavění obrazu ${resizeCount} · ztráta grafiky ${ctxLost} · chyby ${tickErrors} · kvalita ${Q().name} · ${window.innerWidth}×${window.innerHeight}`;
 }
 
 // ---------------------------------------------------------------- ideální stopa (jen okruh)
@@ -9171,6 +9179,23 @@ function tick(now) {
   const dt = Math.min(0.1, Math.max(0.001, (now - last) / 1000));
   last = now;
   if (!W || !car3d) return;
+  // chyba v kterékoli části snímku (zvuk, hlas, síť…) nesmí přeskočit vykreslení: iOS by místo něj ukázal černé plátno
+  try { tickUpdate(dt); } catch (e) { tickErrors++; if (tickErrors < 4) console.error(e); }
+  if (!(window.__rally && window.__rally.freezeCam)) updateCamera(G.paused ? 0 : dt);
+  W.sky.position.copy(camera.position);
+  windTime.value += dt;
+  // směr ke slunci v souřadnicích kamery pro prosvítání listí; v noci skoro nic
+  leafU.uSunView.value.copy(sun.position).sub(sun.target.position).normalize().transformDirection(camera.matrixWorldInverse);
+  leafU.uSunCol.value.copy(sun.color).multiplyScalar(W && W.td.st.night ? 0.1 : Math.min(1, sun.intensity / 3));
+  try { updateGlare(); updateTreeLod(); if (W.specLod) W.specLod(camera.position.x, camera.position.z); updateTerrainLod(); } catch (e) { tickErrors++; }
+  if (post) {
+    if (post.blur) post.grade.uniforms.uBlur.value = (smooth(26, 52, Math.abs(car.vf)) * 0.05 + car.nosFx * 0.04) * (G.mode === 'race' ? 1 : 0);
+    post.composer.render(dt);
+  } else renderer.render(scene, camera);
+  perfCheck(dt, now);
+}
+let tickErrors = 0;
+function tickUpdate(dt) {
   let inp = HOLD;
   if (!G.paused) {
     const td = W.td;
@@ -9245,25 +9270,9 @@ function tick(now) {
       if (G.gp) gpSound();
     }
   }
-  if (!(window.__rally && window.__rally.freezeCam)) updateCamera(G.paused ? 0 : dt);
-  W.sky.position.copy(camera.position);
-  windTime.value += dt;
-  // směr ke slunci v souřadnicích kamery pro prosvítání listí; v noci skoro nic
-  leafU.uSunView.value.copy(sun.position).sub(sun.target.position).normalize().transformDirection(camera.matrixWorldInverse);
-  leafU.uSunCol.value.copy(sun.color).multiplyScalar(W && W.td.st.night ? 0.1 : Math.min(1, sun.intensity / 3));
-  updateGlare();
-  updateTreeLod();
-  if (W.specLod) W.specLod(camera.position.x, camera.position.z);
-  updateTerrainLod();
-  if (post) {
-    if (post.blur) post.grade.uniforms.uBlur.value = (smooth(26, 52, Math.abs(car.vf)) * 0.05 + car.nosFx * 0.04) * (G.mode === 'race' ? 1 : 0);
-    post.composer.render(dt);
-  } else renderer.render(scene, camera);
-
-  // když hra nestíhá, sníží se rozlišení
-  // Změna rozlišení přestaví obrazové buffery a na okamžik hru zastaví, proto se udělá
-  // najednou (rovnou na odhadnutou hodnotu) a za jízdy jen při opravdu nízkém snímkování.
-  // Snížení nejvýš dvakrát za hru, nejdřív 15 s po předchozím a jen o znatelný kus (každé je jeden černý snímek).
+}
+// když hra nestíhá, sníží se rozlišení (viz níže)
+function perfCheck(dt, now) {
   perfT += dt; perfN++;
   if (perfT > 3) {
     const fps = perfN / perfT; lastFps = fps;
