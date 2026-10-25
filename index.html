@@ -38,6 +38,9 @@
   }
   [hidden] { display: none !important; }
   html, body { height: 100%; }
+  /* Safari (mimo aplikaci) by dvojité ťuknutí na tlačítko bralo jako přiblížení stránky */
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+  button, input, .card, .modal { touch-action: manipulation; }
   body {
     background: var(--ink); color: var(--fg); font-family: var(--body); font-size: 15px;
     overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none;
@@ -8902,6 +8905,22 @@ for (const b of document.querySelectorAll('.tbtn')) {
 
 // Přestavění obrazových bufferů na okamžik ukáže černý snímek: dělá se jen při skutečné změně velikosti nebo
 // rozlišení (aplikace a prohlížeče na iPadu posílají „resize“ i bez změny, obraz pak pravidelně problikával)
+// Safari na iPhonu/iPadu z důvodu přístupnosti nerespektuje zákaz přiblížení v meta viewport: rychlé ťukání na
+// tlačítka (dvojité ťuknutí) nebo dva prsty na obrazovce stránku přiblížily. Gesta přiblížení se zruší, dvě
+// ťuknutí rychle po sobě mimo textová pole se nepovažují za dvojité ťuknutí a přiblížená stránka se vrátí zpět.
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = performance.now(), tag = e.target && e.target.tagName;
+  if (now - lastTouchEnd < 350 && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+const vpMeta = document.querySelector('meta[name="viewport"]');
+if (window.visualViewport && vpMeta) window.visualViewport.addEventListener('resize', () => {
+  if (window.visualViewport.scale > 1.01) { const c = vpMeta.content; vpMeta.content = c + ', x=1'; vpMeta.content = c; } // vrátí přiblížení
+});
 let lastSize = '', resizeCount = 0, ctxLost = 0, lastFps = 60;
 renderer.domElement.addEventListener('webglcontextlost', () => { ctxLost++; });
 function resize() {
