@@ -32,10 +32,10 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
     `web/assets/cars/audi.json` se šíří pod stejnou licencí (z gitlab.com/kukmara-tech/car-configurator)
   - změny: odstraněný interiér, motor, podvozek, značky a loga (kde byla samostatným dílem), zjednodušená geometrie,
     menší textury, vlastní lak a rallyové doplňky. Porsche, McLaren, Mercedes-Benz, Audi, Formule 1 a jména týmů
-    (Ferrari, Mercedes, Red Bull, Aston Martin, Alpine, McLaren) jsou ochranné známky svých vlastníků;
+    (Ferrari, Mercedes, Red Bull, Aston Martin, Alpine, McLaren, Williams, Racing Bulls, Haas, Sauber) a názvy sponzorů na vozech jsou ochranné známky svých vlastníků;
     hra s nimi není nijak spojená.
 - **Postava jezdce:** X Bot z [Adobe Mixamo](https://www.mixamo.com), převzatý z ukázek [three.js](https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf) (Mixamo dovoluje postavy použít ve hrách a projektech bez poplatků); zjednodušená síť, vlastní barvy a helma.
-- **Tvary okruhů Miami, Monza a Silverstone:** [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) od Tomislava Bacingera, licence MIT.
+- **Tvary okruhů Miami, Monza, Silverstone, Red Bull Ring a Spa:** [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) od Tomislava Bacingera, licence MIT.
 - **Fotografické textury:** skeny Asphalt033, Ground111, Grass005 a Concrete034 z [ambientCG](https://ambientcg.com) (CC0, volné dílo),
   převzaté z repozitáře [amazingsammed/mini_textures](https://github.com/amazingsammed/mini_textures)
   a zmenšené na 512 px (`web/assets/tex/`).

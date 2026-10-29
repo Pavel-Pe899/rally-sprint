@@ -453,6 +453,30 @@
   .btn.gp { background: linear-gradient(100deg, #e10600 0%, #ff3b1f 60%, #ff7a00 100%); color: #fff; box-shadow: 0 6px 22px rgba(225, 6, 0, .35); }
   @media (max-height: 450px) { .hud-gp { gap: 8px; padding: 4px 10px; } .gp-pos b { font-size: 28px; } .gp-tyre { width: 92px; } .gp-pit { font-size: 15px; padding: 3px 8px; } }
   @media (max-width: 600px) { .hud-gp { top: calc(118px + env(safe-area-inset-top, 0px)); gap: 8px; padding: 4px 10px; } .gp-pos b { font-size: 28px; } .gp-tyre { width: 92px; } }
+  /* tabule pořadí Velké ceny (vpravo pod mapou) */
+  .gp-tower { --row: 24px; position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(176px + env(safe-area-inset-top, 0px)); width: 164px; display: flex; flex-direction: column; gap: 2px; font-family: var(--display); }
+  .gp-tower[hidden] { display: none; }
+  .gt-row { display: grid; grid-template-columns: 24px 5px 1fr auto 11px; align-items: center; gap: 6px; height: var(--row); padding-right: 6px; border-radius: 4px; overflow: hidden; background: rgba(8, 12, 22, .8); color: #fff; font-weight: 800; font-size: 15px; letter-spacing: .05em; backdrop-filter: none; }
+  .gt-row[hidden] { display: none; }
+  .gt-row .pos { align-self: stretch; display: grid; place-items: center; font-style: normal; background: rgba(255, 255, 255, .92); color: #0a0e18; font-size: 14px; }
+  .gt-row .bar { width: 5px; height: 68%; border-radius: 2px; }
+  .gt-row .code { font-weight: 900; }
+  .gt-row .gap { font-size: 12px; letter-spacing: 0; color: #c9d2e4; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .gt-row .ty { width: 11px; height: 11px; border-radius: 50%; border: 3px solid transparent; box-sizing: border-box; }
+  .gt-row.me { background: rgba(255, 255, 255, .94); color: #0a0e18; box-shadow: 0 0 0 2px #ffc419; }
+  .gt-row.me .pos { background: #e10600; color: #fff; } .gt-row.me .gap { color: #2a3347; }
+  body.touch .gp-tower { top: calc(150px + env(safe-area-inset-top, 0px)); }
+  @media (max-height: 450px) { body.touch .gp-tower { --row: 16px; width: 120px; top: calc(100px + env(safe-area-inset-top, 0px)); } body.touch .gt-row { grid-template-columns: 17px 4px 1fr auto 8px; gap: 4px; font-size: 11px; } body.touch .gt-row .pos { font-size: 10px; } body.touch .gt-row .gap { font-size: 9px; } body.touch .gt-row .ty { width: 8px; height: 8px; border-width: 2px; } }
+  @media (max-width: 600px) { .gp-tower { top: calc(236px + env(safe-area-inset-top, 0px)); } }
+  .gp-table .rrow.gt { display: grid; grid-template-columns: 30px 6px 46px 1fr auto auto; align-items: center; gap: 8px; padding: 0 10px 0 0; height: 32px; overflow: hidden; }
+  .gp-table .rrow.gt .pos { align-self: stretch; display: grid; place-items: center; font-style: normal; font-weight: 900; font-family: var(--display); background: rgba(255, 255, 255, .9); color: #0a0e18; }
+  .gp-table .rrow.gt.p1 .pos { background: #ffc419; } .gp-table .rrow.gt.p2 .pos { background: #d3d8df; } .gp-table .rrow.gt.p3 .pos { background: #d8955a; }
+  .gp-table .rrow.gt .bar { width: 6px; height: 70%; border-radius: 2px; }
+  .gp-table .rrow.gt .code { font-family: var(--display); font-size: 16px; letter-spacing: .06em; }
+  .gp-table .rrow.gt .nm { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gp-table .rrow.gt.me .nm { color: var(--fg); }
+  .gp-table .rrow.gt .fl { font-style: normal; font-weight: 900; font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #9b2fe0; color: #fff; }
+  .gp-table .rrow.gt .gp-gap { font-size: 16px; }
   .gp-table .rrow span i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: 0; }
   .badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; align-self: flex-start; }
   .badge.gold { background: #ffcf3a; color: #2a1d00; } .badge.silver { background: #c9d3de; color: #1a222c; } .badge.bronze { background: #d08a4e; color: #2a1406; } .badge.none { background: rgba(255, 255, 255, .08); color: var(--muted); }
@@ -510,6 +534,7 @@
     <div class="gp-info"><span id="gpLap">KOLO 1/4</span><span class="gp-tyre"><i id="gpTyreBar"></i><em id="gpTyre">PNEU 100 %</em></span></div>
     <button class="gp-pit" id="gpPit" aria-label="Zajet do boxů">BOX</button>
   </div>
+  <div class="gp-tower" id="gpTower" hidden aria-hidden="true"></div>
   <div class="hud-center" id="hCenter"></div>
   <div class="hud-toast" id="hToast"></div>
   <div class="hud-brake" id="hBrake" aria-hidden="true">BRZDI</div>
@@ -933,6 +958,8 @@ const MIAMI_PATH = [[38.0, -163.5], [243.1, -35.4], [246.6, -25.9], [245.1, -17.
 // další okruhy F1 ze stejného zdroje (bacinger/f1-circuits, MIT), převedené na metry stejně jako Miami
 const MONZA_PATH = [[-417.7, 491.6], [-381.2, 65.1], [-364.6, -113.7], [-362.8, -121.0], [-357.6, -125.2], [-351.3, -126.2], [-343.4, -125.2], [-336.0, -124.7], [-329.2, -125.2], [-324.5, -128.9], [-320.8, -134.1], [-319.9, -138.7], [-319.9, -143.9], [-345.7, -241.4], [-349.4, -268.0], [-350.8, -292.0], [-348.9, -318.0], [-339.3, -445.2], [-335.5, -466.0], [-330.9, -485.3], [-324.0, -506.1], [-314.8, -528.6], [-304.2, -550.5], [-288.6, -575.0], [-272.5, -595.3], [-250.8, -618.3], [-227.2, -638.6], [-201.0, -657.3], [-172.9, -673.4], [-141.1, -689.1], [-109.3, -700.1], [-74.3, -709.9], [-34.6, -716.8], [5.9, -720.4], [164.0, -733.9], [357.5, -745.4], [369.0, -746.4], [375.0, -749.6], [380.1, -754.8], [386.5, -777.3], [389.3, -783.5], [393.9, -787.7], [401.7, -790.2], [428.0, -795.0], [456.6, -801.1], [497.1, -814.2], [678.2, -874.7], [693.8, -878.3], [708.6, -878.3], [722.9, -875.7], [733.0, -871.6], [742.7, -865.8], [751.9, -859.5], [763.5, -847.0], [769.9, -837.2], [774.5, -825.1], [776.8, -811.6], [784.6, -726.2], [799.4, -580.2], [799.0, -567.2], [796.6, -558.8], [793.0, -551.5], [787.0, -546.3], [775.9, -539.0], [657.5, -475.4], [561.2, -421.8], [501.2, -388.9], [472.2, -372.2], [439.5, -349.3], [416.0, -331.5], [395.7, -313.8], [290.6, -224.2], [216.1, -156.9], [58.4, -19.4], [-36.5, 63.5], [-49.4, 76.6], [-54.5, 84.9], [-55.4, 93.2], [-55.4, 103.1], [-52.1, 125.0], [-51.2, 137.0], [-51.2, 154.2], [-52.6, 163.6], [-56.4, 175.6], [-61.9, 189.6], [-71.1, 203.8], [-83.5, 218.3], [-97.8, 230.3], [-109.3, 239.1], [-115.3, 246.0], [-119.9, 255.3], [-124.1, 272.5], [-133.7, 351.3], [-143.9, 435.2], [-222.2, 1187.7], [-225.5, 1214.8], [-228.6, 1227.4], [-235.1, 1240.4], [-243.9, 1250.9], [-254.0, 1260.3], [-268.3, 1269.6], [-283.9, 1275.3], [-301.9, 1278.5], [-317.2, 1277.4], [-331.4, 1274.3], [-348.0, 1268.0], [-364.1, 1260.7], [-376.1, 1252.4], [-390.4, 1241.5], [-406.5, 1224.2], [-417.6, 1208.6], [-427.2, 1192.0], [-435.6, 1172.2], [-443.4, 1150.3], [-449.4, 1127.8], [-452.2, 1108.6], [-455.4, 1079.4], [-455.8, 1050.2], [-456.3, 1022.6], [-457.7, 967.8], [-458.6, 919.8], [-457.7, 867.7], [-451.7, 799.5], [-429.1, 583.7]];
 const SILVERSTONE_PATH = [[69.0, -776.0], [255.8, -792.1], [288.9, -790.1], [314.5, -781.7], [331.1, -770.8], [350.9, -747.9], [363.5, -721.8], [373.6, -689.0], [387.8, -633.2], [402.4, -578.5], [410.9, -518.0], [414.5, -480.0], [419.4, -387.8], [421.4, -309.0], [424.6, -278.3], [436.4, -249.5], [458.6, -209.4], [468.0, -186.5], [467.6, -169.3], [463.5, -149.0], [431.9, -66.1], [429.9, -32.7], [434.8, -8.8], [446.1, 11.5], [477.3, 54.8], [484.6, 74.7], [485.4, 98.1], [480.1, 119.4], [461.1, 142.9], [436.8, 160.1], [403.6, 179.4], [377.7, 194.5], [359.4, 212.2], [338.4, 247.1], [297.1, 324.2], [69.8, 739.6], [-4.7, 854.9], [-25.7, 883.1], [-42.7, 898.1], [-62.6, 908.1], [-83.2, 913.2], [-102.2, 911.7], [-123.3, 906.9], [-141.1, 899.2], [-156.9, 886.7], [-170.3, 866.8], [-174.4, 859.1], [-194.6, 815.3], [-217.3, 776.1], [-241.6, 743.8], [-258.2, 724.1], [-276.8, 703.7], [-309.6, 670.3], [-382.9, 583.3], [-390.3, 578.7], [-400.4, 577.5], [-410.4, 582.3], [-441.2, 609.9], [-451.8, 613.6], [-462.3, 612.5], [-471.2, 608.8], [-483.8, 596.9], [-497.1, 583.3], [-513.8, 561.4], [-525.9, 538.0], [-534.4, 514.0], [-541.7, 486.9], [-542.5, 475.9], [-540.4, 465.0], [-534.4, 454.6], [-519.8, 431.6], [-296.2, 141.9], [-246.0, 77.8], [-235.5, 65.7], [-217.3, 53.8], [-195.4, 48.6], [-177.6, 48.0], [-152.9, 50.1], [-84.0, 60.5], [-61.3, 63.2], [-37.9, 64.1], [-11.1, 60.5], [13.2, 54.3], [35.0, 42.3], [177.6, -70.3], [186.9, -76.5], [198.3, -82.3], [210.0, -83.4], [218.9, -80.1], [227.0, -72.9], [231.9, -64.6], [256.2, 19.9], [263.5, 31.9], [273.5, 39.2], [285.3, 39.7], [298.3, 34.0], [306.4, 23.6], [311.7, 12.6], [321.8, -15.0], [329.9, -38.5], [335.9, -61.5], [339.2, -83.8], [341.2, -107.4], [339.6, -131.8], [334.7, -142.7], [322.2, -156.8], [-140.0, -575.9], [-152.5, -583.7], [-169.9, -592.5], [-191.3, -595.6], [-213.6, -593.1], [-236.3, -582.2], [-244.4, -572.2], [-250.1, -557.6], [-259.4, -481.5], [-264.7, -465.9], [-276.0, -453.3], [-293.0, -445.0], [-311.6, -442.4], [-332.3, -447.7], [-346.9, -457.5], [-355.8, -469.0], [-362.7, -482.5], [-363.9, -497.1], [-361.0, -512.8], [-349.7, -538.4], [-290.2, -655.6], [-271.1, -678.0], [-252.5, -696.8], [-225.8, -719.7], [-203.9, -734.9], [-176.4, -746.4], [-152.5, -754.1], [-101.8, -760.4]];
+const RBRING_PATH = [[208.7,310.9], [122.4,333.7], [-91.5,391.5], [-106.3,392.6], [-116.1,383.8], [-132.7,352.0], [-185.0,281.7], [-241.9,201.4], [-286.6,130.5], [-327.3,60.7], [-394.0,-83.7], [-412.4,-122.1], [-440.6,-167.5], [-484.0,-220.2], [-556.1,-292.0], [-622.7,-358.3], [-626.7,-367.1], [-626.3,-376.5], [-618.7,-381.1], [-601.2,-384.2], [-546.6,-390.5], [-492.0,-392.6], [-435.6,-392.1], [-381.9,-386.9], [-319.7,-376.9], [-129.6,-340.5], [-42.8,-329.1], [144.7,-321.2], [160.0,-316.0], [169.4,-305.6], [173.0,-294.1], [172.0,-282.1], [167.1,-270.7], [148.4,-244.1], [133.6,-226.4], [106.3,-202.4], [76.3,-186.3], [40.0,-174.3], [0.6,-168.0], [-40.5,-170.7], [-200.2,-196.2], [-221.7,-193.6], [-239.2,-187.4], [-254.4,-176.9], [-267.8,-162.8], [-276.3,-146.1], [-280.8,-127.9], [-281.7,-111.2], [-279.0,-93.0], [-274.1,-79.5], [-196.7,54.9], [-183.7,69.1], [-163.1,82.0], [-139.4,87.3], [-116.5,85.2], [-92.4,75.3], [-77.6,63.3], [-62.4,44.5], [-48.1,26.3], [-32.9,10.7], [-14.6,-1.8], [6.9,-14.4], [36.9,-25.3], [68.2,-32.1], [316.2,-37.3], [506.8,-41.9], [526.9,-41.5], [546.6,-34.6], [562.8,-22.7], [575.7,-6.5], [585.5,14.8], [624.5,145.1], [626.7,157.1], [624.5,165.9], [620.0,172.8], [604.8,184.7], [584.7,196.7], [558.7,209.7], [529.2,222.2], [494.3,233.7]];
+const SPA_PATH = [[-252.4,-807.3], [-365.9,-1004.3], [-367.1,-1013.2], [-362.1,-1021.0], [-351.6,-1024.7], [-339.9,-1021.4], [-302.6,-1002.8], [-211.9,-959.5], [-168.3,-932.9], [-122.9,-899.5], [-82.2,-865.7], [-50.0,-830.8], [123.4,-625.5], [135.5,-614.0], [156.5,-601.1], [193.8,-577.1], [210.2,-560.9], [224.0,-539.0], [232.9,-519.2], [238.8,-496.8], [243.8,-455.6], [246.7,-441.0], [251.7,-427.5], [261.4,-409.8], [347.0,-273.8], [401.5,-187.3], [416.6,-155.0], [426.3,-131.0], [437.6,-92.5], [506.0,144.6], [610.9,504.7], [635.3,591.2], [636.5,605.3], [634.0,620.8], [625.6,633.3], [613.4,643.8], [597.9,652.1], [588.7,661.0], [582.4,671.4], [577.3,687.1], [578.2,702.6], [599.2,795.9], [598.8,812.1], [595.4,826.7], [584.1,842.8], [570.6,853.8], [331.5,1017.9], [316.4,1024.2], [301.3,1024.7], [285.3,1020.0], [272.3,1010.6], [263.1,997.1], [259.3,983.5], [258.5,968.9], [263.1,955.3], [271.4,941.3], [283.6,931.5], [388.1,867.4], [399.5,855.9], [405.7,844.4], [408.3,830.9], [407.0,814.2], [363.7,688.1], [350.3,636.5], [319.7,477.6], [304.6,386.4], [301.3,370.8], [293.7,354.1], [283.6,340.5], [268.5,325.9], [251.7,315.0], [233.3,307.7], [214.0,304.6], [151.4,300.4], [127.5,303.0], [105.7,309.2], [83.5,318.6], [65.4,330.7], [44.4,349.9], [31.1,369.1], [16.4,396.8], [-42.8,543.8], [-95.7,674.6], [-107.0,694.9], [-120.4,708.9], [-138.9,719.3], [-157.4,724.5], [-174.5,725.1], [-191.8,721.4], [-206.4,714.7], [-230.8,699.0], [-246.8,692.3], [-266.1,689.2], [-285.3,691.3], [-303.0,696.9], [-318.1,707.4], [-327.7,719.3], [-339.5,735.5], [-436.4,886.6], [-446.1,895.4], [-457.8,901.7], [-472.1,904.8], [-488.0,903.8], [-501.8,897.5], [-567.3,850.1], [-605.9,822.0], [-615.6,809.5], [-625.6,794.4], [-631.5,779.8], [-635.7,762.6], [-636.5,744.9], [-633.6,723.5], [-626.9,705.3], [-618.1,681.9], [-605.1,646.4], [-582.4,606.3], [-557.6,571.3], [-519.9,529.2], [-457.0,468.2], [-420.0,439.6], [-388.6,421.3], [-226.6,337.4], [-203.1,322.8], [-180.8,305.6], [-160.3,286.4], [-142.7,265.5], [-126.3,243.6], [-104.5,203.6], [-86.8,165.0], [-46.6,75.9], [-39.5,56.5], [-35.2,35.8], [-34.5,9.7], [-38.6,-13.8], [-62.5,-74.8], [-88.5,-142.0], [-120.0,-225.9], [-128.0,-257.1], [-135.5,-294.1], [-140.2,-328.5], [-143.1,-357.7], [-152.3,-492.6], [-150.6,-501.5], [-145.2,-507.8], [-136.8,-509.9], [-122.6,-507.8], [-107.8,-507.8], [-97.8,-509.9], [-91.1,-517.2], [-89.4,-525.5], [-93.6,-536.4], [-145.2,-620.3]];
 const STAGES = [
   {
     id: 'sumava', photo: { road: 'ground', sat: 0.25, tint: '#d2c3ab', terrain: 'grass' }, name: 'Šumavské lesy', region: 'Šumava', surface: 'Šotolina', road: 'gravel', tod: 'Dopoledne',
@@ -999,7 +1026,7 @@ const STAGES = [
     id: 'miami', photo: { road: 'asphalt', tint: '#bcbcbc', terrain: 'grass' }, name: 'Miami GP', region: 'Florida · okruh F1', surface: 'Asfalt', road: 'tarmac', tod: 'Odpoledne',
     circuit: true, path: MIAMI_PATH, hw: 7, kerbs: true, landmarks: 'miami', skyline: true, gpName: 'MIAMI', country: 'FLORIDA',
     // boxová ulička vpravo podél cílové rovinky (metry od startovní čáry): vjezd, zeď boxů, garáže a výjezd
-    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, -28], boxes: [-150, -128, -106, -84, -62, -40] },
+    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, 58], boxes: [-150, -128, -106, -84, -62, -40, -18, 4, 26, 48] },
     len: 5412, seed: 107, turn: 1, hills: 0, hillScale: 1 / 500, bumps: 0.2, crests: 0, water: null, tilt: [0, 0],
     grip: 1.25, offGrip: 0.6, loose: false,
     sky: { top: '#2c78d0', hor: '#cfe5f4', bottom: '#b9c9cc' }, sun: { dir: [0.45, 0.78, 0.42], color: '#fff3dc', int: 3.5 },
@@ -1014,7 +1041,7 @@ const STAGES = [
     // Monza: „chrám rychlosti“ v královském parku, dlouhé rovinky a šikany
     id: 'monza', photo: { road: 'asphalt', tint: '#b8b8b6', terrain: 'grass' }, name: 'Monza GP', region: 'Itálie · okruh F1', surface: 'Asfalt', road: 'tarmac', tod: 'Odpoledne',
     circuit: true, path: MONZA_PATH, hw: 7, kerbs: true, gpName: 'MONZA', country: 'ITALIA',
-    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, -28], boxes: [-150, -128, -106, -84, -62, -40] },
+    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, 58], boxes: [-150, -128, -106, -84, -62, -40, -18, 4, 26, 48] },
     len: 5793, seed: 211, turn: 1, hills: 0, hillScale: 1 / 500, bumps: 0.2, crests: 0, water: null, tilt: [0, 0],
     grip: 1.25, offGrip: 0.6, loose: false,
     sky: { top: '#3b7fcf', hor: '#dfe7ea', bottom: '#b9c4b8' }, sun: { dir: [-0.5, 0.72, 0.45], color: '#fff0d6', int: 3.4 },
@@ -1029,7 +1056,7 @@ const STAGES = [
     // Silverstone: rychlé zatáčky na bývalém letišti v Anglii, kolem louky
     id: 'silverstone', photo: { road: 'asphalt', tint: '#b4b6b8', terrain: 'grass' }, name: 'Silverstone GP', region: 'Anglie · okruh F1', surface: 'Asfalt', road: 'tarmac', tod: 'Poledne',
     circuit: true, path: SILVERSTONE_PATH, hw: 7, kerbs: true, gpName: 'SILVERSTONE', country: 'BRITAIN',
-    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, -28], boxes: [-150, -128, -106, -84, -62, -40] },
+    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, 58], boxes: [-150, -128, -106, -84, -62, -40, -18, 4, 26, 48] },
     len: 5891, seed: 307, turn: 1, hills: 0, hillScale: 1 / 500, bumps: 0.2, crests: 0, water: null, tilt: [0, 0],
     grip: 1.25, offGrip: 0.6, loose: false,
     sky: { top: '#4a82c4', hor: '#e3e8ec', bottom: '#b8c2bc' }, sun: { dir: [0.3, 0.82, -0.5], color: '#fffaf0', int: 3.2 },
@@ -1039,6 +1066,36 @@ const STAGES = [
     trees: [['birch', 0.4], ['bush', 0.35], ['spruce', 0.25]], density: 0.8, rocks: 0,
     mountains: { color: '#a3b5bf', snow: false }, props: { posts: 'none', bales: false, spectators: true },
     clouds: ['#ffffff', 0.45], grass: ['#58802c', '#9cc055', 0.3],
+  },
+  {
+    // Red Bull Ring: krátký rychlý okruh ve štýrských kopcích, dlouhé rovinky a ostré brzdění
+    id: 'redbullring', photo: { road: 'asphalt', tint: '#b9b9b7', terrain: 'grass' }, name: 'Red Bull Ring GP', region: 'Rakousko · okruh F1', surface: 'Asfalt', road: 'tarmac', tod: 'Odpoledne',
+    circuit: true, path: RBRING_PATH, hw: 7, kerbs: true, gpName: 'SPIELBERG', country: 'ÖSTERREICH',
+    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, 58], boxes: [-150, -128, -106, -84, -62, -40, -18, 4, 26, 48] },
+    len: 4298, seed: 401, turn: 1, hills: 0, hillScale: 1 / 500, bumps: 0.2, crests: 0, water: null, tilt: [0, 0],
+    grip: 1.25, offGrip: 0.6, loose: false,
+    sky: { top: '#2f78d2', hor: '#d8e8f2', bottom: '#b4c6b4' }, sun: { dir: [0.35, 0.74, -0.55], color: '#fff2da', int: 3.5 },
+    hemi: { sky: '#d4e8ff', ground: '#587a3c', int: 1.15 }, fog: [220, 1000], exposure: 1.02,
+    ground: { a: '#5f9638', b: '#4e8830', dirt: '#9c9682', rock: '#a59f92', beach: '#d9cfa8' },
+    shoulder: { inner: '#d8d8d4', outer: '#4f8a2e' }, dust: '#d4cfc2',
+    trees: [['spruce', 0.5], ['pine', 0.25], ['birch', 0.25]], density: 1.0, rocks: 0,
+    mountains: { color: '#7d9d92', snow: true }, props: { posts: 'none', bales: false, spectators: true },
+    clouds: ['#ffffff', 0.32], grass: ['#4f7f28', '#98bd55', 0.3],
+  },
+  {
+    // Spa-Francorchamps: nejdelší okruh kalendáře v ardenském lese, rychlé zatáčky a dlouhé rovinky
+    id: 'spa', photo: { road: 'asphalt', tint: '#b0b2b2', terrain: 'grass' }, name: 'Spa GP', region: 'Belgie · okruh F1', surface: 'Asfalt', road: 'tarmac', tod: 'Odpoledne',
+    circuit: true, path: SPA_PATH, hw: 7, kerbs: true, gpName: 'SPA-FRANCORCHAMPS', country: 'BELGIQUE',
+    pit: { side: 1, entry: -265, wallFrom: -205, wallTo: 150, exit: 192, garage: [-162, 58], boxes: [-150, -128, -106, -84, -62, -40, -18, 4, 26, 48] },
+    len: 6954, seed: 503, turn: 1, hills: 0, hillScale: 1 / 500, bumps: 0.2, crests: 0, water: null, tilt: [0, 0],
+    grip: 1.25, offGrip: 0.6, loose: false,
+    sky: { top: '#5d86b8', hor: '#d9e2e6', bottom: '#aeb9b4' }, sun: { dir: [-0.4, 0.66, 0.5], color: '#f7f0e2', int: 3.0 },
+    hemi: { sky: '#d0dfee', ground: '#4d6a3a', int: 1.15 }, fog: [180, 900], exposure: 1.0,
+    ground: { a: '#4f8030', b: '#42722a', dirt: '#8e8a78', rock: '#a59f92', beach: '#d0c9a6' },
+    shoulder: { inner: '#d8d8d4', outer: '#44782a' }, dust: '#cfcbc0',
+    trees: [['spruce', 0.55], ['pine', 0.2], ['birch', 0.25]], density: 1.45, rocks: 0,
+    mountains: { color: '#8aa09a', snow: false }, props: { posts: 'none', bales: false, spectators: true },
+    clouds: ['#f3f6f8', 0.5], grass: ['#487428', '#8db34c', 0.3],
   },
   // ---- flow traily pro horská kola (skrytý režim). Obtížnost podle stupnice IMBA (bílý = nejlehčí, zelený,
   // modrý, černý) s evropským červeným mezi modrým a černým: čím těžší, tím užší, strmější, s vyššími klopenkami
@@ -1621,6 +1678,25 @@ function canvasTex(w, h, draw, srgb = true) {
   t.wrapS = t.wrapT = T.RepeatWrapping;
   t.anisotropy = MAX_ANISO;
   return t;
+}
+// písmo po oblouku na boku pneumatiky (vnější okraj textu 0,78 R, vnitřní 0,66 R; plátno pokrývá kruh o poloměru 0,78 R)
+let pirelliCache = null;
+function pirelliTex() {
+  if (pirelliCache) return pirelliCache;
+  pirelliCache = canvasTex(512, 512, (g, w) => {
+    g.clearRect(0, 0, w, w); g.translate(w / 2, w / 2);
+    g.font = '900 38px Arial, Helvetica, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ececec';
+    const word = (txt, mid, r, sz, sp) => {
+      g.font = `900 ${sz}px Arial, Helvetica, sans-serif`;
+      const step = sp / r, n = txt.length;
+      for (let k = 0; k < n; k++) { g.save(); g.rotate(mid + (k - (n - 1) / 2) * step + Math.PI / 2); g.translate(0, -r); g.fillText(txt[k], 0, 0); g.restore(); }
+    };
+    word('PIRELLI', -Math.PI / 2, 236, 30, 21);   // nahoře i dole
+    word('PIRELLI', Math.PI / 2, 236, 30, 21);
+    g.fillStyle = '#e8102a'; word('P ZERO', 0.2, 236, 20, 13); word('P ZERO', Math.PI + 0.2, 236, 20, 13);
+  });
+  pirelliCache.wrapS = pirelliCache.wrapT = T.ClampToEdgeWrapping;
+  return pirelliCache;
 }
 // Kreslí s přesahem přes okraje, aby se textura dala opakovat bez švu.
 function wrapDraw(g, w, h, x, y, fn) {
@@ -4716,6 +4792,10 @@ function buildModelCar(lv, spec) {
         ring.rotation.y = Math.PI / 2; ring.position.set(outer - w.pivot.position.x + sg * 0.004, (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, 0);
         w.spin.add(ring);
       }
+      // nápis dodavatele pneumatik po obvodu boku (točí se s kolem)
+      const pr = new T.Mesh(new T.RingGeometry(R * 0.66, R * 0.78, 64), new T.MeshBasicMaterial({ map: pirelliTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, side: T.DoubleSide }));
+      pr.rotation.y = sg * Math.PI / 2; pr.position.set(outer - w.pivot.position.x + sg * 0.007, (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, 0);
+      w.spin.add(pr);
     }
   }
 
@@ -4743,7 +4823,7 @@ function buildModelCar(lv, spec) {
   body.traverse((o) => { if (o.isMesh && o.material === paint) paintMeshes.push(o); });
   const ray = new T.Raycaster();
   const hit = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
-  const decal = (h, w, hgt, map, offset = 0.012) => {
+  const decal = (h, w, hgt, map, offset = 0.012) => { // nálepka na povrch
     const d = new T.Mesh(new T.PlaneGeometry(w, hgt), new T.MeshStandardMaterial({ map, transparent: true, roughness: 0.4, polygonOffset: true, polygonOffsetFactor: -2 }));
     d.position.copy(h.p).addScaledVector(h.n, offset);
     d.lookAt(d.position.clone().add(h.n));
@@ -4758,7 +4838,7 @@ function buildModelCar(lv, spec) {
       else decal(h, 0.95, 0.48, doorTexture('7', lv));
     }
   }
-  // formule: nápisy týmu jako na skutečném voze (bočnice, zadní křídlo, číslo na čumáku); jen písmo, žádná loga
+  // formule: nápisy týmu a sponzorů jako na skutečném voze (bočnice, kryt motoru, křídla, pneumatiky); jen písmo, žádná loga
   if (spec.formula && lv.spons) {
     const allMeshes = []; body.traverse((o) => { if (o.isMesh) allMeshes.push(o); });
     const hitAny = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(allMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
@@ -4769,13 +4849,54 @@ function buildModelCar(lv, spec) {
       g.fillStyle = lv.tc; g.fillText(txt, cw / 2, ch / 2 + 4, cw - 24);
       g.fillStyle = lv.a1; g.fillRect(cw * 0.12, ch - 14, cw * 0.76, 8);
     });
-    const spTex = textTex(lv.spons), wingTex = textTex(lv.wing);
-    const nameTex = textTex(lv.name.toUpperCase());
+    // sponzor: nápis podle druhu písma, šířka plátna podle textu; vrací { tex, aspect }
+    const lumOf = (c) => { const k = new T.Color(c); return 0.2126 * k.r + 0.7152 * k.g + 0.0722 * k.b; };
+    const sponsorTex = (it) => {
+      const [, txt, col, kind, bg] = it, H = 128;
+      const font = { ital: 'italic 900 92px Arial, Helvetica, sans-serif', bold: '800 90px Arial, Helvetica, sans-serif', thin: '300 84px Arial, Helvetica, sans-serif', box: '800 74px Arial, Helvetica, sans-serif' }[kind] || '800 90px Arial, sans-serif';
+      const m = document.createElement('canvas').getContext('2d'); m.font = font;
+      const sp = kind === 'thin' ? 10 : kind === 'box' ? 3 : 0;
+      if (m.letterSpacing !== undefined) m.letterSpacing = sp + 'px';
+      const tw = m.measureText(txt).width + (m.letterSpacing !== undefined ? 0 : sp * txt.length) + 4;
+      const pad = kind === 'box' ? 44 : 22, W2 = Math.min(1400, Math.ceil(tw + pad * 2));
+      const tex = canvasTex(W2, H, (g, cw, ch) => {
+        g.clearRect(0, 0, cw, ch);
+        g.font = font; g.textAlign = 'left'; g.textBaseline = 'middle';
+        if (g.letterSpacing !== undefined) g.letterSpacing = sp + 'px';
+        const x0 = pad;
+        if (kind === 'box') {
+          g.fillStyle = bg || '#ffffff'; g.beginPath(); g.roundRect ? g.roundRect(4, 8, cw - 8, ch - 16, 18) : g.rect(4, 8, cw - 8, ch - 16); g.fill();
+          g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.35)'; g.stroke();
+          g.fillStyle = col; g.fillText(txt, x0, ch / 2 + 4);
+        } else {
+          g.lineWidth = 9; g.lineJoin = 'round'; g.strokeStyle = lumOf(col) > 0.5 ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.5)';
+          g.strokeText(txt, x0, ch / 2 + 4); g.fillStyle = col; g.fillText(txt, x0, ch / 2 + 4);
+        }
+      });
+      return { tex, aspect: W2 / H };
+    };
+    const wingTex = textTex(lv.wing), nameTex = textTex(lv.name.toUpperCase());
+    // místa na voze: y, z v souřadnicích auta, výška nápisu, největší šířka, kde hledat povrch (lak / všechno), směr paprsku
+    const SLOT = {
+      pod: { y: 0.43, z: -0.05, h: 0.24, mw: 0.95 }, podF: { y: 0.42, z: 0.78, h: 0.13, mw: 0.42 }, podR: { y: 0.46, z: -1.0, h: 0.12, mw: 0.44 },
+      cover2: { y: 0.56, z: -1.5, h: 0.1, mw: 0.3, any: true }, rwEnd: { y: 0.95, z: bb.min.z + 0.2, h: 0.11, mw: 0.36, any: true }, fwEnd: { y: 0.2, z: bb.max.z - 0.5, h: 0.075, mw: 0.3, any: true },
+    };
+    for (const it of lv.sp || [['pod', lv.spons, lv.tc, 'ital']]) {
+      const sl = SLOT[it[0]]; if (!sl) continue;
+      const { tex, aspect } = sponsorTex(it);
+      const w = Math.min(sl.mw, sl.h * aspect), hh = w / aspect;
+      for (const side of [-1, 1]) {
+        const from = new T.Vector3(side * 3, sl.y, sl.z), dir = new T.Vector3(-side, 0, 0);
+        const h = sl.any ? hitAny(from, dir) : hit(from, dir);
+        if (h) { if (sl.any) h.n.set(side, 0, 0); decal(h, w, hh, tex, 0.016); }
+      }
+    }
     for (const side of [-1, 1]) {
-      const h = hit(new T.Vector3(side * 3, 0.43, -0.05), new T.Vector3(-side, 0, 0)); if (h) decal(h, 0.9, 0.24, spTex, 0.016);
       const hc = hitAny(new T.Vector3(side * 3, 0.8, -1.15), new T.Vector3(-side, 0, 0)); if (hc) decal(hc, 0.72, 0.18, nameTex, 0.014); // bok krytu motoru
     }
     const wing = hitAny(new T.Vector3(0, 0.86, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (wing) decal(wing, 0.82, 0.2, wingTex, 0.01);
+    const sw2 = (lv.sp || []).find((x) => x[0] === 'wing2');
+    if (sw2) { const w2 = hitAny(new T.Vector3(0, 0.6, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (w2) { const { tex, aspect } = sponsorTex(sw2), w = Math.min(0.62, 0.1 * aspect); decal(w2, w, w / aspect, tex, 0.01); } }
     const nose = hitAny(new T.Vector3(0, 3, 1.55), new T.Vector3(0, -1, 0));
     if (nose) { const d = decal(nose, 0.26, 0.26, doorTexture(lv.num || '4', lv), 0.01); d.rotation.set(-Math.PI / 2, 0, Math.PI); }
   }
@@ -5126,13 +5247,29 @@ CAR_TYPES.f1 = {
 };
 // Týmy formule: barvy podle vzhledu skutečných vozů (bez log). Hráč jede za vybraný tým, ostatní jsou soupeři.
 const F1_TEAMS = {
-  // full = oficiální název týmu (včetně titulárního sponzora), spons = nápis na bočnicích, wing = na zadním křídle
-  mclaren: { full: 'McLaren Formula 1 Team', spons: 'McLAREN', wing: 'McLAREN', tc: '#111214', name: 'McLaren', cov: '#ff7a00', body: '#ff7a00', a1: '#111214', a2: '#1a1b1d', rim: '#1b1b1d', num: '4', desc: 'papájově oranžová a černá' },
-  ferrari: { full: 'Scuderia Ferrari HP', spons: 'HP', wing: 'FERRARI', tc: '#ffffff', name: 'Ferrari', cov: '#c80000', body: '#d40000', a1: '#ffd400', a2: '#111214', rim: '#151515', num: '16', desc: 'italská červená, žluté detaily' },
-  mercedes: { full: 'Mercedes-AMG PETRONAS F1 Team', spons: 'PETRONAS', wing: 'AMG', tc: '#00d2be', name: 'Mercedes', cov: '#16181b', body: '#b9bec4', a1: '#00d2be', a2: '#0e0f11', rim: '#111111', num: '63', desc: 'stříbrná šíp s tyrkysovými pruhy' },
-  redbull: { full: 'Oracle Red Bull Racing', spons: 'ORACLE', wing: 'RED BULL', tc: '#ffffff', name: 'Red Bull', cov: '#1e2a5a', body: '#1e2a5a', a1: '#e8001d', a2: '#121a33', rim: '#121212', num: '1', desc: 'tmavě modrá, červená a žlutá' },
-  aston: { full: 'Aston Martin Aramco F1 Team', spons: 'ARAMCO', wing: 'ASTON MARTIN', tc: '#cedc00', name: 'Aston Martin', cov: '#0b5f45', body: '#0b5f45', a1: '#cedc00', a2: '#0d1512', rim: '#141414', num: '14', desc: 'britská zelená a limetková' },
-  alpine: { full: 'BWT Alpine F1 Team', spons: 'BWT', wing: 'ALPINE', tc: '#ffffff', name: 'Alpine', cov: '#ff6fb5', body: '#0a74da', a1: '#ff6fb5', a2: '#0d1424', rim: '#141414', num: '10', desc: 'modrá a růžová' },
+  // full = oficiální název týmu (včetně titulárního sponzora), spons = nápis na bočnicích, wing = na zadním křídle,
+  // code = zkratka v tabuli pořadí, sp = sponzoři na voze: [místo, text, barva, druh písma, pozadí]
+  // (druh: ital = tučná kurzíva, bold = tučné, thin = tenké rozstřelené, box = nápis v barevném štítku). Jen nápisy, žádná loga.
+  mclaren: { full: 'McLaren Formula 1 Team', code: 'MCL', spons: 'McLAREN', wing: 'McLAREN', tc: '#111214', name: 'McLaren', cov: '#ff7a00', body: '#ff7a00', a1: '#111214', a2: '#1a1b1d', rim: '#1b1b1d', num: '4', desc: 'papájově oranžová a černá',
+    sp: [['pod', 'McLAREN', '#111214', 'ital'], ['podF', 'Google', '#ffffff', 'bold'], ['podR', 'GULF', '#ffffff', 'box', '#1e63c8'], ['cover2', 'OAKLEY', '#111214', 'bold'], ['rwEnd', 'DHL', '#d40511', 'box', '#ffcc00'], ['fwEnd', 'PUMA', '#111214', 'bold'], ['wing2', 'Mastercard', '#111214', 'bold']] },
+  ferrari: { full: 'Scuderia Ferrari HP', code: 'FER', spons: 'HP', wing: 'FERRARI', tc: '#ffffff', name: 'Ferrari', cov: '#c80000', body: '#d40000', a1: '#ffd400', a2: '#111214', rim: '#151515', num: '16', desc: 'italská červená, žluté detaily',
+    sp: [['pod', 'HP', '#ffffff', 'ital'], ['podF', 'Shell', '#ffd400', 'ital'], ['podR', 'Santander', '#ec0000', 'box', '#ffffff'], ['cover2', 'Ray-Ban', '#ffffff', 'ital'], ['rwEnd', 'PUMA', '#ffffff', 'bold'], ['fwEnd', 'AMAZON', '#ffffff', 'bold'], ['wing2', 'Ferrari', '#ffd400', 'ital']] },
+  mercedes: { full: 'Mercedes-AMG PETRONAS F1 Team', code: 'MER', tw: '#00d2be', spons: 'PETRONAS', wing: 'AMG', tc: '#00d2be', name: 'Mercedes', cov: '#16181b', body: '#b9bec4', a1: '#00d2be', a2: '#0e0f11', rim: '#111111', num: '63', desc: 'stříbrná šíp s tyrkysovými pruhy',
+    sp: [['pod', 'PETRONAS', '#00a99d', 'ital'], ['podF', 'INEOS', '#111214', 'bold'], ['podR', 'MONSTER', '#111214', 'box', '#8ee000'], ['cover2', 'EPSON', '#1c3f94', 'bold'], ['rwEnd', 'UBS', '#e60000', 'bold'], ['fwEnd', 'TIBCO', '#111214', 'bold'], ['wing2', 'Qualcomm', '#111214', 'bold']] },
+  redbull: { full: 'Oracle Red Bull Racing', code: 'RBR', tw: '#3d63e0', spons: 'ORACLE', wing: 'RED BULL', tc: '#ffffff', name: 'Red Bull', cov: '#1e2a5a', body: '#1e2a5a', a1: '#e8001d', a2: '#121a33', rim: '#121212', num: '1', desc: 'tmavě modrá, červená a žlutá',
+    sp: [['pod', 'ORACLE', '#ff3b30', 'ital'], ['podF', 'Mobil 1', '#ffffff', 'ital'], ['podR', 'HONDA', '#e60012', 'box', '#ffffff'], ['cover2', 'BYBIT', '#f7a600', 'bold'], ['rwEnd', 'RAUCH', '#ffffff', 'bold'], ['fwEnd', 'Accenture', '#ffffff', 'thin'], ['wing2', 'HARD ROCK', '#ffd400', 'bold']] },
+  aston: { full: 'Aston Martin Aramco F1 Team', code: 'AST', spons: 'ARAMCO', wing: 'ASTON MARTIN', tc: '#cedc00', name: 'Aston Martin', cov: '#0b5f45', body: '#0b5f45', a1: '#cedc00', a2: '#0d1512', rim: '#141414', num: '14', desc: 'britská zelená a limetková',
+    sp: [['pod', 'ARAMCO', '#cedc00', 'ital'], ['podF', 'Cognizant', '#ffffff', 'bold'], ['podR', 'VALVOLINE', '#ffffff', 'box', '#d8232a'], ['cover2', 'BOSS', '#ffffff', 'thin'], ['rwEnd', 'PEPPERSTONE', '#ffffff', 'bold'], ['fwEnd', 'CROWDSTRIKE', '#ffffff', 'bold'], ['wing2', 'ARAMCO', '#cedc00', 'bold']] },
+  alpine: { full: 'BWT Alpine F1 Team', code: 'ALP', spons: 'BWT', wing: 'ALPINE', tc: '#ffffff', name: 'Alpine', cov: '#ff6fb5', body: '#0a74da', a1: '#ff6fb5', a2: '#0d1424', rim: '#141414', num: '10', desc: 'modrá a růžová',
+    sp: [['pod', 'BWT', '#ff6fb5', 'ital'], ['podF', 'CASTROL', '#ffffff', 'box', '#00964a'], ['podR', 'OTRO', '#ffffff', 'bold'], ['cover2', 'ALPINE', '#ffffff', 'ital'], ['rwEnd', 'BWT', '#ff6fb5', 'bold'], ['fwEnd', 'KRAKEN', '#ffffff', 'bold'], ['wing2', 'Renault', '#ffffff', 'thin']] },
+  williams: { full: 'Atlassian Williams Racing', code: 'WIL', tw: '#00a3e0', spons: 'ATLASSIAN', wing: 'WILLIAMS', tc: '#ffffff', name: 'Williams', cov: '#0b2a6f', body: '#0b2a6f', a1: '#00a3e0', a2: '#08183d', rim: '#121212', num: '23', desc: 'tmavě modrá a světle modré pruhy',
+    sp: [['pod', 'ATLASSIAN', '#ffffff', 'ital'], ['podF', 'GULF', '#ffffff', 'box', '#f26522'], ['podR', 'KOMATSU', '#ffffff', 'bold'], ['cover2', 'DURACELL', '#f0a500', 'bold'], ['rwEnd', 'SANTANDER', '#ffffff', 'box', '#ec0000'], ['fwEnd', 'ATLASSIAN', '#ffffff', 'bold'], ['wing2', 'WILLIAMS', '#00a3e0', 'ital']] },
+  rbulls: { full: 'Visa Cash App Racing Bulls', code: 'VRB', tw: '#3d63e0', spons: 'VISA', wing: 'RACING BULLS', tc: '#ffffff', name: 'Racing Bulls', cov: '#2a45c8', body: '#2a45c8', a1: '#ffffff', a2: '#e10600', rim: '#121212', num: '22', desc: 'modrá, bílá a červená',
+    sp: [['pod', 'VISA', '#ffffff', 'ital'], ['podF', 'CASH APP', '#00d64f', 'bold'], ['podR', 'HONDA', '#e60012', 'box', '#ffffff'], ['cover2', 'REVOLUT', '#ffffff', 'bold'], ['rwEnd', 'VISA', '#ffffff', 'bold'], ['fwEnd', 'RBPT', '#ffffff', 'bold'], ['wing2', 'RACING BULLS', '#ffffff', 'thin']] },
+  haas: { full: 'MoneyGram Haas F1 Team', code: 'HAA', tw: '#e10600', spons: 'MONEYGRAM', wing: 'HAAS', tc: '#111214', name: 'Haas', cov: '#e9ecef', body: '#e9ecef', a1: '#e10600', a2: '#111214', rim: '#151515', num: '87', desc: 'bílá s červenou a černou',
+    sp: [['pod', 'MONEYGRAM', '#111214', 'ital'], ['podF', 'HAAS', '#e10600', 'ital'], ['podR', 'TOYOTA', '#ffffff', 'box', '#e10600'], ['cover2', 'AUTOMATION', '#111214', 'bold'], ['rwEnd', 'TOYOTA', '#e10600', 'bold'], ['fwEnd', 'HAAS', '#111214', 'bold'], ['wing2', 'MONEYGRAM', '#111214', 'bold']] },
+  sauber: { full: 'Stake F1 Team Kick Sauber', code: 'SAU', tw: '#52e252', spons: 'STAKE', wing: 'SAUBER', tc: '#52e252', name: 'Sauber', cov: '#15181b', body: '#15181b', a1: '#52e252', a2: '#0a0b0c', rim: '#121212', num: '27', desc: 'černá s neonově zelenou',
+    sp: [['pod', 'STAKE', '#52e252', 'ital'], ['podF', 'KICK', '#111214', 'box', '#52e252'], ['podR', 'SAUBER', '#ffffff', 'bold'], ['cover2', 'STAKE', '#52e252', 'bold'], ['rwEnd', 'KICK', '#52e252', 'bold'], ['fwEnd', 'KICK', '#52e252', 'bold'], ['wing2', 'SAUBER', '#ffffff', 'thin']] },
 };
 const f1Team = () => (F1_TEAMS[saved.team] ? saved.team : 'mclaren');
 // Velká cena: 3 kola, omezovač v boxové uličce 80 km/h, zastávka 2,8 s. Startovní rošt za startovní čarou po dvou.
@@ -5323,6 +5460,35 @@ const audioWake = () => { const c = Sound.ctx; if (c && c.state !== 'running' &&
 document.addEventListener('visibilitychange', () => { if (!document.hidden) audioWake(); else { try { speechSynthesis.cancel(); } catch (e) { /* nic */ } } });
 window.addEventListener('pageshow', audioWake); window.addEventListener('focus', audioWake);
 for (const ev of ['pointerdown', 'touchend', 'keydown']) document.addEventListener(ev, audioWake, { passive: true, capture: true });
+// Zvuk klepnutí v menu, lobby, výběrech a výsledcích (ne na ovládání za jízdy). Má vlastní AudioContext, protože
+// motor se rozjíždí až na startu; krátký cvak pro běžná tlačítka, dvojtón pro hlavní.
+const UIS = {
+  ctx: null, last: 0,
+  tone(t, f0, f1, dur, vol, type) {
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
+  },
+  click(kind) {
+    if (!saved.sound) return;
+    const now = performance.now(); if (now - this.last < 40) return; this.last = now;
+    try {
+      if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; this.ctx = new C(); }
+      const c = this.ctx; if (c.state === 'suspended') c.resume().catch(() => {});
+      const t = c.currentTime + 0.005;
+      if (kind === 'main') { this.tone(t, 520, 780, 0.09, 0.16, 'triangle'); this.tone(t + 0.07, 780, 1170, 0.16, 0.14, 'triangle'); }
+      else if (kind === 'back') { this.tone(t, 620, 380, 0.09, 0.13, 'triangle'); }
+      else this.tone(t, 1250, 820, 0.05, 0.11, 'triangle');
+    } catch (e) { /* bez zvuku */ }
+  },
+};
+document.addEventListener('click', (e) => {
+  const el = e.target && e.target.closest ? e.target.closest('button, summary, [role=button], .stage, .car-pick, .livery, .team, .tpick, .net-pl, #diagLine') : null;
+  if (!el || el.disabled || el.closest('#touch') || el.classList.contains('tbtn')) return;
+  if (el.closest('#hud') && !el.closest('.hud-btns')) return;
+  UIS.click(el.classList.contains('btn') && !el.classList.contains('ghost') ? 'main' : /^(bNetClose|bTeamOk|bQuit|rMenu)$/.test(el.id) || el.classList.contains('ghost') ? 'back' : 'tap');
+}, true);
 const Sound = {
   ctx: null, on: saved.sound, loops: [],
   // smyčky se počítají po kouscích ještě před startem, aby první rozjezd necukl
@@ -7811,8 +7977,8 @@ const GP_AI = { alat: 2.15, vtop: 79, brake: 26 };
 // spočítané ze stejného modelu motoru a odporu jako v carDynamics. Obtížnost (volí se ve výběru týmu) mění jen
 // rychlost v zatáčkách (skill): „Rychlí“ jedou zhruba jako dobrý jezdec bez chyb, „velmi rychlí“ ještě rychleji.
 const GP_DIFF = {
-  normal: { name: 'Rychlí', desc: 'jedou jako dobrý jezdec', skills: [0.975, 0.96, 0.945, 0.93, 0.915] },
-  hard: { name: 'Velmi rychlí', desc: 'pro zkušené, bez chyb', skills: [1.08, 1.065, 1.05, 1.035, 1.02] },
+  normal: { name: 'Rychlí', desc: 'jedou jako dobrý jezdec', skills: [0.975, 0.96, 0.945, 0.93, 0.915, 0.9, 0.885, 0.87, 0.855] },
+  hard: { name: 'Velmi rychlí', desc: 'pro zkušené, bez chyb', skills: [1.08, 1.065, 1.05, 1.035, 1.02, 1.005, 0.99, 0.975, 0.96] },
 };
 function f1Acc(v) {
   const cs = CAR_TYPES.f1, vtop = 57 * cs.vmax;
@@ -7852,7 +8018,7 @@ function gpSetup() {
   const taken = G.net && G.net.teams ? Object.values(G.net.teams) : [me];
   const rivals = teams.filter((k) => !taken.includes(k));
   // rychlost soupeřů: nejrychlejší startuje první, pomalejší za ním (dobrý řidič je předjede)
-  const D = GP_DIFF[(G.gp.diff && GP_DIFF[G.gp.diff]) ? G.gp.diff : gpDiff()], skills = D.skills, pitLaps = [2, 1, 2, 2, 1];
+  const D = GP_DIFF[(G.gp.diff && GP_DIFF[G.gp.diff]) ? G.gp.diff : gpDiff()], skills = D.skills, pitLaps = [2, 1, 2, 2, 1, 2, 1, 2, 1];
   for (const k of Object.keys(G.gpModels || {})) G.gpModels[k].root.visible = G.gpModels[k].blob.visible = rivals.includes(k);
   gp.ai = rivals.map((key, k) => ({
     key, team: F1_TEAMS[key], box: teams.indexOf(key), c3d: gpBuildAI(key),
@@ -7861,7 +8027,7 @@ function gpSetup() {
   }));
   Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null });
   // hráči startují za počítačem řízenými auty (po síti v pořadí podle zařízení, stejně na všech telefonech)
-  const slot = G.net && G.net.devs ? rivals.length + Math.max(0, G.net.devs.indexOf(netDev())) : 5;
+  const slot = G.net && G.net.devs ? rivals.length + Math.max(0, G.net.devs.indexOf(netDev())) : rivals.length;
   const i = clamp(td.startIdx + Math.round(gridRel(slot) / td.ds), 0, td.n - 1);
   placeCar(i);
   car.x += td.NX[i] * gridLat(slot); car.z += td.NZ[i] * gridLat(slot); car.lat = gridLat(slot);
@@ -7870,15 +8036,15 @@ function gpSetup() {
   for (const c of [car3d, ...gp.ai.map((a) => a.c3d)]) setTyre(c, TYRE_SOFT);
 }
 // okruhy Velké ceny (všechny s boxovou uličkou) a jejich názvy
-const GP_TRACKS = { miami: 'Velká cena Miami', monza: 'Velká cena Itálie · Monza', silverstone: 'Velká cena Británie · Silverstone' };
+const GP_TRACKS = { miami: 'Velká cena Miami', monza: 'Velká cena Itálie · Monza', silverstone: 'Velká cena Británie · Silverstone', redbullring: 'Velká cena Rakouska · Red Bull Ring', spa: 'Velká cena Belgie · Spa' };
 // pro hlas (4. pád): „vyhrál jsi Velkou cenu …“
-const GP_SAY = { miami: 'Velkou cenu Miami', monza: 'Velkou cenu Itálie v Monze', silverstone: 'Velkou cenu Británie v Silverstonu' };
+const GP_SAY = { miami: 'Velkou cenu Miami', monza: 'Velkou cenu Itálie v Monze', silverstone: 'Velkou cenu Británie v Silverstonu', redbullring: 'Velkou cenu Rakouska', spa: 'Velkou cenu Belgie' };
 const gpTrackId = () => (GP_TRACKS[saved.gpTrack] ? saved.gpTrack : 'miami');
 const gpTitle = () => GP_TRACKS[W && W.td.st.id] || 'Velká cena';
 function gpStart() {
   G.gp = { V: null };
   document.body.classList.add('gp');
-  $('hGp').hidden = false;
+  $('hGp').hidden = false; $('gpTower').hidden = false; tower.room = 0;
   startRace();
 }
 function gpEnd() {
@@ -7887,7 +8053,7 @@ function gpEnd() {
   for (const c of Object.values(G.gpModels || {})) { scene.remove(c.root, c.blob); disposeGroup(c.root); disposeGroup(c.blob); }
   G.gpModels = null;
   document.body.classList.remove('gp');
-  $('hGp').hidden = true;
+  $('hGp').hidden = true; $('gpTower').hidden = true;
   for (const el of hud.mapAI || []) el.remove();
   hud.mapAI = [];
   if (W && W.startLights) for (const m of W.startLights) m.emissiveIntensity = 0;
@@ -7898,7 +8064,7 @@ function gpMapDots() {
   for (const el of hud.mapAI || []) el.remove();
   hud.mapAI = G.gp.ai.map((a) => {
     const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    c.setAttribute('r', '4'); c.setAttribute('fill', a.team.body); c.setAttribute('stroke', '#0a1220'); c.setAttribute('stroke-width', '1.5');
+    c.setAttribute('r', '4'); c.setAttribute('fill', a.team.tw || a.team.body); c.setAttribute('stroke', '#0a1220'); c.setAttribute('stroke-width', '1.5');
     hud.map.parentNode.insertBefore(c, hud.mapCar);
     return c;
   });
@@ -8233,8 +8399,48 @@ function gpStandings() {
   rows.sort((x, y) => (x.t != null && y.t != null ? x.t - y.t : x.t != null ? -1 : y.t != null ? 1 : y.d - x.d));
   return rows;
 }
+// Tabule pořadí jako v televizním přenosu: pořadí, barva týmu, zkratka týmu, odstup za autem před sebou a pneumatiky.
+// Vejde se tolik řádků, kolik dovolí výška obrazovky; hráč je vždy vidět.
+const tower = { els: [], key: '', at: 0, room: 0, rowH: 0 };
+function gpTowerRows(rows) {
+  const el = $('gpTower'), n = rows.length, lap = W.td.pit.lap;
+  if (!tower.room || tower.n !== n) {
+    const top = parseFloat(getComputedStyle(el).top) || 170;
+    tower.rowH = (parseFloat(getComputedStyle(el).getPropertyValue('--row')) || 24) + 2;
+    tower.room = clamp(Math.floor((window.innerHeight - top - 190) / tower.rowH), 5, n);
+    tower.n = n;
+  }
+  const me = rows.findIndex((r) => r.me), count = Math.min(tower.room, n), start = clamp(me - Math.floor(count / 2), 0, n - count);
+  while (tower.els.length < count) {
+    const r = document.createElement('div'); r.className = 'gt-row';
+    r.innerHTML = '<i class="pos"></i><i class="bar"></i><b class="code"></b><span class="gap"></span><i class="ty"></i>';
+    el.appendChild(r); tower.els.push({ r, pos: r.children[0], bar: r.children[1], code: r.children[2], gap: r.children[3], ty: r.children[4], k: '' });
+  }
+  const racing = G.phase === 'run' || G.phase === 'done';
+  tower.els.forEach((e, i) => {
+    e.r.hidden = i >= count; if (i >= count) return;
+    const k = start + i, o = rows[k];
+    let tm = null, v = 50, tyre = null;
+    if (o.a) { tm = o.a.team; v = o.a.v; tyre = o.a.pit >= 4 ? TYRE_MEDIUM : TYRE_SOFT; }
+    else if (o.me) { tm = F1_TEAMS[f1Team()]; v = car.vf; tyre = G.gp.pitted ? TYRE_MEDIUM : TYRE_SOFT; }
+    else if (o.remote) { tm = F1_TEAMS[o.remote.pres && o.remote.pres.team] || F1_TEAMS[f1Team()]; }
+    let gap = '';
+    if (racing) {
+      if (o.t != null) gap = k === 0 ? fmt(o.t) : '+' + Math.max(0, o.t - rows[k - 1].t).toFixed(1);
+      else if (k === 0) gap = 'VEDE';
+      else if (rows[k - 1].t == null) { const dd = rows[k - 1].d - o.d; gap = dd >= lap * 0.98 ? '+' + Math.floor(dd / lap) + ' kolo' : '+' + (dd / Math.max(30, Math.abs(v))).toFixed(1); }
+    }
+    const key = [k + 1, tm && tm.code, gap, o.me ? 1 : 0, tyre].join('|');
+    if (e.k === key) return;
+    e.k = key;
+    e.pos.textContent = k + 1; e.code.textContent = (o.me && G.net ? netName().slice(0, 3).toUpperCase() : tm ? tm.code : '???'); e.gap.textContent = gap;
+    e.bar.style.background = tm ? tm.tw || tm.body : '#888'; e.ty.style.borderColor = tyre || 'transparent'; e.r.classList.toggle('me', !!o.me);
+  });
+}
 function gpHud() {
   const gp = G.gp, rows = gpStandings(), pos = rows.findIndex((r) => r.me) + 1;
+  const nowT = performance.now();
+  if (nowT - tower.at > 150) { tower.at = nowT; gpTowerRows(rows); }
   setText($('gpPos'), 'gpPos', 'P' + pos); setText($('gpOf'), 'gpOf', '/' + rows.length);
   setText($('gpLap'), 'gpLap', `KOLO ${Math.min(GP_LAPS, gp.lap + 1)}/${GP_LAPS}`);
   const tyre = Math.round(100 * (1 - clamp(gp.wear, 0, 1)));
@@ -8277,27 +8483,29 @@ function gpRows(est) {
   const gp = G.gp, lap = W.td.pit.lap;
   const tn = gpNow();
   est = est || ((a) => (a.finishT != null ? a.finishT : tn + (GP_LAPS * lap - a.d) / Math.max(25, a.d / Math.max(1, tn)) + (a.pit < 4 ? 13 : 0)));
-  const rows = gp.ai.map((a) => ({ name: a.team.name, color: a.team.body, t: est(a), best: a.best }));
+  const rows = gp.ai.map((a) => ({ name: a.team.name, code: a.team.code, color: a.team.tw || a.team.body, t: est(a), best: a.best }));
   const meT = F1_TEAMS[f1Team()];
-  rows.push({ me: true, name: G.net ? `${netName()} · ${meT.name}` : meT.name, color: meT.body, t: G.result, best: gp.best, dsq: gp.dsq });
+  rows.push({ me: true, name: G.net ? `${netName()} · ${meT.name}` : meT.name, code: meT.code, color: meT.tw || meT.body, t: G.result, best: gp.best, dsq: gp.dsq });
   if (G.net) for (const o of NET.others.values()) {
     if (!o.pres) continue;
     const tm = F1_TEAMS[o.pres.team] || meT, d = o.progNow != null ? o.progNow : o.pres.prog || 0;
     const t = o.pres.fin != null ? o.pres.fin : tn + (GP_LAPS * lap - d) / Math.max(25, d / Math.max(1, tn));
-    rows.push({ player: true, name: `${o.name} · ${tm.name}`, color: tm.body, t, dsq: !!o.pres.dsq, running: o.pres.fin == null && !o.gone });
+    rows.push({ player: true, name: `${o.name} · ${tm.name}`, code: tm.code, color: tm.tw || tm.body, t, dsq: !!o.pres.dsq, running: o.pres.fin == null && !o.gone });
   }
   rows.sort((x, y) => (x.dsq ? 1 : 0) - (y.dsq ? 1 : 0) || x.t - y.t);
   return rows;
 }
 function gpResults() {
-  if (G.mode !== 'race' || !G.gp) return;
+  if (G.mode !== 'race' || !G.gp || !G.gp.result) return;
   const gp = G.gp, rows = gp.result, pos = gp.pos, win = rows[0].t;
   const medal = gp.dsq ? 'none' : pos === 1 ? 'gold' : pos === 2 ? 'silver' : pos === 3 ? 'bronze' : 'none';
   let html = `<h2>${gpTitle()} <em>${gp.dsq ? 'diskvalifikace' : pos === 1 ? 'vítězství!' : 'v cíli'}</em></h2>`;
   html += `<div class="res-top"><div class="bigtime">${gp.dsq ? 'DSQ' : 'P' + pos}</div><span class="badge ${medal}">${gp.dsq ? 'Bez zastávky v boxech' : pos === 1 ? 'Vítěz' : pos <= 3 ? pos + '. místo · pódium' : pos + '. místo'}</span></div>`;
   html += '<div class="rows compact gp-table">';
+  const fastest = rows.reduce((m, r) => (r.best != null && !r.dsq && (m == null || r.best < m) ? r.best : m), null);
   rows.forEach((r, k) => {
-    html += `<div class="rrow ${r.me ? 'me' : ''}"><span><i style="background:${r.color}"></i>${k + 1}. ${r.name.replace(/[<>&]/g, '')}${r.me ? ' · ty' : ''}</span><b>${r.dsq ? 'DSQ' : r.running ? 'jede…' : k === 0 ? fmt(r.t) : '+' + (r.t - win).toFixed(1) + ' s'}</b></div>`;
+    const tag = !r.dsq && r.best != null && r.best === fastest ? '<em class="fl" title="Nejrychlejší kolo">NK</em>' : '';
+    html += `<div class="rrow gt ${r.me ? 'me' : ''} ${k < 3 && !r.dsq ? 'p' + (k + 1) : ''}"><i class="pos">${k + 1}</i><i class="bar" style="background:${r.color}"></i><b class="code">${r.code || ''}</b><span class="nm">${r.name.replace(/[<>&]/g, '')}${r.me ? ' · ty' : ''}</span>${tag}<b class="gp-gap">${r.dsq ? 'DSQ' : r.running ? 'jede…' : k === 0 ? fmt(r.t) : '+' + (r.t - win).toFixed(1) + ' s'}</b></div>`;
   });
   html += '</div><div class="rows">';
   html += `<div class="rrow"><span>Nejrychlejší kolo</span><b>${gp.best != null ? fmt(gp.best) : '–'}</b></div>`;
@@ -9157,7 +9365,7 @@ renderer.domElement.addEventListener('webglcontextlost', () => { ctxLost++; });
 function resize() {
   const w = window.innerWidth, h = window.innerHeight, key = `${w}x${h}@${renderer.getPixelRatio()}`;
   if (key === lastSize) return;
-  lastSize = key; resizeCount++;
+  lastSize = key; resizeCount++; tower.room = 0;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
@@ -9201,6 +9409,8 @@ const GRADE = {
   miami: { sat: 1.12, con: 1.06, tint: [1.02, 1.0, 0.97], bloom: [0.3, 2.2] },
   monza: { sat: 1.1, con: 1.06, tint: [1.03, 1.0, 0.95], bloom: [0.3, 2.2] },
   silverstone: { sat: 1.04, con: 1.05, tint: [0.99, 1.0, 1.02], bloom: [0.32, 2.1] },
+  redbullring: { sat: 1.06, con: 1.05, tint: [1.0, 1.0, 1.02], bloom: [0.32, 2.1] },
+  spa: { sat: 0.98, con: 1.05, tint: [0.98, 1.0, 1.0], bloom: [0.3, 2.1] },
   mtbW: { sat: 1.08, con: 1.08, tint: [1.04, 1.0, 0.94], bloom: [0.4, 1.6] },
   mtbG: { sat: 1.08, con: 1.08, tint: [1.04, 1.0, 0.94], bloom: [0.4, 1.6] },
   mtbB: { sat: 1.08, con: 1.08, tint: [1.04, 1.0, 0.94], bloom: [0.4, 1.6] },
