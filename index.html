@@ -37,6 +37,8 @@
     color-scheme: dark;
   }
   [hidden] { display: none !important; }
+  .detail .stat.rec { grid-column: 1 / -1; border: 1px solid rgba(255, 196, 25, .45); background: linear-gradient(90deg, rgba(255, 196, 25, .14), rgba(255, 196, 25, .03)); }
+  .detail .stat.rec b { color: var(--accent); }
   html, body { height: 100%; }
   /* Safari (mimo aplikaci) by dvojité ťuknutí na tlačítko bralo jako přiblížení stránky */
   html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
@@ -7472,6 +7474,8 @@ function finishRace() {
     saveGhost(st.id, { t: G.result, d: G.rec });
   }
   if (G.champ) G.champ.times[G.champ.k] = G.result;
+  G.recPrev = REC.map[st.id] || null;
+  G.recNew = !G.net && !G.gp && recSubmit(st, G.result);
   if (G.net) netFinish();
   Voice.stop(); Chat.say(record ? 'record' : 'finish', true);
   hud.center.innerHTML = `CÍL<span class="sub">${fmt(G.result)}</span>`;
@@ -7489,6 +7493,10 @@ function showResults(record, prev) {
   if (G.penalty) html += `<div class="rrow"><span>Penalizace za návrat na trať</span><b>+${G.penalty} s</b></div>`;
   if (G.splits.length) html += `<div class="rrow"><span>Mezičasy</span><b>${G.splits.map(fmt).join(' · ')}</b></div>`;
   html += `<div class="rrow ${record ? 'me' : ''}"><span>${record ? 'Nový osobní rekord' : 'Osobní rekord'}</span><b>${fmt(record ? G.result : prev)}${!record && prev != null ? ` (${fmtDelta(G.result - prev)})` : ''}</b></div>`;
+  // rekord trati (sdílený přes claude.ai)
+  const tr = REC.map[st.id];
+  if (G.recNew) html += `<div class="rrow me rec"><span>🏆 Nový rekord trati!${G.recPrev ? ` (byl ${fmt(G.recPrev.t)} · ${G.recPrev.name.replace(/[<>&]/g, '')})` : ''}</span><b>${fmt(G.result)}</b></div>`;
+  else if (tr) html += `<div class="rrow"><span>Rekord trati · ${tr.name.replace(/[<>&]/g, '')}</span><b>${fmt(tr.t)} (${fmtDelta(G.result - tr.t)})</b></div>`;
   html += '</div>';
   html += `<div class="detail"><div class="stat"><small><i class="medal m-gold"></i>Zlato</small><b>${fmt(td.ideal * MEDAL.gold)}</b></div><div class="stat"><small><i class="medal m-silver"></i>Stříbro</small><b>${fmt(td.ideal * MEDAL.silver)}</b></div><div class="stat"><small><i class="medal m-bronze"></i>Bronz</small><b>${fmt(td.ideal * MEDAL.bronze)}</b></div></div>`;
   if (G.champ) {
@@ -8921,6 +8929,36 @@ $('bP2pShare').onclick = () => {
 };
 $('netName').addEventListener('input', () => { saved.netName = $('netName').value.slice(0, 12); persist(); netPresence({ name: netName() }); netRender(); });
 
+// ---- rekordy tratí (jen ve hře otevřené přes claude.ai): sdílená databáze stránky, dokument records/<trať>.
+// Zapisovat smí jen vlastník hry (pravidlo při zveřejnění: records → write owner), takže je nikdo cizí nezmění;
+// ostatní přihlášení je jen vidí. Jméno je jméno z menu Proti sobě (táta a syn na stejném účtu se tím odliší).
+const REC = { db: null, map: {} };
+function recConnect() {
+  const c = window.claude && typeof window.claude.use === 'function' ? window.claude : null;
+  if (!c) return;
+  Promise.resolve(c.use('db')).then((db) => {
+    if (!db) return;
+    REC.db = db;
+    try {
+      db.collection('records').onSnapshot((snap) => {
+        const map = {};
+        for (const d of snap.docs) { const v = d.exists && d.data(); if (v && typeof v.t === 'number') map[d.id] = v; }
+        REC.map = map;
+        if (G.mode === 'menu') renderMenu();
+      }, () => { REC.db = null; });
+    } catch (e) { REC.db = null; }
+  }).catch(() => {});
+}
+// nový rekord trati: zapíše se (vlastníkovi projde, ostatním databáze zápis odmítne a nic se nestane)
+function recSubmit(st, t) {
+  if (!REC.db || !(t > 0) || t < W.td.ideal * 0.6) return false; // nesmyslně rychlý čas (chyba) se nezapíše
+  const cur = REC.map[st.id];
+  if (cur && cur.t <= t) return false;
+  const rec = { t: +t.toFixed(3), name: netName(), car: saved.car, team: carType().formula ? f1Team() : null, at: new Date().toISOString().slice(0, 10) };
+  REC.map[st.id] = rec;
+  REC.db.doc('records/' + st.id).set(rec).catch(() => { if (REC.map[st.id] === rec) { if (cur) REC.map[st.id] = cur; else delete REC.map[st.id]; } });
+  return true;
+}
 function renderMenu() {
   applyModeUI();
   const bikeM0 = isBike();
@@ -8942,7 +8980,8 @@ function renderMenu() {
   $('stageDetail').innerHTML =
     `<div class="stat"><small>Délka</small><b>${(td.length / 1000).toFixed(2)} km</b></div>` +
     `<div class="stat"><small>Zatáčky · skoky</small><b>${nTurns} · ${nJumps}</b></div>` +
-    `<div class="stat"><small>Zlato pod</small><b>${fmt(td.ideal * MEDAL.gold)}</b></div>`;
+    `<div class="stat"><small>Zlato pod</small><b>${fmt(td.ideal * MEDAL.gold)}</b></div>` +
+    (REC.map[td.st.id] ? `<div class="stat rec"><small>Rekord trati · ${REC.map[td.st.id].name.replace(/[<>&]/g, '')}</small><b>${fmt(REC.map[td.st.id].t)}</b></div>` : '');
   $('bStartSub').textContent = td.st.name;
   $('bGpMenu').hidden = bikeM0 || saved.car !== 'f1';
   const cl = $('carList');
@@ -9374,6 +9413,7 @@ async function boot(data) {
   $('secret').addEventListener('click', toggleMode);
   setLivery(clamp(saved.livery | 0, 0, LIVERIES.length - 1));
   loadStage(idx, startDemo);
+  recConnect();
   requestAnimationFrame(tick);
   Sound.prepare();
 }
@@ -9382,7 +9422,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
