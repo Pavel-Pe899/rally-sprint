@@ -455,6 +455,20 @@
   @media (max-width: 600px) { .hud-gp { top: calc(118px + env(safe-area-inset-top, 0px)); gap: 8px; padding: 4px 10px; } .gp-pos b { font-size: 28px; } .gp-tyre { width: 92px; } }
   /* déšť: ztmavení a studený nádech okrajů obrazu */
   .rain-fx { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(40, 58, 82, 0) 40%, rgba(24, 34, 52, .55) 100%); mix-blend-mode: multiply; }
+  /* výběr pneumatik před zajetím do boxů */
+  .gp-tyrepick { position: absolute; left: 50%; top: calc(86px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(460px, calc(100% - 24px)); padding: 10px 12px; border-radius: 16px; background: rgba(8, 12, 22, .92); border: 1px solid var(--line); box-shadow: 0 14px 40px rgba(0, 0, 0, .5); pointer-events: auto; font-family: var(--display); z-index: 6; }
+  .gp-tyrepick[hidden] { display: none; }
+  .tp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tp-head b { font-size: 18px; letter-spacing: .04em; } .tp-head span { flex: 1; color: var(--muted); font-size: 12px; font-family: var(--body, inherit); }
+  .tp-head button { width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); color: var(--fg); font-size: 15px; cursor: pointer; touch-action: manipulation; }
+  .tp-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tp-row button { position: relative; display: grid; gap: 2px; justify-items: center; padding: 10px 6px 8px; border-radius: 12px; border: 2px solid var(--line); background: rgba(255, 255, 255, .05); color: var(--fg); font-family: var(--display); font-weight: 800; font-size: 17px; cursor: pointer; touch-action: manipulation; }
+  .tp-row button i { width: 34px; height: 34px; border-radius: 50%; border: 5px solid #15161a; box-shadow: 0 0 0 3px currentColor inset; display: block; margin-bottom: 2px; }
+  .tp-row button small { font-family: var(--body, inherit); font-weight: 500; font-size: 10.5px; color: var(--muted); line-height: 1.2; text-align: center; }
+  .tp-row button.adv { border-color: var(--accent); background: rgba(255, 196, 25, .12); }
+  .tp-row button.adv::after { content: 'DOPORUČENO'; position: absolute; top: -9px; font-size: 9px; letter-spacing: .08em; padding: 1px 6px; border-radius: 6px; background: var(--accent); color: #1a1300; }
+  .tp-row button.cur { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25); }
+  @media (max-height: 450px) { .gp-tyrepick { top: calc(54px + env(safe-area-inset-top, 0px)); padding: 6px 10px; } .tp-row button { padding: 5px 4px; font-size: 14px; } .tp-row button i { width: 22px; height: 22px; border-width: 4px; } .tp-row button small { display: none; } }
   /* tabule pořadí Velké ceny (vpravo pod mapou) */
   .gp-tower { --row: 24px; position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(176px + env(safe-area-inset-top, 0px)); width: 164px; display: flex; flex-direction: column; gap: 2px; font-family: var(--display); }
   .gp-tower[hidden] { display: none; }
@@ -554,6 +568,14 @@
   </div>
   <div class="gp-tower" id="gpTower" hidden aria-hidden="true"></div>
   <div class="rain-fx" id="rainFx" aria-hidden="true"></div>
+  <div class="gp-tyrepick" id="gpTyrePick" hidden>
+    <div class="tp-head"><b>Jaké pneumatiky?</b><span id="gpTyreInfo"></span><button id="gpTyreClose" aria-label="Zavřít">✕</button></div>
+    <div class="tp-row">
+      <button data-t="soft"><i style="background:#e8102a"></i>Měkké<small>rychlé, rychle se sjedou</small></button>
+      <button data-t="medium"><i style="background:#ffd200"></i>Střední<small>vydrží déle</small></button>
+      <button data-t="wet"><i style="background:#2f8cff"></i>Do deště<small>na mokrou trať</small></button>
+    </div>
+  </div>
   <div class="hud-center" id="hCenter"></div>
   <div class="hud-toast" id="hToast"></div>
   <div class="hud-brake" id="hBrake" aria-hidden="true">BRZDI</div>
@@ -3817,7 +3839,7 @@ function buildWorld(td) {
       });
       const monitorMat = new T.MeshBasicMaterial({ map: screenTex2 });
       const parts = [], box = (w, h, d, x, y, z, color, rx = 0) => parts.push({ geo: new T.BoxGeometry(w, h, d).rotateX(rx).translate(x, y, z), color });
-      const crewHome = [], crewHome2 = [], slot2 = [];
+      const crewHome = [];
       
       p.boxes.forEach((b, k) => {
         const tm = F1_TEAMS[teams[k % teams.length]], i = relIdx(b);
@@ -3909,10 +3931,6 @@ function buildWorld(td) {
         const [bx, , bz] = at(i, p.box);
         pitW.boxes.push({ i, x: bx, z: bz, y: Y[i] + 0.04, h: HD[i], rel: b, team: teams[k % teams.length] });
         for (let c = 0; c < CREW_SLOT.length; c++) { const [hx, hy, hz] = at(clamp(i + Math.round((c - 5) * 0.7), 0, n - 1), p.edge + 1.0 + (c % 3) * 0.7, 0); crewHome.push({ box: k, x: hx, y: hy, z: hz, color: tm.body, helm: tm.a1 }); }
-        // druhé stání téhož týmu (týmový závod, dva jezdci): o 11 m dál, s vlastními mechaniky
-        const i2 = relIdx(b - 11), [bx2, , bz2] = at(i2, p.box);
-        slot2.push({ i: i2, x: bx2, z: bz2, y: Y[i2] + 0.04, h: HD[i2], rel: b - 11, team: teams[k % teams.length] });
-        for (let c = 0; c < CREW_SLOT.length; c++) { const [hx, hy, hz] = at(clamp(i2 + Math.round((c - 5) * 0.7), 0, n - 1), p.edge + 1.0 + (c % 3) * 0.7, 0); crewHome2.push({ box: p.boxes.length + k, x: hx, y: hy, z: hz, color: tm.body, helm: tm.a1 }); }
         // hosté na terase nad garáží
         for (let x = -Wb / 2 + 1; x < Wb / 2 - 1; x += 1.6) {
           if (rnd() < 0.45) continue;
@@ -3941,7 +3959,6 @@ function buildWorld(td) {
       const toolShift = poses.stand.hand.clone().sub(new T.Vector3(0, 1.0, 0.45));
       for (const g of toolGeo) g.translate(toolShift.x, toolShift.y, toolShift.z);
       const kneelTool = poses.kneel.hand.clone().sub(poses.stand.hand); // utahovák u klečícího níž a dál
-      pitW.boxes.push(...slot2); crewHome.push(...crewHome2);
       const N = crewHome.length, role = (c) => (c.slot < 4 ? 0 : c.slot < 6 ? 1 : c.slot < 7 ? 2 : 3);
       crewHome.forEach((c, k) => { c.slot = k % CREW_SLOT.length; });
       const suitMat = new T.MeshLambertMaterial({ color: '#ffffff' }), darkMat = new T.MeshLambertMaterial({ color: '#1b1d22' });
@@ -8162,7 +8179,7 @@ function gpSetup() {
     d: gridRel(k), lat: gridLat(k), latT: gridLat(k), home: (k % 2 ? 1 : -1) * (0.4 + k * 0.25), v: 0,
     k, tyre: 'soft', plan: total > GP_LAPS ? [Math.round(total * 0.72) + (k % 2)] : [], skill: skills[k], pitLap: total > GP_LAPS ? Math.round(total * 0.33) + (k % 3) : pitLaps[k], pit: 0, stopT: 0, wear: 0, done: false, finishT: null, lapNo: 0, lapStart: 0, best: null, spin: 0, passT: 0,
   }));
-  Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me) + (gp.duo && G.net && G.net.devs ? teams.length * Math.max(0, Object.keys(G.net.teams).sort().filter((d) => G.net.teams[d] === me).indexOf(netDev())) : 0), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: 'soft' });
+  Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: 'soft' });
   if (gp.rainOn) { gp.seed = G.net ? G.net.id : Math.random().toString(36).slice(2, 8); wxStart(wxPlan(gp.seed, total)); } else wxEnd();
   // hráči startují za počítačem řízenými auty (po síti v pořadí podle zařízení, stejně na všech telefonech)
   const slot = G.net && G.net.devs ? rivals.length + Math.max(0, G.net.devs.indexOf(netDev())) : rivals.length;
@@ -8187,7 +8204,7 @@ function gpStart(opts = {}) {
 }
 function gpEnd() {
   if (!G.gp) return;
-  wxEnd();
+  wxEnd(); $('gpTyrePick').hidden = true;
   G.gp = null;
   if (duoTeam) { duoTeam = null; if (car3d) setLivery(saved.livery); }
   for (const c of Object.values(G.gpModels || {})) { scene.remove(c.root, c.blob); disposeGroup(c.root); disposeGroup(c.blob); }
@@ -8209,8 +8226,6 @@ function gpMapDots() {
     return c;
   });
 }
-// druhé auto týmu (týmový závod) stojí v boxu o kus dál po trati (čísla boxů nad počtem týmů)
-const gpBoxRel = (p, idx) => (idx < p.boxes.length ? p.boxes[idx] : p.boxes[idx - p.boxes.length] - 11);
 // vzdálenost ujetá v závodě (od startovní čáry, přes všechna kola)
 // čas závodu pro soupeře: po dojetí hráče se G.time zastaví, ale soupeři jedou dál (jinak by všichni, kdo dojedou
 // po hráči, dostali jeho čas – po síti to posílalo počítačová auta před hráče, kteří dojeli dřív)
@@ -8526,21 +8541,21 @@ function wxTick(dt) {
   Sound.rain(k);
 }
 // pneumatiky: která jsou na voze a jestli se k tomu, jak je mokro, hodí
-const gpWetGrip = () => { const gp = G.gp; if (!gp || !WX.cfg) return 1; const w = WX.wet; return gp.tyre === 'wet' ? 1 - 0.05 * w - 0.12 * (1 - w) + 0.03 * shopLv('rain') * w : 1 - 0.45 * w; };
+const gpWetGrip = () => { const gp = G.gp; if (!gp) return 1; const cmp = gp.tyre === 'soft' ? 1.03 : 1; if (!WX.cfg) return cmp; const w = WX.wet; return gp.tyre === 'wet' ? 1 - 0.05 * w - 0.12 * (1 - w) + 0.03 * shopLv('rain') * w : (1 - 0.45 * w) * cmp; };
 const gpTyreWrong = () => !!WX.cfg && (G.gp.tyre === 'wet' ? WX.wet < 0.08 && WX.rain < 0.05 : WX.wet > 0.3);
 const gpCanPit = () => { const gp = G.gp; return !gp.pitted || gp.wear > 0.5 || gpTyreWrong(); };
 function gpTick(dt) {
   const gp = G.gp, td = W.td, p = td.pit, lap = p.lap;
   if (G.phase === 'run') {
     wxTick(dt);
-    gp.wear += (Math.abs(car.vf) * dt) / (lap * gpWearLaps()) * (carType().wearK || 1) * (gp.tyre === 'wet' && !(WX.cfg && WX.wet > 0.2) ? 2.2 : 1); // bez zastávky jsou pneumatiky po dvou kolech sjeté (dlouhý závod po ~4)
+    gp.wear += (Math.abs(car.vf) * dt) / (lap * gpWearLaps()) * (carType().wearK || 1) * (gp.tyre === 'wet' && !(WX.cfg && WX.wet > 0.2) ? 2.2 : gp.tyre === 'soft' ? 1.3 : 1); // bez zastávky jsou pneumatiky po dvou kolech sjeté (dlouhý závod po ~4)
     gp.serviceCD = Math.max(0, gp.serviceCD - dt);
-    const rel = p.relOf(car.s), lat = car.lat * p.side, myRel = gpBoxRel(p, gp.myBox);
+    const rel = p.relOf(car.s), lat = car.lat * p.side, myRel = p.boxes[gp.myBox];
     // omezovač a navigace k boxu
     if (car.limiter && !gp.limiterShown && !gp.pilot) { gp.limiterShown = true; toast(`Boxová ulička · omezovač 80 km/h · zastav u boxu ${F1_TEAMS[f1Team()].name}`, 3); }
     if (!car.limiter) gp.limiterShown = false;
     const atBox = Math.abs(rel - myRel) < 4.5 || (gp.pilot === 'in' && rel > myRel - 4.5 && rel < myRel + 30);
-    if (!gp.service && !gp.serviceCD && (!gp.pitted || gp.pitReq || gpCanPit()) && lat > p.split && atBox && Math.abs(car.vf) < 5) {
+    if (!gp.service && !gp.serviceCD && (!gp.pitted || gp.pitReq || gpCanPit()) && !gpMateBusy() && lat > p.split && atBox && Math.abs(car.vf) < 5) {
       gp.service = PIT_STOP_T; gpCrew(gp.myBox, true);
       const b = W.pit.boxes[gp.myBox];
       gp.snap = { x: b.x, z: b.z, h: b.h };
@@ -8562,9 +8577,9 @@ function gpTick(dt) {
       if (gp.service <= 0) {
         gp.service = 0; gp.wear = 0; gp.pitted = true; gp.serviceCD = 8; gpCrew(gp.myBox, false);
         gp.pilot = 'out'; gp.pitReq = false; // auto samo vyjede z boxu na trať
-        gp.tyre = WX.cfg && WX.wet > 0.3 ? 'wet' : 'medium';
-        setTyre(car3d, gp.tyre === 'wet' ? TYRE_WET : TYRE_MEDIUM);
-        toast('Nové pneumatiky! Jeď!', 1.8); Sound.beep(880, 0.2);
+        gp.tyre = gp.tyreWant || (WX.cfg && WX.wet > 0.3 ? 'wet' : 'medium'); gp.tyreWant = null;
+        setTyre(car3d, gp.tyre === 'wet' ? TYRE_WET : gp.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM);
+        toast(`Nové pneumatiky: ${TYRE_NAMES[gp.tyre].toLowerCase()}! Jeď!`, 1.8); Sound.beep(880, 0.2);
         gpRadio('Výborně, nové gumy. Jeď, jeď!');
       }
     }
@@ -8579,16 +8594,45 @@ function gpTick(dt) {
 }
 // Automatické zajetí do boxů (ťuknutí na BOX nebo najetí do vjezdu): formule sama zajede do uličky,
 // zastaví u boxu svého týmu, po výměně pneumatik vyjede a za výjezdem vrátí řízení hráči.
-function gpRequestPit() {
+// týmový závod: v boxu je jen jedno stání. Je-li tam právě kolega (mechanici na něm pracují nebo u boxu stojí), zastaví se
+// druhé auto o 11 m před boxem, aby nezavazelo, a až kolega odjede, popojede na stání
+function gpMateBusy() {
+  const gp = G.gp;
+  if (!G.net || !gp || !gp.duo || !W.pit.boxes[gp.myBox]) return false;
+  const b = W.pit.boxes[gp.myBox];
+  for (const o of NET.others.values()) {
+    if (o.gone || !o.pres) continue;
+    if (o.pres.svc === gp.myBox) return true;
+    if (o.x != null && Math.hypot(o.x - b.x, o.z - b.z) < 6 && Math.abs(o.v || 0) < 9) return true;
+  }
+  return false;
+}
+// volba pneumatik před zajetím do boxů: ťuknutí na BOX otevře výběr (měkké, střední, na déšť), po volbě auto zajede samo
+const TYRE_NAMES = { soft: 'Měkké', medium: 'Střední', wet: 'Do deště' };
+const gpTyreAdvice = () => (WX.cfg && (WX.wet > 0.3 || WX.rain > 0.3) ? 'wet' : (gpTotal() - G.gp.lap <= 1 ? 'soft' : 'medium'));
+function gpPitMenu(force) {
+  const gp = G.gp, el = $('gpTyrePick');
+  if (!gp || G.phase !== 'run') return;
+  if (gp.pitReq || gp.pilot) { gpRequestPit(); return; } // už jede do boxů: ťuknutí zajetí zruší
+  if (!force && !el.hidden) { el.hidden = true; return; }
+  if (gp.pitted && !gpCanPit()) { toast('Pneumatiky máš v pořádku · box není potřeba', 1.4); return; }
+  const adv = gpTyreAdvice();
+  for (const k of ['soft', 'medium', 'wet']) { const b = el.querySelector(`[data-t="${k}"]`); b.classList.toggle('adv', k === adv); b.classList.toggle('cur', gp.tyre === k); }
+  $('gpTyreInfo').textContent = WX.cfg ? (WX.rain > 0.3 ? 'Prší' : WX.wet > 0.3 ? 'Trať je mokrá' : WX.wet > 0.08 ? 'Trať schne' : 'Trať je suchá') + ` · máš ${TYRE_NAMES[gp.tyre].toLowerCase()}` : `Máš ${TYRE_NAMES[gp.tyre].toLowerCase()} pneumatiky`;
+  el.hidden = false;
+}
+for (const b of document.querySelectorAll('#gpTyrePick [data-t]')) b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('gpTyrePick').hidden = true; gpRequestPit(b.dataset.t); });
+$('gpTyreClose').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('gpTyrePick').hidden = true; });
+function gpRequestPit(tyre) {
   const gp = G.gp;
   if (!gp || G.phase !== 'run' || gp.pitted && !gp.pilot && !gpCanPit()) { if (gp && gp.pitted) toast('Pneumatiky máš v pořádku · box není potřeba', 1.4); return; }
   // druhé ťuknutí zajetí zruší (dokud auto nestojí u mechaniků)
   if (gp.pitReq || gp.pilot) { if (!gp.service) { gp.pitReq = false; gp.pilot = null; gp.pilotLat = null; toast('Zajetí do boxů zrušeno', 1.4); } return; }
-  gp.pitReq = true;
-  toast('Box! Formule zajede do boxů sama', 2.2); Sound.beep(660, 0.15);
+  gp.pitReq = true; gp.tyreWant = TYRE_NAMES[tyre] ? tyre : WX.cfg && WX.wet > 0.3 ? 'wet' : 'medium';
+  toast(`Box! Formule zajede do boxů sama · ${TYRE_NAMES[gp.tyreWant].toLowerCase()} pneumatiky`, 2.4); Sound.beep(660, 0.15);
 }
 function gpPitPilot() {
-  const gp = G.gp, td = W.td, p = td.pit, rel = p.relOf(car.s), lat = car.lat * p.side, bRel = gpBoxRel(p, gp.myBox);
+  const gp = G.gp, td = W.td, p = td.pit, rel = p.relOf(car.s), lat = car.lat * p.side, bRel = p.boxes[gp.myBox];
   // pomocník řídí jen v okolí boxové uličky; kdekoli jinde (návrat na trať, smyk mimo) se vypne a řídí hráč
   if (gp.pilot && !gp.service && (rel < p.entry - 170 || rel > p.exit + 30)) { gp.pilot = null; gp.pilotLat = null; if (gp.pitted) gp.pitReq = false; }
   // do boxů zaveze jen ťuknutí na BOX (samo se nezapíná: u vjezdu stačilo vyjet kousek za kraj a auto to vtáhlo);
@@ -8597,21 +8641,23 @@ function gpPitPilot() {
     if (gp.pitReq && rel > p.entry - 140 && rel < p.wallFrom - 10) gp.pilot = 'in';
     else return null;
   }
-  let latT, vt;
+  let latT, vt, waiting = false, tg = bRel;
   if (gp.pilot === 'in') {
     // vjezd minul (zůstal na trati za začátkem zdi boxů): zkusí to v dalším kole
     if (rel > p.wallFrom + 5 && rel < p.wallTo && lat < p.inner) { gp.pilot = null; toast('Vjezd do boxů minut · zkusím to další kolo', 2); return null; }
-    latT = rel < p.entry ? HW - 1.4 : rel < bRel - 36 ? p.lane : p.box;
+    waiting = gpMateBusy(); tg = waiting ? bRel - 11 : bRel; // kolega je v boxu: počkat o kus před ním
+    latT = rel < p.entry ? HW - 1.4 : rel < tg - 36 ? p.lane : p.box;
     // před vjezdem zpomalí (i se sjetými pneumatikami se trefí do uličky), v ní na omezovač
     vt = Math.min(formulaSpeedAhead(0.85), 26 + Math.max(0, p.entry - rel) * 0.25, Math.sqrt(PIT_LIMIT * PIT_LIMIT + 2 * 10 * Math.max(0, p.wallFrom - 20 - rel)));
     if (rel > p.wallFrom - 20) vt = Math.min(vt, PIT_LIMIT);
-    if (rel > bRel - 40) vt = Math.min(vt, Math.sqrt(2 * 6 * Math.max(0, bRel - rel)) + (lat > p.box - 1.2 ? 0.4 : 2.5));
+    if (rel > tg - 40) vt = Math.min(vt, Math.sqrt(2 * 6 * Math.max(0, tg - rel)) + (lat > p.box - 1.2 ? 0.4 : 2.5));
   } else {
     latT = rel < p.wallTo ? p.lane : HW - 1.4;
     vt = rel < p.wallTo ? PIT_LIMIT : formulaSpeedAhead(0.9);
     if (rel > p.exit + 10 && rel < p.exit + 400) { gp.pilot = null; gp.pitReq = false; gp.pilotLat = null; toast('Jeď! Řídíš zase ty', 1.6); return null; }
   }
   gp.pilotLat = latT;
+  if (waiting && gp.pilot === 'in' && rel > tg - 1.5 && car.vf < 6) return { steer: autopilot(1, null, latT * p.side).steer, throttle: 0, brake: 1, hb: true }; // stojí a čeká
   const ap = autopilot(1, null, latT * p.side);
   return { steer: ap.steer, throttle: car.vf < vt - Math.min(0.5, vt * 0.3) ? 1 : 0, brake: car.vf > vt + 1.2 ? 1 : 0, hb: false };
 }
@@ -8685,6 +8731,7 @@ function gpTowerRows(rows) {
 }
 function gpHud() {
   const gp = G.gp, rows = gpStandings(), pos = rows.findIndex((r) => r.me) + 1;
+  if (!$('gpTyrePick').hidden && (gp.pitReq || gp.pilot || gp.service > 0 || G.phase !== 'run')) $('gpTyrePick').hidden = true;
   const nowT = performance.now();
   if (nowT - tower.at > 150) { tower.at = nowT; gpTowerRows(rows); }
   setText($('gpPos'), 'gpPos', 'P' + pos); setText($('gpOf'), 'gpOf', '/' + rows.length);
@@ -9621,7 +9668,7 @@ $('bPause').onclick = () => setPaused(true);
 $('bCam').onclick = () => { G.camMode = (G.camMode + 1) % 3; camS.init = false; };
 $('bSound').onclick = () => { saved.sound = !saved.sound; Sound.setOn(saved.sound); persist(); toast(saved.sound ? 'Zvuk zapnutý' : 'Zvuk vypnutý', 1.2); };
 hud.reset.onclick = () => resetToTrack(false);
-$('gpPit').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); gpRequestPit(); });
+$('gpPit').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); gpPitMenu(); });
 
 window.addEventListener('keydown', (e) => {
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code) && G.mode === 'race') e.preventDefault();
@@ -9630,7 +9677,8 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Escape' || e.code === 'KeyP') setPaused(!G.paused);
   if (e.code === 'KeyC' && G.mode === 'race') { G.camMode = (G.camMode + 1) % 3; camS.init = false; }
   if (e.code === 'KeyR') resetToTrack(false);
-  if (e.code === 'KeyB') gpRequestPit();
+  if (e.code === 'KeyB') gpPitMenu();
+  if (G.gp && !$('gpTyrePick').hidden && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) { $('gpTyrePick').hidden = true; gpRequestPit(['soft', 'medium', 'wet'][+e.code.slice(5) - 1]); }
   if (e.code === 'KeyM') { saved.sound = !saved.sound; Sound.setOn(saved.sound); persist(); }
   if (e.code === 'Enter' && G.mode === 'menu' && !overlay.menu.hidden && document.activeElement === document.body) $('bStart').click();
 });
@@ -9957,7 +10005,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { get scene() { return scene; }, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
