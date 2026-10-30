@@ -742,6 +742,8 @@
             <input id="p2pCode" class="net-name net-code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="KÓD">
             <button class="btn ghost" id="bP2pJoin">Připojit</button>
           </div>
+          <button class="btn ghost net-test" id="bP2pTest"><span>Otestovat spojení</span><small>ukáže, které servery na tvé síti fungují</small></button>
+          <pre class="net-p2p-st" id="p2pTestOut" hidden style="white-space:pre-wrap;font-size:12px"></pre>
           <button class="net-link" id="bP2pShare">↗ Poslat kamarádovi odkaz</button>
         </div>
         <details class="net-more">
@@ -10080,6 +10082,42 @@ function p2pJoin(code, relay = false) {
   });
   netRender();
 }
+
+// Test spojení na tomto telefonu a v této síti: dosáhne se na párovací server, na STUN a na jednotlivé převodní (TURN) servery?
+// Každý server se zkouší zvlášť (jen přes převodní se vynutí iceTransportPolicy 'relay') a vypíše se, které opravdu odpověděly.
+async function p2pSelfTest() {
+  const out = $('p2pTestOut'); out.hidden = false; out.textContent = 'Zkouším…\n';
+  const line = (s) => { out.textContent += s + '\n'; };
+  const t0 = performance.now();
+  // 1) párovací server
+  await new Promise((done) => {
+    if (typeof window.Peer !== 'function') { line('✗ PeerJS knihovna chybí'); return done(); }
+    let ok = false, ended = false; const pr = new window.Peer(undefined, { debug: 0 });
+    const fin = () => { if (ended) return; ended = true; try { pr.destroy(); } catch (e) { /* nic */ } done(); };
+    pr.on('open', () => { ok = true; line(`✓ párovací server 0.peerjs.com (${Math.round(performance.now() - t0)} ms)`); fin(); });
+    pr.on('error', (e) => { line(`✗ párovací server: ${e.type || e}`); fin(); });
+    setTimeout(() => { if (!ok && !ended) { line('✗ párovací server neodpověděl do 8 s'); fin(); } }, 8000);
+  });
+  // 2) STUN a jednotlivé TURN servery
+  const tests = [['STUN Google', P2P_OPTS.config.iceServers[0], false], ...P2P_OPTS.config.iceServers.slice(1).map((s) => [s.urls[0].replace(/^turns?:/, '').replace(/\?.*$/, ''), s, true])];
+  for (const [name, srv, relay] of tests) {
+    const res = await new Promise((done) => {
+      let pc, cnt = { host: 0, srflx: 0, relay: 0 }, ended = false;
+      const fin = () => { if (ended) return; ended = true; try { pc.close(); } catch (e) { /* nic */ } done(cnt); };
+      try {
+        pc = new RTCPeerConnection({ iceServers: [srv], iceTransportPolicy: relay ? 'relay' : 'all' });
+        pc.createDataChannel('t');
+        pc.onicecandidate = (ev) => { if (!ev.candidate) return fin(); const m = / typ (host|srflx|relay)/.exec(ev.candidate.candidate); if (m) { cnt[m[1]]++; if ((relay && m[1] === 'relay') || (!relay && m[1] === 'srflx')) setTimeout(fin, 300); } };
+        pc.createOffer().then((o) => pc.setLocalDescription(o)).catch(() => fin());
+      } catch (e) { return done(null); }
+      setTimeout(fin, 7000);
+    });
+    if (!res) line(`✗ ${name}: prohlížeč spojení neumí`);
+    else line(`${(relay ? res.relay : res.srflx) ? '✓' : '✗'} ${name}: ${relay ? 'převodní adresa ' + (res.relay ? 'získána' : 'nezískána') : 'veřejná adresa ' + (res.srflx ? 'zjištěna' : 'nezjištěna')}`);
+  }
+  line('Hotovo. Pošli mi (nebo kamarádovi) tenhle výpis, ať vidíme, co v tvé síti nejde.');
+}
+$('bP2pTest').onclick = () => { p2pSelfTest().catch((e) => { $('p2pTestOut').textContent += 'Chyba testu: ' + e; }); };
 function p2pWire(conn) {
   conn.on('open', () => {
     P2P.conns.set(conn.peer, conn);
