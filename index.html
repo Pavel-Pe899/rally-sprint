@@ -4990,7 +4990,7 @@ function buildModelCar(lv, spec) {
     body.add(d); return d;
   };
   // koupené křídlo nahradí původní: z modelu se odřízne (zadní: za koncem krytu motoru nad zemí, přední: celá šířka před nosem)
-  const sw = spec.formula && spec.shop ? spec.shop : null, cutR = sw && sw.rwing > 0, cutF = sw && sw.fwing > 0;
+  const sw = spec.formula ? (spec.shop || {}) : null, cutR = !!sw, cutF = !!sw;      // formule má vždy vlastní nová křídla (původní z modelu se odřízne)
   if (cutR || cutF) {
     const cm = new T.Vector3();
     body.traverse((o) => {
@@ -5003,7 +5003,7 @@ function buildModelCar(lv, spec) {
         const gone = (cutR && cm.z < -2.28 && cm.y > 0.7 && Math.abs(cm.x) < 0.66) || (cutF && cm.z > 1.85 && cm.y < 0.27 && (Math.abs(cm.x) > 0.16 || cm.y < 0.18));
         if (!gone) keep.push(a, b2, c2);
       }
-      geo.setIndex(keep); o.geometry = geo;
+      geo.setIndex(keep); o.geometry = creaseNormals(geo); o.userData.smooth = true;
     });
   }
   const midZ = (bb.min.z + bb.max.z) / 2;
@@ -5016,7 +5016,7 @@ function buildModelCar(lv, spec) {
     }
   }
   // formule: nápisy týmu a sponzorů jako na skutečném voze (bočnice, kryt motoru, křídla, pneumatiky); jen písmo, žádná loga
-  if (spec.formula && lv.spons) {
+  if (spec.formula && lv.spons !== undefined) {
     const allMeshes = []; body.traverse((o) => { if (o.isMesh) allMeshes.push(o); });
     const hitAny = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(allMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
     const textTex = (txt, w = 512) => canvasTex(w, 128, (g, cw, ch) => {
@@ -5090,10 +5090,16 @@ function buildModelCar(lv, spec) {
     const wing = cutR ? null : hitAny(new T.Vector3(0, 0.86, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (wing) decal(wing, 0.82, 0.2, wingTex, 0.01);
     const sw2 = (lv.sp || []).find((x) => x[0] === 'wing2');
     if (sw2 && !cutR) { const w2 = hitAny(new T.Vector3(0, 0.6, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (w2) { const { tex, aspect } = sponsorTex(sw2), w = Math.min(0.62, 0.1 * aspect); decal(w2, w, w / aspect, tex, 0.01); } }
+    // barevná grafika vozu: pruh po bocích, pruh po krytu motoru a špička nosu v doplňkové barvě týmu
+    const gk = new T.Color(lv.a1), gcol = (0.2126 * gk.r + 0.7152 * gk.g + 0.0722 * gk.b) > 0.04 ? lv.a1 : lv.a2;
+    const solid = canvasTex(8, 8, (g2, w, h) => { g2.fillStyle = gcol; g2.fillRect(0, 0, w, h); });
+    for (const side of [-1, 1]) { const hs = hitAny(new T.Vector3(side * 3, 0.3, -0.6), new T.Vector3(-side, 0, 0)); if (hs) { hs.n.set(side, 0, 0); decal(hs, 1.6, 0.03, solid, 0.012); } }
+    const hc = hitAny(new T.Vector3(0, 3, -1.45), new T.Vector3(0, -1, 0)); if (hc) { const d = decal(hc, 0.06, 1.0, solid, 0.01); d.rotation.set(-Math.PI / 2, 0, 0); }
+    const hn = hitAny(new T.Vector3(0, 3, 2.35), new T.Vector3(0, -1, 0)); if (hn) { const d = decal(hn, 0.1, 0.4, solid, 0.01); d.rotation.set(-Math.PI / 2, 0, 0); }
     const nose = hitAny(new T.Vector3(0, 3, 1.55), new T.Vector3(0, -1, 0));
     if (nose) { const d = decal(nose, 0.26, 0.26, doorTexture(lv.num || '4', lv), 0.01); d.rotation.set(-Math.PI / 2, 0, Math.PI); }
     // koupené díly z dílny (křídla, motor, podlaha, KERS): hladké tvary navazující na karoserii
-    if (spec.shop) kersMatRef = shopBodyLook(spec.shop, { hitAny, body, bb, lv });
+    kersMatRef = shopBodyLook(spec.shop || {}, { hitAny, body, bb, lv });
   }
   const roof = hit(new T.Vector3(0, 3, midZ - 0.3), new T.Vector3(0, -1, 0));
   if (roof) { const d = decal(roof, 0.55, 0.55, roofTexture('7')); d.rotation.set(-Math.PI / 2, 0, 0); }
@@ -5200,6 +5206,32 @@ function warpGeo(geo, f) {
   for (let i = 0; i < p.count; i++) { const r = f(p.getX(i), p.getY(i), p.getZ(i)); p.setXYZ(i, r[0], r[1], r[2]); void o; }
   geo.computeVertexNormals(); return geo;
 }
+// vyhlazení normál s ostrou hranou: sousední plochy se spojí do plynulého stínování, pokud se jejich sklon liší míň než o ~38°
+// (zaoblí faseta modelu, ostré hrany a rohy zůstanou)
+function creaseNormals(src, cosMax = 0.79) {
+  const geo = src.index ? src.toNonIndexed() : src.clone(), p = geo.attributes.position, nTri = p.count / 3;
+  const fn = new Float32Array(nTri * 3), key = (i) => Math.round(p.getX(i) * 2000) + '|' + Math.round(p.getY(i) * 2000) + '|' + Math.round(p.getZ(i) * 2000);
+  const at = new Map(), a = new T.Vector3(), b = new T.Vector3(), c = new T.Vector3();
+  for (let t = 0; t < nTri; t++) {
+    a.fromBufferAttribute(p, t * 3); b.fromBufferAttribute(p, t * 3 + 1); c.fromBufferAttribute(p, t * 3 + 2);
+    b.sub(a); c.sub(a); b.cross(c); fn[t * 3] = b.x; fn[t * 3 + 1] = b.y; fn[t * 3 + 2] = b.z;              // neznormalizované = váha podle plochy
+    for (let k = 0; k < 3; k++) { const kk = key(t * 3 + k); let l = at.get(kk); if (!l) at.set(kk, (l = [])); l.push(t); }
+  }
+  const nor = new Float32Array(p.count * 3);
+  for (let t = 0; t < nTri; t++) {
+    const fx = fn[t * 3], fy = fn[t * 3 + 1], fz = fn[t * 3 + 2], fl = Math.hypot(fx, fy, fz) || 1;
+    for (let k = 0; k < 3; k++) {
+      let sx = 0, sy = 0, sz = 0;
+      for (const u of at.get(key(t * 3 + k))) {
+        const ux = fn[u * 3], uy = fn[u * 3 + 1], uz = fn[u * 3 + 2], ul = Math.hypot(ux, uy, uz) || 1;
+        if ((fx * ux + fy * uy + fz * uz) / (fl * ul) > cosMax) { sx += ux; sy += uy; sz += uz; }
+      }
+      const l = Math.hypot(sx, sy, sz) || 1; nor[(t * 3 + k) * 3] = sx / l; nor[(t * 3 + k) * 3 + 1] = sy / l; nor[(t * 3 + k) * 3 + 2] = sz / l;
+    }
+  }
+  geo.setAttribute('normal', new T.BufferAttribute(nor, 3));
+  return geo;
+}
 // obrácené trojúhelníky (záporný objem) otočí, aby normály mířily ven
 function fixWinding(g) {
   const p = g.attributes.position, ix = g.index; let vol = 0;
@@ -5267,34 +5299,50 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
   const tintS = addShine(new T.MeshPhysicalMaterial({ color: (() => { const k = new T.Color(lv.a1); return 0.2126 * k.r + 0.7152 * k.g + 0.0722 * k.b; })() > 0.22 ? lv.a1 : lv.body, roughness: 0.25, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.1 }), 'part-tint', { gloss: 1.1 });
   const wing = (chord, width, camber, x, y, z, pitch, mat) => put(airfoilGeo(chord, width, camber), mat, x, y, z, pitch);
   const platePaint = addShine(new T.MeshPhysicalMaterial({ color: lv.body, roughness: 0.35, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1 }), 'plate-paint', { gloss: 0.8 });
-  // ---- zadní křídlo: celé nové (původní se z modelu odřízne), počet profilů = stupeň, boční desky, nosník a gurney
-  if (sh.rwing > 0) {
-    const L = sh.rwing, hw = 0.56, chords = [0.27, 0.21, 0.17], pitches = [0.1, 0.3, 0.5];
+  // ---- zadní křídlo: vždy celé nové (původní se z modelu odřízne); L0 dva profily, L1 větší s gurney, L2 tři, L3 čtyři s DRS a žaluziemi
+  {
+    const L = sh.rwing | 0, n = [2, 2, 3, 4][L], hw = [0.52, 0.55, 0.56, 0.57][L], chords = [0.27, 0.21, 0.17, 0.14].map((c) => c * (L === 1 ? 1.12 : 1)), pitches = [0.1, 0.28, 0.46, 0.62];
     const els = [];
-    for (let k = 0; k < L; k++) els.push({ le: -2.31 - 0.088 * k, y: 0.8 + 0.078 * k, c: chords[k], p: pitches[k] });
-    els.forEach((e, k) => wing(e.c, hw * 2, -0.075, 0, e.y, e.le, e.p, k === L - 1 && L > 1 ? tintS : shiny));
-    const last = els[L - 1], zTe = last.le - last.c - 0.03, yTop = last.y + 0.1;
+    for (let k = 0; k < n; k++) els.push({ le: -2.31 - 0.088 * k, y: 0.8 + 0.078 * k, c: chords[k], p: pitches[k] });
+    els.forEach((e, k) => wing(e.c, hw * 2, -0.075, 0, e.y, e.le, e.p, k === n - 1 ? tintS : shiny));
+    const last = els[n - 1], zTe = last.le - last.c - 0.03, yTop = last.y + 0.1;
     for (const s of [-1, 1]) {
       put(plateGeo(roundedPlatePts(zTe, -2.27, 0.7, yTop, 0.045, 0.07), 0.014), platePaint, s * (hw + 0.008), 0, 0);               // boční deska s uříznutým rohem
       put(plateGeo(roundedPlatePts(zTe + 0.06, -2.4, 0.72, 0.8, 0.02, 0.0), 0.006), shiny, s * (hw + 0.017), 0, 0);                  // tmavý pruh u paty desky
       if (L >= 3) for (let k = 0; k < 3; k++) put(softBox(0.008, 0.012, 0.16, 0.6, 8), tintS, s * (hw + 0.018), 0.86 + k * 0.05, -2.52);   // žaluzie v desce
     }
     put(pylonGeo([[0, 0.55, -2.0], [0, 0.66, -2.3], [0, 0.78, -2.5]], 0.03, 0.4), shiny, 0, 0, 0);                                    // nosník (labutí krk) z krytu motoru
-    if (L >= 2) put(softBox(hw * 2, 0.014, 0.012, 0.5, 10), tintS, 0, last.y + 0.028, last.le - last.c, last.p);                       // gurney
+    if (L >= 1) put(softBox(hw * 2, 0.014, 0.012, 0.5, 10), tintS, 0, last.y + 0.028, last.le - last.c, last.p);                       // gurney
     if (L >= 3) put(new T.CapsuleGeometry(0.02, 0.1, 6, 12).rotateX(Math.PI / 2), shiny, 0, 0.9, -2.46);                                // zásuvka DRS
+    // záď: deformační struktura plynule pod křídlem, dešťové světlo, výfuk a spodní křídélko
+    const crash = softBox(0.26, 0.2, 0.62, 0.55, 20);
+    warpGeo(crash, (x, y, z) => { const t = 0.5 - z / 0.62; return [x * (1 - 0.35 * t), y * (1 - 0.3 * t), z]; });                       // zužuje se dozadu
+    put(crash, platePaint, 0, 0.55, -2.46);
+    put(softBox(0.1, 0.045, 0.02, 0.5, 8), glow('#ff1a1a', 2.2), 0, 0.5, -2.775);                                                   // dešťové světlo
+    put(new T.CylinderGeometry(0.036, 0.042, 0.2, 20).rotateX(Math.PI / 2), shiny, 0, 0.63, -2.66);                                       // výfuk
+    put(new T.CircleGeometry(0.034, 20), glow('#ff7a1a', 1.2), 0, 0.63, -2.765, 0, Math.PI, 0);
+    put(airfoilGeo(0.15, 0.62, -0.05, 0.1), shiny, 0, 0.42, -2.5, 0.3);                                                                // spodní křídélko (beam wing)
   }
-  // ---- přední křídlo: celé nové přes celou šířku, počet profilů = stupeň, boční desky, kaskády, nosníky z nosu
-  if (sh.fwing > 0) {
-    const L = sh.fwing, hw = 1.0, chords = [0.4, 0.33, 0.27], pitches = [0.06, 0.16, 0.26];
+  // ---- přední křídlo: vždy celé nové přes celou šířku; L0 dva profily, L1 větší, L2 tři, L3 čtyři s kaskádami
+  {
+    const L = sh.fwing | 0, n = [2, 2, 3, 4][L], hw = [0.96, 1.0, 1.0, 1.0][L], chords = [0.4, 0.33, 0.27, 0.22].map((c) => c * (L === 1 ? 1.1 : 1)), pitches = [0.06, 0.16, 0.26, 0.36];
     const els = [];
-    for (let k = 0; k < L; k++) els.push({ le: 2.76 - 0.21 * k, y: 0.085 + 0.05 * k, c: chords[k], p: pitches[k] });
-    els.forEach((e, k) => wing(e.c, hw * 2, -0.07, 0, e.y, e.le, e.p, k === L - 1 && L > 1 ? tintS : shiny));
-    const zT = els[L - 1].le - els[L - 1].c - 0.02, yT = els[L - 1].y + 0.07;
+    for (let k = 0; k < n; k++) els.push({ le: 2.76 - 0.21 * k, y: 0.085 + 0.05 * k, c: chords[k], p: pitches[k] });
+    els.forEach((e, k) => wing(e.c, hw * 2, -0.07, 0, e.y, e.le, e.p, k === n - 1 ? tintS : k === 0 ? platePaint : shiny));
+    const zT = els[n - 1].le - els[n - 1].c - 0.02, yT = els[n - 1].y + 0.07;
     for (const s of [-1, 1]) {
       put(plateGeo(roundedPlatePts(zT, 2.78, 0.04, yT + 0.1, 0.035, 0.07), 0.014), platePaint, s * (hw + 0.01), 0, 0);                  // koncová deska
-      if (L >= 2) put(plateGeo(roundedPlatePts(zT + 0.1, 2.62, 0.09, yT + 0.03, 0.02, 0.03), 0.008), shiny, s * 0.76, 0, 0);            // vnitřní kaskáda
-      if (L >= 3) { put(plateGeo(roundedPlatePts(zT + 0.12, 2.5, 0.1, yT + 0.01, 0.015, 0.02), 0.007), tintS, s * 0.52, 0, 0); put(softBox(0.18, 0.012, 0.07, 0.6, 8), tintS, s * 0.9, yT + 0.1, 2.5, 0, 0, s * 0.3); }
+      if (L >= 1) put(plateGeo(roundedPlatePts(zT + 0.1, 2.62, 0.09, yT + 0.03, 0.02, 0.03), 0.008), shiny, s * 0.76, 0, 0);            // vnitřní kaskáda
+      if (L >= 2) { put(plateGeo(roundedPlatePts(zT + 0.12, 2.5, 0.1, yT + 0.01, 0.015, 0.02), 0.007), tintS, s * 0.52, 0, 0); put(softBox(0.18, 0.012, 0.07, 0.6, 8), tintS, s * 0.9, yT + 0.1, 2.5, 0, 0, s * 0.3); }
       put(pylonGeo([[s * 0.07, 0.3, 2.1], [s * 0.085, 0.2, 2.4], [s * 0.1, 0.12, 2.6]], 0.024, 0.45), shiny, 0, 0, 0);                  // nosník z nosu
+    }
+  }
+  // ---- zavěšení kol: plynulé kapkovité ramena od karoserie k nábojům (zaoblené, v barvě karbonu)
+  for (const s of [-1, 1]) {
+    for (const [z, zin] of [[1.56, 1.5], [-2.07, -2.0]]) {
+      put(pylonGeo([[s * 0.2, 0.48, zin + 0.18], [s * 0.45, 0.43, z + 0.1], [s * 0.66, 0.37, z + 0.03]], 0.017, 0.5), shiny, 0, 0, 0);
+      put(pylonGeo([[s * 0.2, 0.26, zin - 0.12], [s * 0.45, 0.3, z - 0.08], [s * 0.66, 0.31, z - 0.03]], 0.017, 0.5), shiny, 0, 0, 0);
+      put(pylonGeo([[s * 0.2, 0.52, zin - 0.02], [s * 0.45, 0.4, z + 0.0], [s * 0.64, 0.32, z]], 0.012, 0.6), shiny, 0, 0, 0);
     }
   }
   // ---- motor: aerodynamický airbox (zužuje se nahoru a u paty přechází do krytu), žebro, svítící výfuky
@@ -5384,6 +5432,13 @@ function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, dryGrou
       }
       add(new T.CylinderGeometry(R * 0.14, R * 0.14, 0.022, sh.wheels === 3 ? 6 : 24), new T.MeshStandardMaterial({ color: sh.wheels === 3 ? '#c9a24a' : rimCol, roughness: 0.2, metalness: 0.95 }), face, cy, 0).rotation.z = Math.PI / 2;
     }
+  }
+  if (!(sh.wheels >= 1)) {                                                                    // základní kola: plynulý aerodynamický kryt s kroužkem v barvě týmu
+    const prof = [[0.001, 0.016], [R * 0.2, 0.014], [R * 0.4, 0.024], [R * 0.54, 0.014], [R * 0.58, 0.0]].map(([r, y]) => new T.Vector2(r, y));
+    const dome = add(new T.LatheGeometry(prof, 36).rotateZ(sg > 0 ? -Math.PI / 2 : Math.PI / 2), addShine(new T.MeshStandardMaterial({ color: '#1a1c20', roughness: 0.3, metalness: 0.6 }), 'dome', { gloss: 1 }), face - sg * 0.004, cy, 0);
+    const kk = new T.Color(lv.a1), tc = (0.2126 * kk.r + 0.7152 * kk.g + 0.0722 * kk.b) > 0.2 ? lv.a1 : lv.body;
+    add(new T.TorusGeometry(R * 0.5, R * 0.012, 8, 48).rotateY(Math.PI / 2), new T.MeshStandardMaterial({ color: tc, roughness: 0.35, metalness: 0.2 }), face + sg * 0.016, cy, 0);
+    void dome;
   }
   // brzdy: kotouč za paprsky (L1 plný ocelový, L2 vrtaný, L3 karbonový se zářezy), třmen; při brzdění žhne dooranžova
   if (sh.brakes >= 1) {
@@ -5707,25 +5762,25 @@ const F1_TEAMS = {
   // full = oficiální název týmu (včetně titulárního sponzora), spons = nápis na bočnicích, wing = na zadním křídle,
   // code = zkratka v tabuli pořadí, sp = sponzoři na voze: [místo, text, barva, druh písma, pozadí]
   // (druh: ital = tučná kurzíva, bold = tučné, thin = tenké rozstřelené, box = nápis v barevném štítku). Jen nápisy, žádná loga.
-  mclaren: { full: 'McLaren Formula 1 Team', code: 'MCL', spons: 'McLAREN', wing: 'McLAREN', tc: '#111214', name: 'McLaren', cov: '#ff7a00', body: '#ff7a00', a1: '#111214', a2: '#1a1b1d', rim: '#1b1b1d', num: '4', desc: 'papájově oranžová a černá',
+  mclaren: { full: 'McLaren Formula 1 Team', code: 'MCL', spons: 'McLAREN', wing: 'McLAREN', tc: '#111214', name: 'McLaren', cov: '#ff8000', body: '#ff8000', a1: '#111214', a2: '#16171a', rim: '#1b1b1d', num: '4', desc: 'papájově oranžová a černá',
     sp: [['pod', 'McLAREN', '#111214', 'ital'], ['podF', 'Google', '#ffffff', 'bold'], ['podR', 'GULF', '#ffffff', 'box', '#1e63c8'], ['cover2', 'OAKLEY', '#111214', 'bold'], ['rwEnd', 'DHL', '#d40511', 'box', '#ffcc00'], ['fwEnd', 'PUMA', '#111214', 'bold'], ['wing2', 'Mastercard', '#111214', 'bold']] },
-  ferrari: { full: 'Scuderia Ferrari HP', code: 'FER', spons: 'HP', wing: 'FERRARI', tc: '#ffffff', name: 'Ferrari', cov: '#c80000', body: '#d40000', a1: '#ffd400', a2: '#111214', rim: '#151515', num: '16', desc: 'italská červená, žluté detaily',
+  ferrari: { full: 'Scuderia Ferrari HP', code: 'FER', spons: 'HP', wing: 'FERRARI', tc: '#ffffff', name: 'Ferrari', cov: '#dc0000', body: '#dc0000', a1: '#fff200', a2: '#141416', rim: '#151515', num: '16', desc: 'italská červená, žluté detaily',
     sp: [['pod', 'HP', '#ffffff', 'ital'], ['podF', 'Shell', '#ffd400', 'ital'], ['podR', 'Santander', '#ec0000', 'box', '#ffffff'], ['cover2', 'Ray-Ban', '#ffffff', 'ital'], ['rwEnd', 'PUMA', '#ffffff', 'bold'], ['fwEnd', 'AMAZON', '#ffffff', 'bold'], ['wing2', 'Ferrari', '#ffd400', 'ital']] },
-  mercedes: { full: 'Mercedes-AMG PETRONAS F1 Team', code: 'MER', tw: '#00d2be', spons: 'PETRONAS', wing: 'AMG', tc: '#00d2be', name: 'Mercedes', cov: '#16181b', body: '#b9bec4', a1: '#00d2be', a2: '#0e0f11', rim: '#111111', num: '63', desc: 'stříbrná šíp s tyrkysovými pruhy',
+  mercedes: { full: 'Mercedes-AMG PETRONAS F1 Team', code: 'MER', tw: '#00d2be', spons: 'PETRONAS', wing: 'AMG', tc: '#00d2be', name: 'Mercedes', cov: '#c4c9cf', body: '#c4c9cf', a1: '#00d2be', a2: '#101214', rim: '#111111', num: '63', desc: 'stříbrná šíp s tyrkysovými pruhy',
     sp: [['pod', 'PETRONAS', '#00a99d', 'ital'], ['podF', 'INEOS', '#111214', 'bold'], ['podR', 'MONSTER', '#111214', 'box', '#8ee000'], ['cover2', 'EPSON', '#1c3f94', 'bold'], ['rwEnd', 'UBS', '#e60000', 'bold'], ['fwEnd', 'TIBCO', '#111214', 'bold'], ['wing2', 'Qualcomm', '#111214', 'bold']] },
-  redbull: { full: 'Oracle Red Bull Racing', code: 'RBR', tw: '#3d63e0', spons: 'ORACLE', wing: 'RED BULL', tc: '#ffffff', name: 'Red Bull', cov: '#1e2a5a', body: '#1e2a5a', a1: '#e8001d', a2: '#121a33', rim: '#121212', num: '1', desc: 'tmavě modrá, červená a žlutá',
+  redbull: { full: 'Oracle Red Bull Racing', code: 'RBR', tw: '#3d63e0', spons: 'ORACLE', wing: 'RED BULL', tc: '#ffffff', name: 'Red Bull', cov: '#1b2b66', body: '#1b2b66', a1: '#e10a24', a2: '#0d1536', rim: '#121212', num: '1', desc: 'tmavě modrá, červená a žlutá',
     sp: [['pod', 'ORACLE', '#ff3b30', 'ital'], ['podF', 'Mobil 1', '#ffffff', 'ital'], ['podR', 'HONDA', '#e60012', 'box', '#ffffff'], ['cover2', 'BYBIT', '#f7a600', 'bold'], ['rwEnd', 'RAUCH', '#ffffff', 'bold'], ['fwEnd', 'Accenture', '#ffffff', 'thin'], ['wing2', 'HARD ROCK', '#ffd400', 'bold']] },
-  aston: { full: 'Aston Martin Aramco F1 Team', code: 'AST', spons: 'ARAMCO', wing: 'ASTON MARTIN', tc: '#cedc00', name: 'Aston Martin', cov: '#0b5f45', body: '#0b5f45', a1: '#cedc00', a2: '#0d1512', rim: '#141414', num: '14', desc: 'britská zelená a limetková',
+  aston: { full: 'Aston Martin Aramco F1 Team', code: 'AST', spons: 'ARAMCO', wing: 'ASTON MARTIN', tc: '#cedc00', name: 'Aston Martin', cov: '#00665c', body: '#00665c', a1: '#cedc00', a2: '#0b1412', rim: '#141414', num: '14', desc: 'britská zelená a limetková',
     sp: [['pod', 'ARAMCO', '#cedc00', 'ital'], ['podF', 'Cognizant', '#ffffff', 'bold'], ['podR', 'VALVOLINE', '#ffffff', 'box', '#d8232a'], ['cover2', 'BOSS', '#ffffff', 'thin'], ['rwEnd', 'PEPPERSTONE', '#ffffff', 'bold'], ['fwEnd', 'CROWDSTRIKE', '#ffffff', 'bold'], ['wing2', 'ARAMCO', '#cedc00', 'bold']] },
-  alpine: { full: 'BWT Alpine F1 Team', code: 'ALP', spons: 'BWT', wing: 'ALPINE', tc: '#ffffff', name: 'Alpine', cov: '#ff6fb5', body: '#0a74da', a1: '#ff6fb5', a2: '#0d1424', rim: '#141414', num: '10', desc: 'modrá a růžová',
+  alpine: { full: 'BWT Alpine F1 Team', code: 'ALP', spons: 'BWT', wing: 'ALPINE', tc: '#ffffff', name: 'Alpine', cov: '#1176e0', body: '#1176e0', a1: '#ff6fb5', a2: '#0b1a33', rim: '#141414', num: '10', desc: 'modrá a růžová',
     sp: [['pod', 'BWT', '#ff6fb5', 'ital'], ['podF', 'CASTROL', '#ffffff', 'box', '#00964a'], ['podR', 'OTRO', '#ffffff', 'bold'], ['cover2', 'ALPINE', '#ffffff', 'ital'], ['rwEnd', 'BWT', '#ff6fb5', 'bold'], ['fwEnd', 'KRAKEN', '#ffffff', 'bold'], ['wing2', 'Renault', '#ffffff', 'thin']] },
-  williams: { full: 'Atlassian Williams Racing', code: 'WIL', tw: '#00a3e0', spons: 'ATLASSIAN', wing: 'WILLIAMS', tc: '#ffffff', name: 'Williams', cov: '#0b2a6f', body: '#0b2a6f', a1: '#00a3e0', a2: '#08183d', rim: '#121212', num: '23', desc: 'tmavě modrá a světle modré pruhy',
+  williams: { full: 'Atlassian Williams Racing', code: 'WIL', tw: '#00a3e0', spons: 'ATLASSIAN', wing: 'WILLIAMS', tc: '#ffffff', name: 'Williams', cov: '#10337f', body: '#10337f', a1: '#00a3e0', a2: '#071a45', rim: '#121212', num: '23', desc: 'tmavě modrá a světle modré pruhy',
     sp: [['pod', 'ATLASSIAN', '#ffffff', 'ital'], ['podF', 'GULF', '#ffffff', 'box', '#f26522'], ['podR', 'KOMATSU', '#ffffff', 'bold'], ['cover2', 'DURACELL', '#f0a500', 'bold'], ['rwEnd', 'SANTANDER', '#ffffff', 'box', '#ec0000'], ['fwEnd', 'ATLASSIAN', '#ffffff', 'bold'], ['wing2', 'WILLIAMS', '#00a3e0', 'ital']] },
-  rbulls: { full: 'Visa Cash App Racing Bulls', code: 'VRB', tw: '#3d63e0', spons: 'VISA', wing: 'RACING BULLS', tc: '#ffffff', name: 'Racing Bulls', cov: '#2a45c8', body: '#2a45c8', a1: '#ffffff', a2: '#e10600', rim: '#121212', num: '22', desc: 'modrá, bílá a červená',
+  rbulls: { full: 'Visa Cash App Racing Bulls', code: 'VRB', tw: '#3d63e0', spons: 'VISA', wing: 'RACING BULLS', tc: '#ffffff', name: 'Racing Bulls', cov: '#1e3aa8', body: '#1e3aa8', a1: '#ffffff', a2: '#0d1a52', rim: '#121212', num: '22', desc: 'modrá, bílá a červená',
     sp: [['pod', 'VISA', '#ffffff', 'ital'], ['podF', 'CASH APP', '#00d64f', 'bold'], ['podR', 'HONDA', '#e60012', 'box', '#ffffff'], ['cover2', 'REVOLUT', '#ffffff', 'bold'], ['rwEnd', 'VISA', '#ffffff', 'bold'], ['fwEnd', 'RBPT', '#ffffff', 'bold'], ['wing2', 'RACING BULLS', '#ffffff', 'thin']] },
-  haas: { full: 'MoneyGram Haas F1 Team', code: 'HAA', tw: '#e10600', spons: 'MONEYGRAM', wing: 'HAAS', tc: '#111214', name: 'Haas', cov: '#e9ecef', body: '#e9ecef', a1: '#e10600', a2: '#111214', rim: '#151515', num: '87', desc: 'bílá s červenou a černou',
+  haas: { full: 'MoneyGram Haas F1 Team', code: 'HAA', tw: '#e10600', spons: 'MONEYGRAM', wing: 'HAAS', tc: '#111214', name: 'Haas', cov: '#e9ecef', body: '#e9ecef', a1: '#e10600', a2: '#16171a', rim: '#151515', num: '87', desc: 'bílá s červenou a černou',
     sp: [['pod', 'MONEYGRAM', '#111214', 'ital'], ['podF', 'HAAS', '#e10600', 'ital'], ['podR', 'TOYOTA', '#ffffff', 'box', '#e10600'], ['cover2', 'AUTOMATION', '#111214', 'bold'], ['rwEnd', 'TOYOTA', '#e10600', 'bold'], ['fwEnd', 'HAAS', '#111214', 'bold'], ['wing2', 'MONEYGRAM', '#111214', 'bold']] },
-  sauber: { full: 'Stake F1 Team Kick Sauber', code: 'SAU', tw: '#52e252', spons: 'STAKE', wing: 'SAUBER', tc: '#52e252', name: 'Sauber', cov: '#15181b', body: '#15181b', a1: '#52e252', a2: '#0a0b0c', rim: '#121212', num: '27', desc: 'černá s neonově zelenou',
+  sauber: { full: 'Stake F1 Team Kick Sauber', code: 'SAU', tw: '#52e252', spons: 'STAKE', wing: 'SAUBER', tc: '#52e252', name: 'Sauber', cov: '#14171a', body: '#14171a', a1: '#52e252', a2: '#0a0b0c', rim: '#121212', num: '27', desc: 'černá s neonově zelenou',
     sp: [['pod', 'STAKE', '#52e252', 'ital'], ['podF', 'KICK', '#111214', 'box', '#52e252'], ['podR', 'SAUBER', '#ffffff', 'bold'], ['cover2', 'STAKE', '#52e252', 'bold'], ['rwEnd', 'KICK', '#52e252', 'bold'], ['fwEnd', 'KICK', '#52e252', 'bold'], ['wing2', 'SAUBER', '#ffffff', 'thin']] },
 };
 let duoTeam = null; // v týmovém závodě jedou oba hráči za tým, který nabídl zakladatel
@@ -9667,17 +9722,6 @@ function shopProxy(lv, sh) {
   for (const s of [-1, 1]) add(softBox(0.4, 0.36, 1.5, 0.5, 18), paint, s * 0.52, 0.4, -0.5);
   add(softBox(1.5, 0.03, 3.5, 0.2, 16), dark, 0, 0.1, -0.3);
   add(new T.SphereGeometry(0.13, 20, 14), new T.MeshStandardMaterial({ color: lv.a2 || '#ffffff', roughness: 0.3 }), 0, 0.86, -0.1);
-  if (!(sh.rwing > 0)) {                                                                                    // původní zadní křídlo (nahradí ho koupené)
-    add(softBox(1.1, 0.03, 0.34, 0.4, 14), dark, 0, 0.78, -2.54);
-    add(softBox(1.08, 0.02, 0.2, 0.4, 14), dark, 0, 0.92, -2.62);
-    for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(-2.74, -2.3, 0.72, 1.0, 0.03, 0.05), 0.012), paint, s * 0.585, 0, 0);
-    add(softBox(0.06, 0.3, 0.1, 0.5, 8), dark, 0, 0.62, -2.4);
-  }
-  if (!(sh.fwing > 0)) {                                                                                    // původní přední křídlo
-    add(softBox(2.0, 0.025, 0.6, 0.4, 14), dark, 0, 0.1, 2.45);
-    add(softBox(2.0, 0.02, 0.3, 0.4, 14), dark, 0, 0.17, 2.3);
-    for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(1.95, 2.76, 0.05, 0.25, 0.03, 0.06), 0.014), paint, s * 1.02, 0, 0);
-  }
   const wetGroups = [], dryGroups = [], brakeMats = [];
   for (const [sx, z, R, wd] of [[-1, 1.56, 0.33, 0.4], [1, 1.56, 0.33, 0.4], [-1, -2.07, 0.36, 0.5], [1, -2.07, 0.36, 0.5]]) {
     const pivot = new T.Group(); pivot.position.set(sx * 0.82, 0.34, z); body.add(pivot);
@@ -11036,7 +11080,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
