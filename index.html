@@ -8740,9 +8740,9 @@ function gpSetup() {
   gp.ai = rivals.map((key, k) => ({
     key, team: F1_TEAMS[key], box: teams.indexOf(key), c3d: gpBuildAI(key),
     d: gridRel(k), lat: gridLat(k), latT: gridLat(k), home: (k % 2 ? 1 : -1) * (0.4 + k * 0.25), v: 0,
-    k, tyre: total > GP_LAPS ? 'soft' : 'medium', plan: total > GP_LAPS ? [Math.round(total * 0.72) + (k % 2)] : [], skill: skills[k], pitLap: total > GP_LAPS ? Math.round(total * 0.33) + (k % 3) : pitLaps[k], pit: 0, stopT: 0, wear: 0, done: false, finishT: null, lapNo: 0, lapStart: 0, best: null, spin: 0, passT: 0,
+    k, tyre: 'medium', plan: total > GP_LAPS ? [Math.round(total * 0.72) + (k % 2)] : [], skill: skills[k], pitLap: total > GP_LAPS ? Math.round(total * 0.33) + (k % 3) : pitLaps[k], pit: 0, stopT: 0, wear: 0, done: false, finishT: null, lapNo: 0, lapStart: 0, best: null, spin: 0, passT: 0,
   }));
-  Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: total > GP_LAPS ? 'soft' : 'medium' }); // krátký závod na 3 kola se startuje na středních pneumatikách, dlouhý na měkkých
+  Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: 'medium' }); // všechny závody se startují na středních pneumatikách
   if (gp.rainOn) { gp.seed = G.net ? G.net.id : Math.random().toString(36).slice(2, 8); wxStart(wxPlan(gp.seed, total)); } else wxEnd();
   // hráči startují za počítačem řízenými auty (po síti v pořadí podle zařízení, stejně na všech telefonech)
   const slot = G.net && G.net.devs ? rivals.length + Math.max(0, G.net.devs.indexOf(netDev())) : rivals.length;
