@@ -3665,6 +3665,7 @@ function buildWorld(td) {
     const seatCols = [['#1fa3a8', '#178a8e'], ['#f08a24', '#d77412'], ['#2c5aa0', '#244c88'], ['#d81f26', '#b8161c'], ['#e9ecef', '#cfd3d7']];
     const concTex = photoDetail('concrete_d', 512, 256);
     const standMat = concTex ? addCloudShadow(new T.MeshLambertMaterial({ vertexColors: true }), 'concrete', concreteHook(concTex)) : new T.MeshLambertMaterial({ vertexColors: true });
+    addShine(standMat, 'stand', { gloss: 0.45 });
     const bannerMat = new T.MeshLambertMaterial({ map: adTex });
     const screenTex = canvasTex(512, 256, (g, w, h) => {
       g.fillStyle = '#0c1018'; g.fillRect(0, 0, w, h);
@@ -3761,9 +3762,23 @@ function buildWorld(td) {
         parts.push({ geo: new T.BoxGeometry(0.14, 0.14, D + 2.5).rotateX(-0.32).translate(x, roofY - 0.55, D / 2 - 0.5), color: '#7d858d' }); // vzpěra
         if (opt.flags) box(0.08, 4.2, 0.08, x, roofY + 2.1, -1.4, '#d0d4d9');            // stožár
       }
+      // střecha se leskne od slunce: samostatná síť (horní plocha), aby měla vlastní materiál
       const mesh = new T.Mesh(mergeColored(parts), standMat);
       mesh.castShadow = mesh.receiveShadow = true;
       const g = new T.Group(); g.add(mesh);
+      // LED pás na čele střechy: barevné šipky týmů, které se posouvají (animuje updateLed)
+      {
+        const led = ledTex(), strip = new T.Mesh(new T.BoxGeometry(len + 3, 0.5, 0.12), new T.MeshBasicMaterial({ map: led }));
+        strip.position.set(0, roofY - 0.82, -2.5); g.add(strip);
+        const strip2 = strip.clone(); strip2.position.set(0, roofY - 0.82, -2.28); g.add(strip2);
+        // reflektory na střeše: hlava se světlem (svítí), ramínko a patka
+        const lampM = new T.MeshBasicMaterial({ color: '#fff6d8' }), armM = new T.MeshStandardMaterial({ color: '#4c545c', metalness: 0.7, roughness: 0.4 });
+        for (let x = -len / 2 + 6; x < len / 2; x += 14) {
+          const arm = new T.Mesh(new T.BoxGeometry(0.12, 1.3, 0.12), armM); arm.position.set(x, roofY + 0.7, -1.8); g.add(arm);
+          const head = new T.Mesh(new T.BoxGeometry(1.5, 0.5, 0.25), armM); head.position.set(x, roofY + 1.45, -1.9); head.rotation.x = 0.25; g.add(head);
+          for (let k = 0; k < 4; k++) { const l = new T.Mesh(new T.CircleGeometry(0.17, 12), lampM); l.position.set(x - 0.54 + k * 0.36, roofY + 1.46, -2.04); l.rotation.set(0.25, Math.PI, 0); g.add(l); }
+        }
+      }
       const ban = new T.Mesh(new T.PlaneGeometry(len + 3, 1.1), bannerMat);
       ban.position.set(0, roofY - 0.1, -2.4); ban.rotation.y = Math.PI; g.add(ban);
       const ban2 = ban.clone(); ban2.rotation.y = 0; ban2.position.z = -2.38; g.add(ban2);
@@ -3794,7 +3809,7 @@ function buildWorld(td) {
           const wx = x0 + lx * cr + lz * sr, wz = z0 - lx * sr + lz * cr;
           // víc než polovina sedí (o kus níž a vzadu na sedačce), ostatní stojí a fandí
           const sit = rnd() < 0.55, bz = sit ? 0.12 : 0, bx2 = x0 + lx * cr + (lz + bz) * sr, bz2 = z0 - lx * sr + (lz + bz) * cr;
-          spectators.push({ x: sit ? bx2 : wx, y: y0 + tr.y0 + 0.6 + k * 0.55 - (sit ? 0.5 : 0.3), z: sit ? bz2 : wz, sit, phase: rnd() * 6.28, speed: 7 + rnd() * 5, face: rot + Math.PI, flag: !sit && rnd() < 0.12 ? (rnd() * 3) | 0 : -1 });
+          spectators.push({ x: sit ? bx2 : wx, y: y0 + tr.y0 + 0.6 + k * 0.55 - (sit ? 0.5 : 0.3), z: sit ? bz2 : wz, sit, phase: rnd() * 6.28, speed: 7 + rnd() * 5, face: rot + Math.PI, flag: !sit && rnd() < 0.2 ? (rnd() * 3) | 0 : -1 });
         }
       }
       for (let t = -len / 2; t <= len / 2; t += 4) addObstacle(x0 + TX[i] * t, z0 + TZ[i] * t, 2.5, true);
@@ -4098,7 +4113,7 @@ function buildWorld(td) {
     const CELL = 48, key = (sp) => Math.floor(sp.x / CELL) * 100000 + Math.floor(sp.z / CELL);
     spectators.sort((a, b) => key(a) - key(b));
     for (const sp of spectators) {
-      sp.sc = 0.9 + rnd() * 0.18; sp.cheer = rnd() < 0.4;
+      sp.sc = 0.9 + rnd() * 0.18; sp.cheer = rnd() < 0.5;
       sp.cShirt = jackets[(rnd() * jackets.length) | 0]; sp.cPants = pantsCol[(rnd() * pantsCol.length) | 0];
       sp.cSkin = skins[(rnd() * skins.length) | 0]; sp.cHair = rnd() < 0.3 ? jackets[(rnd() * jackets.length) | 0] : hairs[(rnd() * hairs.length) | 0];
     }
@@ -4214,7 +4229,7 @@ function buildWorld(td) {
       lodAt = [cx, cz];
       for (const ch of chunks) {
         const [x0, x1, z0, z1] = ch.box, d = Math.hypot(Math.max(0, x0 - cx, cx - x1), Math.max(0, z0 - cz, cz - z1));
-        const want = d < 60;
+        const want = d < 85;
         if (want === ch.hi) continue;
         ch.hi = want;
         for (const m of ch.meshes) m.visible = want;
@@ -10848,10 +10863,10 @@ resize();
 // Scéna se vykreslí do HDR bufferu, pak přijde záře (bloom), barevné ladění etapy
 // a při velké rychlosti jemné rozmazání okrajů. Na nízké kvalitě se kreslí rovnou.
 const GRADE_SHADER = {
-  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.08 }, uContrast: { value: 1.06 }, uTint: { value: new T.Vector3(1, 1, 1) }, uBlur: { value: 0 }, uTime: { value: 0 }, uTexel: { value: new T.Vector2(1 / 1280, 1 / 720) } },
+  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.08 }, uContrast: { value: 1.06 }, uTint: { value: new T.Vector3(1, 1, 1) }, uBlur: { value: 0 }, uSun: { value: new T.Vector2(0.5, 0.5) }, uShaft: { value: 0 }, uTime: { value: 0 }, uTexel: { value: new T.Vector2(1 / 1280, 1 / 720) } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float uSat; uniform float uContrast; uniform vec3 uTint; uniform float uBlur; uniform float uTime; uniform vec2 uTexel;
+    uniform sampler2D tDiffuse; uniform float uSat; uniform float uContrast; uniform vec3 uTint; uniform float uBlur; uniform vec2 uSun; uniform float uShaft; uniform float uTime; uniform vec2 uTexel;
     varying vec2 vUv;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
@@ -10866,6 +10881,18 @@ const GRADE_SHADER = {
         for (int i = 1; i < 6; i++) acc += texture2D(tDiffuse, vUv - dir * k * (float(i) / 6.0)).rgb;
         c = acc / 6.0;
       }
+      // sluneční paprsky (crepuscular rays): jasné body se rozmažou po směru ke slunci; vidět jen při pohledu proti slunci
+      if (uShaft > 0.002) {
+        vec2 sd = (uSun - vUv) * 0.09;
+        vec2 sp = vUv; float sw = 1.0; vec3 acc = vec3(0.0);
+        for (int i = 0; i < 16; i++) {
+          sp += sd / 16.0 * 6.0;
+          vec3 s = texture2D(tDiffuse, sp).rgb;
+          float sl = dot(s, vec3(0.2126, 0.7152, 0.0722));
+          acc += s * smoothstep(0.7, 1.4, sl) * sw; sw *= 0.93;
+        }
+        c += acc * (uShaft * 0.075) * vec3(1.0, 0.93, 0.8);
+      }
       // doostření: odečte rozmazání okolních bodů (drobné detaily, pletivo a písmo jsou ostřejší)
       vec3 bl = (texture2D(tDiffuse, vUv + vec2(uTexel.x, 0.0)).rgb + texture2D(tDiffuse, vUv - vec2(uTexel.x, 0.0)).rgb + texture2D(tDiffuse, vUv + vec2(0.0, uTexel.y)).rgb + texture2D(tDiffuse, vUv - vec2(0.0, uTexel.y)).rgb) * 0.25;
       c += clamp(c - bl, -0.18, 0.18) * 0.55;
@@ -10879,7 +10906,7 @@ const GRADE_SHADER = {
       c += vec3(0.018, 0.008, -0.014) * smoothstep(0.45, 1.0, lm) + vec3(-0.008, 0.002, 0.016) * (1.0 - smoothstep(0.0, 0.35, lm));
       // vinětace jako u objektivu a jemné filmové zrno
       c *= 1.0 - 0.26 * smoothstep(0.36, 0.95, rr);
-      c += (hash(vUv * vec2(1920.0, 1080.0) + uTime) - 0.5) * 0.022;
+      c += (hash(vUv * vec2(1920.0, 1080.0) + uTime) - 0.5) * 0.022 * smoothstep(0.015, 0.2, lm);   // zrno jen na osvětlených místech (čistě černý snímek zůstane černý)
       gl_FragColor = vec4(c, 1.0);
     }`,
 };
@@ -10938,14 +10965,32 @@ const glareSet = (o, tr) => {
   if (cache.glareO !== o) { cache.glareO = o; glareEl.style.opacity = o; }
   if (tr && cache.glareT !== tr) { cache.glareT = tr; glareEl.style.transform = tr; }
 };
+// LED pásy tribun: pruhy barev týmů s šipkami; textura se posouvá, takže pás „běží“
+const ledTexes = [];
+function ledTex() {
+  const cols = Object.values(F1_TEAMS), t = canvasTex(512, 32, (g, w, h) => {
+    g.fillStyle = '#05070b'; g.fillRect(0, 0, w, h);
+    const sw = w / cols.length;
+    cols.forEach((tm, k) => {
+      g.fillStyle = tm.body === '#e9ecef' ? tm.a1 : tm.body; g.fillRect(k * sw, 4, sw - 6, h - 8);
+      g.fillStyle = tm.a1; for (let a = 0; a < 3; a++) { g.beginPath(); g.moveTo(k * sw + 6 + a * 12, 6); g.lineTo(k * sw + 18 + a * 12, h / 2); g.lineTo(k * sw + 6 + a * 12, h - 6); g.lineTo(k * sw + 12 + a * 12, h - 6); g.lineTo(k * sw + 24 + a * 12, h / 2); g.lineTo(k * sw + 12 + a * 12, 6); g.fill(); }
+    });
+  });
+  t.wrapS = T.RepeatWrapping; t.repeat.set(3, 1); ledTexes.push(t);
+  return t;
+}
+function updateLed(dt) { for (const t of ledTexes) t.offset.x = (t.offset.x + dt * 0.08) % 1; }
 function updateGlare() {
   const st = W.td.st;
+  updateLed(0.016);
+  if (post) post.grade.uniforms.uShaft.value = 0;
   if (st.night) { glareSet('0'); return; }
   sunV.set(...st.sun.dir).normalize();
   camera.getWorldDirection(camDir);
   const facing = sunV.dot(camDir);
   if (facing < 0.55) { glareSet('0'); return; }
   const p = tmpV.copy(sunV).multiplyScalar(1000).add(camera.position).project(camera);
+  if (post) { post.grade.uniforms.uSun.value.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5); post.grade.uniforms.uShaft.value = smooth(0.5, 0.95, facing) * shineK.value; }
   const x = Math.round((p.x * 0.5 + 0.5) * window.innerWidth), y = Math.round((-p.y * 0.5 + 0.5) * window.innerHeight);
   glareSet((smooth(0.55, 0.95, facing) * (st.sun.dir[1] < 0.3 ? 1 : 0.6)).toFixed(2), `translate3d(${x}px, ${y}px, 0)`);
 }
