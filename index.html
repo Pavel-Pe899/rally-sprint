@@ -5696,6 +5696,14 @@ const Sound = {
       this.skid = mk('bandpass', 2300, 3.5);
       this.hiss = mk('highpass', 1400, 0.6);
       this.intake = mk('bandpass', 1700, 0.9, eg); // sání a turbo pod plynem
+      this.rumble = mk('lowpass', 150, 1.2); // pásy na krajnici okruhu: hluboké drnčení
+      this.crowd = mk('bandpass', 950, 0.5); // diváci na okruhu: ustavičný šum
+      this.crowdHi = mk('bandpass', 2400, 0.8);
+      // tónové kvílení pneumatik na asfaltu (dvě mírně rozladěné pily s chvěním), k šumu skluzu navíc
+      const sq = ctx.createGain(); sq.gain.value = 0; const sqf = ctx.createBiquadFilter(); sqf.type = 'bandpass'; sqf.frequency.value = 1200; sqf.Q.value = 3;
+      sqf.connect(sq); sq.connect(comp);
+      const sqLfo = ctx.createOscillator(); sqLfo.frequency.value = 23; const sqLfoG = ctx.createGain(); sqLfoG.gain.value = 35; sqLfo.connect(sqLfoG); sqLfo.start();
+      this.squeal = { g: sq, f: sqf, o: [0, 7].map((d) => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = d; sqLfoG.connect(o.detune); o.connect(sqf); o.start(); return o; }) };
       // pískání turba a kvílení převodovky s rovnými zuby
       const osc = (type) => { const o = ctx.createOscillator(); o.type = type; const g = ctx.createGain(); g.gain.value = 0; o.connect(g); g.connect(comp); o.start(); return { o, g }; };
       this.turbo = osc('sine'); this.whine = osc('triangle');
@@ -5712,7 +5720,10 @@ const Sound = {
         o.connect(g); g.connect(pre); lfoG.connect(o.detune); o.start(); return { o, mul };
       });
       // soupeř, který jede blízko (s Dopplerovým jevem při projetí kolem)
-      const opp = ctx.createGain(); opp.gain.value = 0; opp.connect(comp);
+      const opp = ctx.createGain(); opp.gain.value = 0;
+      const oppPan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      if (oppPan) { opp.connect(oppPan); oppPan.connect(comp); } else opp.connect(comp);
+      this.oppPan = oppPan;
       const oppLp = ctx.createBiquadFilter(); oppLp.type = 'lowpass'; oppLp.frequency.value = 3200; oppLp.connect(opp);
       const oppWs = ctx.createWaveShaper(); oppWs.curve = cv; oppWs.connect(oppLp);
       const oppO = [['sawtooth', 1, 0.5], ['sawtooth', 2.01, 0.3], ['square', 0.5, 0.2]].map(([type, mul, g0]) => {
@@ -5789,19 +5800,57 @@ const Sound = {
       this.whine.o.frequency.setTargetAtTime(car.nosOn ? 1800 + speed * 22 : 900 + speed * 14, t, 0.05);
       this.whine.g.gain.setTargetAtTime(car.nosOn ? 0.03 : 0.012, t, 0.05);
     }
+    this.environment(t, dt, speed, loose, slip, off, air, brake, thr, rpm);
+  },
+  // povrch a okolí: štěrk odlétá, drnčení pásů, kvílení pneumatik a brzd, omezovač, diváci
+  environment(t, dt, speed, loose, slip, off, air, brake, thr, rpm) {
+    const circuit = !!(W.td && W.td.st.circuit), sp = Math.min(1, speed / 45);
+    // kamínky: na šotolině, sněhu a písku se odrážejí o podlahu a podběhy (náhodné cvaky, víc na krajnici)
+    if (!air && speed > 6 && (loose || off)) {
+      this.pebble = (this.pebble || 0) + dt * speed * (off ? 1.1 : 0.55) * (0.4 + 0.6 * Math.min(1, thr + slip * 0.2));
+      while (this.pebble >= 1) {
+        this.pebble -= 1;
+        const f = 2200 + Math.random() * 3800;
+        this.burst('bandpass', f, 6 + Math.random() * 6, 0.03 + Math.random() * 0.06 * sp, t + Math.random() * 0.03, 0.006 + Math.random() * 0.01, 0.06);
+      }
+    }
+    // pásy na krajnici okruhu: hluboké drnčení, rychlejší jízda = vyšší rozteč
+    const onKerb = circuit && car.surf === 'shoulder' && !air && speed > 5;
+    this.rumble.gain.setTargetAtTime(onKerb ? 0.22 * Math.min(1, speed / 35) : 0, t, 0.04);
+    if (onKerb) { this.rumbleLfo = (this.rumbleLfo || 0) + dt * (14 + speed * 0.5); if (this.rumbleLfo >= 1) { this.rumbleLfo = 0; this.burst('lowpass', 180, 1.4, 0.18 * Math.min(1, speed / 30), t, 0.03, 0.12); } }
+    // kvílení: na asfaltu při smyku (tónové), při silném brzdění z rychlosti i kvílení brzd
+    const tarmac = !loose && !off;
+    const sqk = tarmac && !air ? clamp((slip - 1.2) / 5, 0, 1) * Math.min(1, speed / 25) : 0;
+    const brk = tarmac && !air && brake > 0.6 && speed > 18 ? (brake - 0.6) * 1.2 * Math.min(1, speed / 40) : 0;
+    this.squeal.g.gain.setTargetAtTime(Math.min(0.05, sqk * 0.045 + brk * 0.02), t, 0.05);
+    const sf = 850 + speed * 7 + sqk * 400 + (brk ? 500 : 0);
+    for (const o of this.squeal.o) o.frequency.setTargetAtTime(sf, t, 0.05);
+    this.squeal.f.frequency.setTargetAtTime(sf * 1.4, t, 0.08);
+    this.skid.gain.setTargetAtTime(Math.min(0.32, (loose ? 0.08 : 0.35) * (air ? 0 : slip) + brk * 0.1), t, 0.05);
+    // omezovač otáček: výpadky zapalování, když motor naráží na maximum
+    if (!carType().bike && thr > 0.9 && rpm > ENGINE_RPM[ENGINE_RPM.length - 1] * 0.985) {
+      this.limT = (this.limT || 0) + dt;
+      if (this.limT > 0.06) { this.limT = 0; this.limOn = !this.limOn; }
+      if (this.limOn) this.eg.gain.setTargetAtTime(0.05, t, 0.004);
+    } else { this.limT = 0; this.limOn = false; }
+    // diváci okruhu: hukot davu, na rovince víc (rychlá jízda kolem tribun)
+    const wob = 0.8 + 0.2 * Math.sin(t * 0.7) * Math.sin(t * 1.9);
+    this.crowd.gain.setTargetAtTime(circuit ? 0.045 * wob : 0, t, 0.5);
+    this.crowdHi.gain.setTargetAtTime(circuit ? 0.012 * wob * (0.5 + 0.5 * sp) : 0, t, 0.5);
   },
   silence() {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    for (const g of [this.eg, this.gravel, this.wind, this.skid, this.hiss, this.turbo.g, this.whine.g, this.f1, this.opp, this.rainG]) if (g) g.gain.setTargetAtTime(0, t, 0.1);
+    for (const g of [this.eg, this.gravel, this.wind, this.skid, this.hiss, this.turbo.g, this.whine.g, this.f1, this.opp, this.rainG, this.rumble, this.crowd, this.crowdHi, this.squeal && this.squeal.g]) if (g) g.gain.setTargetAtTime(0, t, 0.1);
   },
   // nejbližší soupeř: hlasitost podle vzdálenosti, výška tónu podle jeho otáček a přibližování (Doppler)
-  opponent(dist, vClose, speed) {
+  opponent(dist, vClose, speed, pan = 0) {
     if (!this.ctx || !this.opp) return;
     const t = this.ctx.currentTime;
     const fr = 6500 + clamp(speed / 80, 0, 1) * 5500, f0 = (fr / 60) * 3 * (343 / (343 - clamp(vClose, -80, 80)));
     for (const { o, mul } of this.oppO) o.frequency.setTargetAtTime(f0 * mul, t, 0.05);
     this.opp.gain.setTargetAtTime(dist < 250 ? 0.3 / (1 + dist / 8) : 0, t, 0.06);
+    if (this.oppPan) this.oppPan.pan.setTargetAtTime(clamp(pan, -1, 1) * Math.min(1, 25 / (dist + 6)), t, 0.08); // soupeř vlevo se ozve vlevo
   },
   rain(level) {
     if (!this.ctx || !this.noiseBuf) return;
@@ -5815,9 +5864,11 @@ const Sound = {
   beep(freq, dur = 0.16) {
     if (!this.ctx) return;
     const o = this.ctx.createOscillator(), g = this.ctx.createGain();
-    o.type = 'square'; o.frequency.value = freq; g.gain.value = 0.18;
-    g.gain.setTargetAtTime(0, this.ctx.currentTime + dur, 0.02);
-    o.connect(g); g.connect(this.out); o.start(); o.stop(this.ctx.currentTime + dur + 0.3);
+    const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = Math.max(1800, freq * 3.2);
+    o.type = 'square'; o.frequency.value = freq; g.gain.value = 0.0001;
+    g.gain.setTargetAtTime(0.17, this.ctx.currentTime, 0.004); // měkký nástup bez lupnutí
+    g.gain.setTargetAtTime(0, this.ctx.currentTime + dur, 0.025);
+    o.connect(f); f.connect(g); g.connect(this.out); o.start(); o.stop(this.ctx.currentTime + dur + 0.3);
   },
   burst(type, f, q, gain, at, decay, len) {
     const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuf;
@@ -5828,9 +5879,51 @@ const Sound = {
     src.start(at, Math.random() * 1.5); src.stop(at + len);
     return fl;
   },
-  thump(strength) {
+  thump(strength, kind = 'hit') { this.impact(strength, kind); },
+  // náraz po vrstvách: hluboká rána, drcení plechu, kovový zvuk (s ladícími dozvuky) a při silném nárazu cinkání skla;
+  // strom a balík zní hluchě, zeď a kámen kovově, přistání jen dunivě
+  impact(strength, kind = 'hit') {
+    if (!this.ctx || !this.noiseBuf) return;
+    const c = this.ctx, t = c.currentTime, s = clamp(strength, 0, 1.2);
+    this.burst('lowpass', kind === 'land' ? 180 : 260, 0.7, Math.min(1.2, s) * (kind === 'land' ? 1.1 : 1), t, 0.06, 0.5);
+    if (kind === 'land') { this.burst('lowpass', 90, 1, 0.8 * s, t, 0.1, 0.5); return; }
+    const hollow = kind === 'tree' || kind === 'bale' || kind === 'splash';
+    this.burst('bandpass', hollow ? 700 : 1300, 0.9, 0.55 * s, t + 0.004, hollow ? 0.05 : 0.09, 0.45); // drcení
+    if (kind === 'splash') return;
+    if (!hollow && s > 0.25) for (const [f, a] of [[420 + Math.random() * 120, 0.12], [1130 + Math.random() * 200, 0.07], [2700 + Math.random() * 400, 0.04]]) {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(a * s, t + 0.003); g.gain.setTargetAtTime(0, t + 0.01, 0.07 + Math.random() * 0.05);
+      o.connect(g); g.connect(this.out); o.start(t); o.stop(t + 0.7);
+    }
+    if (s > 0.6 && kind !== 'tree') for (let k = 0; k < 5; k++) this.burst('highpass', 5200 + Math.random() * 2500, 5, 0.05 * s, t + 0.04 + k * (0.03 + Math.random() * 0.05), 0.012, 0.08); // střepy
+  },
+  // utahovák kol v boxech: čtyři krátká zavrčení za sebou, pak ještě jedno při nasazení
+  gun(delay = 0) {
+    if (!this.ctx || !this.noiseBuf) return;
+    const c = this.ctx, t0 = c.currentTime + delay;
+    for (let k = 0; k < 4; k++) {
+      const t = t0 + k * 0.22;
+      const o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(420, t); o.frequency.exponentialRampToValueAtTime(1050, t + 0.12);
+      f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = 1.5;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.03); g.gain.setTargetAtTime(0, t + 0.12, 0.02);
+      o.connect(f); f.connect(g); g.connect(this.out); o.start(t); o.stop(t + 0.3);
+      this.burst('bandpass', 3000, 3, 0.05, t + 0.14, 0.01, 0.05); // cvak matice
+    }
+  },
+  // krátká fanfára (cíl na stupních vítězů, nový rekord)
+  fanfare(big) {
     if (!this.ctx) return;
-    this.burst('lowpass', 260, 0.7, Math.min(1.2, strength), this.ctx.currentTime, 0.06, 0.5);
+    const c = this.ctx, t0 = c.currentTime + 0.1, notes = big ? [523, 659, 784, 1047, 784, 1047] : [523, 659, 784];
+    notes.forEach((f, k) => {
+      const t = t0 + k * (big ? 0.13 : 0.15), last = k === notes.length - 1;
+      for (const [type, mul, a] of [['triangle', 1, 0.16], ['sine', 2, 0.06]]) {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = type; o.frequency.value = f * mul; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 0.012);
+        g.gain.setTargetAtTime(0, t + (last ? 0.3 : 0.09), last ? 0.18 : 0.04);
+        o.connect(g); g.connect(this.out); o.start(t); o.stop(t + 1.2);
+      }
+    });
   },
   // prskání výfuku po ubrání plynu: několik ran za sebou, každá jinak
   pop(strength = 1) {
@@ -6576,7 +6669,7 @@ function physics(dt, inp) {
         car.vx *= 0.6; car.vz *= 0.6;
         car.omega += (Math.random() - 0.5) * Math.min(3, -vn * 0.12);
         if (-vn > 3) {
-          Sound.thump(-vn / 10); car.shake = Math.min(1, car.shake + -vn / 18);
+          Sound.thump(-vn / 10, 'wall'); car.shake = Math.min(1, car.shake + -vn / 18);
           if (-vn > 9) Chat.say('crash');
           const hx = o.x + nx * o.r, hz = o.z + nz * o.r;
           if (o.hard) sparkBurst(hx, car.y + 0.5, hz, Math.min(40, 6 + -vn * 2), Math.min(2, -vn / 10));
@@ -6600,7 +6693,7 @@ function physics(dt, inp) {
         const keep = 1 - Math.min(0.35, vn * 0.02); car.vx *= keep; car.vz *= keep;
         car.omega *= 0.6;
         if (vn > 3) {
-          Sound.thump(vn / 10); car.shake = Math.min(1, car.shake + vn / 20);
+          Sound.thump(vn / 10, 'wall'); car.shake = Math.min(1, car.shake + vn / 20);
           if (!st.trail) sparkBurst(car.x + nx * 1.1, car.y + 0.4, car.z + nz * 1.1, Math.min(40, 6 + vn * 2.5), Math.min(2, vn / 10));
           if (vn > 9) Chat.say('crash');
         }
@@ -6647,7 +6740,7 @@ function physics(dt, inp) {
       if (ov > o.vmax) { o.vx *= o.vmax / ov; o.vz *= o.vmax / ov; }
       const imp = -vn;
       if (imp > 2) {
-        Sound.thump(Math.min(1, imp / 12) * (o.kind === 'bale' ? 0.55 : 0.9));
+        Sound.thump(Math.min(1, imp / 12) * (o.kind === 'bale' ? 0.55 : 0.9), o.kind === 'bale' ? 'bale' : o.kind === 'rock' ? 'hit' : 'tree');
         car.shake = Math.min(1, car.shake + (imp / 30) * Math.min(1.5, o.m / 400));
         const hx = o.x + nx * o.r, hz = o.z + nz * o.r;
         if (o.kind === 'rock' && imp > 7) sparkBurst(hx, car.y + 0.3, hz, Math.min(24, imp * 2), Math.min(1.5, imp / 14));
@@ -6675,7 +6768,7 @@ function physics(dt, inp) {
       car.suspKick = impact; // odpružení kola se při dopadu stlačí
       car.y = g; car.air = false; car.vy = slope * spd;
       if (impact > 4) {
-        Sound.thump(impact / 11);
+        Sound.thump(impact / 11, 'land');
         car.shake = Math.min(1, car.shake + impact / 25);
         car.bounce = -Math.min(0.16, impact * 0.011);
         if (impact > 8.5 && !bikeM) sparkBurst(car.x, g + 0.15, car.z, Math.min(36, (impact - 8) * 6), 1);
@@ -7282,7 +7375,7 @@ function updateCarVisual(dt, inp) {
           0.35 + Math.random() * 0.4, 0.6 + Math.random() * 0.5);
       }
       car.mud = Math.min(1, (car.mud || 0) + dt * 2);
-      if (!pd.splashed) { pd.splashed = true; Sound.thump(0.25); }
+      if (!pd.splashed) { pd.splashed = true; Sound.thump(0.25, 'splash'); }
     }
   }
   splash.update(dt);
@@ -7819,6 +7912,7 @@ function finishRace() {
   G.result = G.time + G.penalty;
   const prev = saved.best[st.id];
   const record = prev == null || G.result < prev;
+  Sound.fanfare(record);
   if (record) {
     saved.best[st.id] = G.result; saved.splits[st.id] = G.splits.slice(); persist();
     recordGhost();
@@ -8590,7 +8684,7 @@ function gpTick(dt) {
     if (gp.tyreAsked && rel < p.entry - 150) gp.tyreAsked = false;
     const atBox = Math.abs(rel - myRel) < 4.5 || (gp.pilot === 'in' && rel > myRel - 4.5 && rel < myRel + 30);
     if (!gp.service && !gp.serviceCD && (!gp.pitted || gp.pitReq || gpCanPit()) && !gpMateBusy() && lat > p.split && atBox && Math.abs(car.vf) < 5) {
-      gp.service = PIT_STOP_T; gpCrew(gp.myBox, true);
+      gp.service = PIT_STOP_T; gpCrew(gp.myBox, true); Sound.gun(0.15); Sound.gun(1.1);
       const b = W.pit.boxes[gp.myBox];
       gp.snap = { x: b.x, z: b.z, h: b.h };
       toast('Mechanici mění pneumatiky…', PIT_STOP_T);
@@ -8703,7 +8797,8 @@ function gpSound() {
   const p = best.c3d.root.position, dx = car.x - p.x, dz = car.z - p.z, d = Math.max(0.1, bd);
   const h = best.c3d.root.rotation.y, vxA = Math.sin(h) * best.v, vzA = Math.cos(h) * best.v;
   const vClose = ((vxA - car.vx) * dx + (vzA - car.vz) * dz) / d; // kladná = soupeř se přibližuje
-  Sound.opponent(bd, vClose, best.v);
+  const hd = car.h; // bok soupeře vůči směru jízdy (kladné = vpravo)
+  Sound.opponent(bd, vClose, best.v, (-dx * Math.cos(hd) + dz * Math.sin(hd)) / d);
 }
 function gpRadio(text) { Voice.say(text, { until: Infinity }); }
 // průjezd cílovou čarou: další kolo, nebo cíl po čtvrtém
