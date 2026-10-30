@@ -3910,11 +3910,37 @@ function buildWorld(td) {
       strip(p.wallFrom, p.wallTo, p.split - 0.08, p.split + 0.08, white, 0.05, 0.05);
       // zeď boxů: betonové svodidlo s bílo-červenou hranou, nad ním plot
       // k trati reklamy (stejné jako na zdech okruhu), k uličce beton
+      const concTexPit = () => (typeof concreteTex !== 'undefined' ? concreteTex : null);
       const pwAd = adTex.clone(); pwAd.repeat.set(-8 / 32 * sd, 8 / 1.05); pwAd.needsUpdate = true;
       strip(p.wallFrom, p.wallTo, p.inner, p.inner, new T.MeshLambertMaterial({ map: pwAd, side: T.DoubleSide }), 0, 1.05);
       strip(p.wallFrom, p.wallTo, p.outer, p.outer, capMat, 0, 1.05);
       strip(p.wallFrom, p.wallTo, p.inner, p.outer, new T.MeshLambertMaterial({ color: '#d81f26', side: T.DoubleSide }), 1.05, 1.05);
       strip(p.wallFrom, p.wallTo, (p.inner + p.outer) / 2, (p.inner + p.outer) / 2, fenceMat, 1.05, 4.2);
+      // zeď boxů ve 3D: šikmé betonové patky po obou stranách (svodidlo se rozšiřuje k zemi), zaoblené čelo na začátku a konci,
+      // trubková vodítka plotu, dvojité pletivo a sloupky se vzpěrami
+      const pwConc = addShine(new T.MeshStandardMaterial({ map: concTexPit(), roughness: 0.85, metalness: 0, side: T.DoubleSide }), 'pitwall', { gloss: 0.5 });
+      strip(p.wallFrom, p.wallTo, p.inner - 0.32, p.inner, pwConc, 0, 0.5);
+      strip(p.wallFrom, p.wallTo, p.outer, p.outer + 0.32, pwConc, 0.5, 0);
+      strip(p.wallFrom, p.wallTo, (p.inner + p.outer) / 2 - 0.07, (p.inner + p.outer) / 2 - 0.07, fenceMat, 1.05, 4.2);
+      for (const [r, dir] of [[p.wallFrom, -1], [p.wallTo, 1]]) {          // čela zdi: betonový klín
+        const i = relIdx(r), [x, y, z] = at(i, (p.inner + p.outer) / 2, 0);
+        const cap = new T.Mesh(new T.CylinderGeometry((p.outer - p.inner) / 2 + 0.2, (p.outer - p.inner) / 2 + 0.5, 1.05, 14), pwConc);
+        cap.position.set(x, y + 0.52, z); cap.rotation.y = 0; cap.castShadow = true; group.add(cap); void dir;
+      }
+      {
+        const railM = addShine(new T.MeshStandardMaterial({ color: '#9aa2ab', metalness: 0.8, roughness: 0.3 }), 'pitrail', { gloss: 1.2 });
+        const postPts = [];
+        for (const dy of [4.2, 2.7, 1.1]) {
+          const pts = [];
+          for (let i = relIdx(p.wallFrom); i <= relIdx(p.wallTo); i += 2) pts.push(new T.Vector3(...at(i, (p.inner + p.outer) / 2, dy)));
+          if (pts.length > 3) { const tube = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), Math.min(1500, pts.length * 2), 0.045, 6, false), railM); group.add(tube); }
+        }
+        for (let i = relIdx(p.wallFrom); i <= relIdx(p.wallTo); i += 3) postPts.push(at(i, (p.inner + p.outer) / 2, 1.05));
+        const pg = mergeColored([{ geo: new T.CylinderGeometry(0.06, 0.06, 3.3, 8).translate(0, 1.65, 0) }, { geo: new T.CylinderGeometry(0.15, 0.19, 0.1, 10).translate(0, 0.05, 0) }]);
+        const posts = new T.InstancedMesh(pg, railM, postPts.length);
+        postPts.forEach(([x, y, z], k) => posts.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.identity(), vS.set(1, 1, 1))));
+        posts.computeBoundingSphere(); group.add(posts);
+      }
       const teams = Object.keys(F1_TEAMS);
       const signTex = (tm) => canvasTex(512, 64, (g, w, h) => {
         g.fillStyle = tm.body; g.fillRect(0, 0, w, h);
@@ -8634,7 +8660,7 @@ function startDemo() {
 function startRace() {
   Sound.init();
   G.mode = 'race'; G.phase = 'countdown'; G.countdown = 3.6; G.time = 0; G.penalty = 0; G.result = null;
-  G.splits = []; G.splitShown = 0; G.noteIdx = 0; G.speakIdx = 0; G.callIdx = 0; G.paused = false; G.lastBeep = 4;
+  G.cp = false; G.cpWarn = false; G.splits = []; G.splitShown = 0; G.noteIdx = 0; G.speakIdx = 0; G.callIdx = 0; G.paused = false; G.lastBeep = 4;
   G.rec = []; G.recNext = 0;
   G.ghost = saved.ghost && !G.gp && !G.net ? loadGhost(W.td.st.id) : null;
   const td = W.td;
@@ -9544,7 +9570,7 @@ function gpPitPilot() {
     if (rel > p.wallFrom + 5 && rel < p.wallTo && lat < p.inner) { gp.pilot = null; toast('Vjezd do boxů minut · zkusím to další kolo', 2); return null; }
     waiting = gpMateBusy(); tg = waiting ? bRel - 11 : bRel; // kolega je v boxu: počkat o kus před ním
     // boční cíl se mění plynule podle polohy (ne skokem): na trati kraj, před vjezdem plynule do uličky, pak plynule ke stání
-    latT = lerp(HW - 1.4, p.lane, smooth(p.entry - 70, p.entry + 25, rel));
+    latT = lerp(HW - 1.4, p.lane, smooth(p.entry + 2, p.entry + 48, rel));   // přechod až v uličce (před vjezdem je mimo trať tráva a auto by se trepalo)
     latT = lerp(latT, p.box, smooth(tg - 62, tg - 34, rel));
     // před vjezdem zpomalí (i se sjetými pneumatikami se trefí do uličky), v ní na omezovač
     vt = Math.min(formulaSpeedAhead(0.85), 26 + Math.max(0, p.entry - rel) * 0.25, Math.sqrt(PIT_LIMIT * PIT_LIMIT + 2 * 10 * Math.max(0, p.wallFrom - 20 - rel)));
@@ -9575,7 +9601,7 @@ function gpRadio(text) { Voice.say(text, { until: Infinity }); }
 function gpLap() {
   const gp = G.gp, td = W.td, lt = G.time - gp.lapStart;
   gp.laps.push(lt); gp.best = gp.best == null ? lt : Math.min(gp.best, lt); gp.lapStart = G.time;
-  gp.lap++;
+  gp.lap++; G.cpWarn = false;
   if (gp.lap >= gpTotal()) { gpFinish(); return; }
   // okruh pokračuje: auto je na začátku trati (tatáž místa jako za cílem)
   const sh = td.finishIdx - td.startIdx;
@@ -11183,7 +11209,17 @@ function tickUpdate(dt) {
           G.splitShown = 4;
         } else break;
       }
-      if (car.s >= td.S[td.finishIdx]) { if (G.gp) gpLap(); else if (!(G.net && netLap())) finishRace(); }
+      // neviditelný kontrolní bod v polovině kola: cílová čára se v závodě na kola započítá jen po jeho projetí
+      // (couvání, otočka a návrat přes čáru kolo nepřidají). Samostatná jízda a rally etapy ho nepotřebují.
+      const needCp = !!(G.gp || (G.net && td.st.circuit));
+      { const s0 = td.S[td.startIdx], L0 = td.S[td.finishIdx] - s0, mid = s0 + L0 * 0.5;
+        if (!G.cp && car.s >= mid && car.s < mid + L0 * 0.25) G.cp = true; }
+      if (car.s >= td.S[td.finishIdx] && (G.cp || !needCp)) { G.cp = false; if (G.gp) gpLap(); else if (!(G.net && netLap())) finishRace(); }
+      else if (needCp && car.s >= td.S[td.finishIdx] + 20 && G.phase === 'run') {
+        // čáru přejel bez kontrolního bodu: kolo se nepočítá, auto se jen přenese na začátek kola (stejné místo za cílem)
+        const sh = td.finishIdx - td.startIdx; car.idx -= sh; car.s -= td.pit ? td.pit.lap : td.S[td.finishIdx] - td.S[td.startIdx];
+        if (!G.cpWarn) { G.cpWarn = true; toast('Kolo se nepočítá: chybí průjezd kontrolním bodem v půlce okruhu', 3); }
+      }
       const lost = Math.abs(car.lat) > HW + 38 || (td.st.water != null && car.y < td.st.water - 0.4);
       const slow = Math.abs(car.vf) < 1.5 && car.surf === 'off';
       G.stuck = lost || slow ? G.stuck + dt : 0;
