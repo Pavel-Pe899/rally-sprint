@@ -2818,11 +2818,11 @@ function buildWorld(td) {
     const d = trackDist(x, z) - 1, i = trackDist.i, lat = (x - X[i]) * NX[i] + (z - Z[i]) * NZ[i];
     return d >= r + trailShoulder(td, i, Math.sign(lat) || 1) - 1.4;
   };
-  // Okruh: je bod za zdí (svodidlem) vzhledem ke VŠEM úsekům trati v okolí 30 m? (stromy nesmí stát před zdí ani mezi
+  // Okruh: je bod za zdí (svodidlem) vzhledem ke VŠEM úsekům trati v okolí 50 m? (stromy nesmí stát před zdí ani mezi
   // dvěma blízkými úseky trati, kde by je kontrola jen podle vlastního úseku nechala v únikové zóně druhého)
   function behindWalls(x, z, margin) {
     const cx = Math.floor(x / 10), cz = Math.floor(z / 10), half = td.ds * 0.75;
-    for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) {
+    for (let a = -5; a <= 5; a++) for (let b = -5; b <= 5; b++) {
       const l = tHash.get((cx + a) * 100000 + cz + b); if (!l) continue;
       for (const j of l) {
         const dx = x - X[j], dz = z - Z[j];
@@ -3072,7 +3072,7 @@ function buildWorld(td) {
         const forest = st.trail ? 1 : smooth(-0.15, 0.25, noise.fbm(px / 160, pz / 160, 2)) * (1 - fmin) + fmin;
         if (rnd() > forest) continue;
         if (!st.trail && roadDistAt(px, pz) < HW + 5.5) continue;
-        if (st.circuit && (off < (side > 0 ? td.wallR[i] : td.wallL[i]) + 3 || !behindWalls(px, pz, 4.5))) continue; // jen za zdí, od žádného úseku trati blíž
+        if (st.circuit && (off < (side > 0 ? td.wallR[i] : td.wallL[i]) + 14 || !behindWalls(px, pz, 14))) continue; // jen daleko za zdí (koruna ani kmen nesmí být u plotu), od žádného úseku trati blíž
         if (inPaddock(i, side, off)) continue;
         // ani podél celé boxové uličky a u vjezdu (stromy by překážely ve výhledu do boxů)
         if (td.pit && side === td.pit.side) { const pr = td.pit.relOf(S[i]); if (pr > td.pit.entry - 160 && pr < td.pit.exit + 60 && off < td.pit.edge + 40) continue; }
@@ -3083,6 +3083,7 @@ function buildWorld(td) {
         if (st.trail && !clearOf(px, pz, HW + 1.4 + (kind === 'bush' ? 1.0 : 2.0))) continue;
         const sc = ((kind === 'bush' ? 0.7 : 0.75) + rnd() * 0.65) * (st.trail && kind !== 'bush' ? 1.35 : 1);
         place(kind, px, py - 0.15, pz, sc, rnd() * Math.PI * 2, 0.82 + rnd() * 0.3);
+        if (st.circuit) (td.treesDbg || (td.treesDbg = [])).push(px, pz);
         const def = kinds[kind] || (kinds[kind] = TREE_KINDS[kind]());
         if (def.r > 0 && off < HW + 50) addObstacle(px, pz, def.r * sc);
       }
@@ -3092,7 +3093,7 @@ function buildWorld(td) {
       const side = rnd() < 0.5 ? -1 : 1;
       const off = HW + 4 + rnd() * 30;
       const px = X[i] + NX[i] * side * off, pz = Z[i] + NZ[i] * side * off;
-      if (clearOf(px, pz, HW + (st.trail ? 2.8 : 3.8)) && (!st.circuit || behindWalls(px, pz, 3))) {
+      if (clearOf(px, pz, HW + (st.trail ? 2.8 : 3.8)) && (!st.circuit || behindWalls(px, pz, 8))) {
         const py = terrainAt(px, pz);
         if (st.water == null || py > st.water - 0.5) {
           const sc = 0.5 + rnd() * rnd() * 2.2;
@@ -3120,7 +3121,7 @@ function buildWorld(td) {
           const pz = Z[i] + NZ[i] * side * off + TZ[i] * (rnd() - 0.5) * 8;
           if (rnd() > smooth(-0.1, 0.25, noise.fbm(px / 160, pz / 160, 2))) continue;
           if (roadDistAt(px, pz) < 100) continue;
-          if (st.circuit && !behindWalls(px, pz, 4.5)) continue;
+          if (st.circuit && !behindWalls(px, pz, 14)) continue;
           const py = terrainAt(px, pz);
           if (st.water != null && py < st.water + 0.6) continue;
           const cell = FAR_SPRITE[pickKind()];
