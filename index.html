@@ -9389,19 +9389,31 @@ function p2pFail(e) {
   if (t === 'peer-unavailable') { if (P2P.peer) P2P.peer.gone = true; } else { p2pStop(); P2P.status = P2P.status || ''; }
   netRender();
 }
-function p2pHost(tries = 0) {
+function p2pHost(tries = 0, keep = '') {
   if (typeof window.Peer !== 'function') { p2pFail({ type: 'browser-incompatible' }); return; }
   p2pStop();
-  let code = ''; for (let k = 0; k < 4; k++) code += P2P_ABC[(Math.random() * P2P_ABC.length) | 0];
+  let code = keep; if (!code) for (let k = 0; k < 4; k++) code += P2P_ABC[(Math.random() * P2P_ABC.length) | 0];
   const peer = new window.Peer(p2pId(code), P2P_OPTS);
-  Object.assign(P2P, { peer, host: true, code, status: 'Zakládám hru…' });
-  peer.on('open', () => { P2P.open = true; P2P.status = `Kód hry: ${code} – řekni ho kamarádovi`; P2P.dirty = true; netRender(); });
+  Object.assign(P2P, { peer, host: true, code, status: keep ? 'Obnovuji hru…' : 'Zakládám hru…' });
+  peer.on('open', () => { P2P.open = true; P2P.status = `Kód hry: ${code} – řekni ho kamarádovi a nech tuhle obrazovku otevřenou`; P2P.dirty = true; netRender(); });
   setTimeout(() => { if (P2P.peer === peer && !P2P.open) p2pFail({ type: 'signal-timeout' }); }, 15000);
   peer.on('connection', (conn) => p2pWire(conn));
-  peer.on('error', (e) => { if (e.type === 'unavailable-id' && tries < 4) p2pHost(tries + 1); else p2pFail(e); });
+  // staré přihlášení kódu u serveru po výpadku chvíli trvá, než zmizí: při obnově se zkouší znovu
+  peer.on('error', (e) => { if (e.type === 'unavailable-id' && keep && tries < 8) setTimeout(() => { if (P2P.peer === peer) p2pHost(tries + 1, keep); }, 2500); else if (e.type === 'unavailable-id' && !keep && tries < 4) p2pHost(tries + 1); else p2pFail(e); });
   peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) { /* nic */ } });
   netRender();
 }
+// iPhone a iPad po přepnutí do jiné aplikace (třeba poslat kód kamarádovi) pozastaví stránku a server na kód zapomene:
+// po návratu se hra znovu přihlásí pod stejným kódem
+function p2pResume() {
+  if (!P2P.host || !P2P.peer || document.hidden) return;
+  const peer = P2P.peer;
+  if (peer.destroyed) p2pHost(0, P2P.code);
+  else if (peer.disconnected) { try { peer.reconnect(); } catch (e) { p2pHost(0, P2P.code); } }
+}
+document.addEventListener('visibilitychange', p2pResume);
+window.addEventListener('pageshow', p2pResume);
+setInterval(p2pResume, 4000);
 function p2pJoin(code) {
   code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (code.length !== 4) { P2P.status = 'Kód má 4 znaky.'; netRender(); return; }
@@ -9410,17 +9422,29 @@ function p2pJoin(code) {
   const peer = new window.Peer(undefined, P2P_OPTS);
   Object.assign(P2P, { peer, host: false, code, status: `Připojuji ke hře ${code}…` });
   setTimeout(() => { if (P2P.peer === peer && !P2P.open) p2pFail({ type: 'signal-timeout' }); }, 15000);
-  peer.on('open', () => {
-    P2P.open = true;
+  // kamarád může mít hru chvíli mimo obrazovku (poslal kód): hledá se opakovaně, ~40 s
+  const attempt = (n) => {
+    if (P2P.peer !== peer || peer.destroyed) return;
+    peer.gone = false;
     const conn = peer.connect(p2pId(code), { serialization: 'json', reliable: true });
     p2pWire(conn);
-    P2P.status = `Hledám hru ${code}…`; netRender();
-    const pc = conn.peerConnection;
-    if (pc) pc.addEventListener('iceconnectionstatechange', () => { if (!conn.open && P2P.peer === peer) { P2P.status = `Spojuji se hrou ${code} (${pc.iceConnectionState})…`; netRender(); } });
-    setTimeout(() => { if (P2P.peer === peer && !conn.open && !peer.gone) p2pFail({ type: 'ice-timeout' }); }, 25000);
+    P2P.status = n ? `Kamarádova hra ${code} zatím není vidět, zkouším znovu (${n})… kamarád musí mít hru otevřenou na obrazovce „Proti sobě“` : `Hledám hru ${code}…`;
     netRender();
+    const pc = conn.peerConnection;
+    if (pc) pc.addEventListener('iceconnectionstatechange', () => { if (!conn.open && P2P.peer === peer && !peer.gone) { P2P.status = `Spojuji se hrou ${code} (${pc.iceConnectionState})…`; netRender(); } });
+    conn.on('open', () => { peer.joined = true; });
+    setTimeout(() => { if (P2P.peer === peer && !conn.open && !peer.joined && !peer.gone) p2pFail({ type: 'ice-timeout' }); }, 25000);
+  };
+  peer.on('open', () => { P2P.open = true; attempt(0); });
+  peer.on('error', (e) => {
+    if (e.type !== 'peer-unavailable') { p2pFail(e); return; }
+    peer.gone = true;
+    if (P2P.peer !== peer || peer.joined) return;
+    peer.tries = (peer.tries || 0) + 1;
+    if (peer.tries > 12) { p2pFail(e); return; }
+    P2P.status = `Hra s kódem ${code} zatím není vidět, zkouším znovu (${peer.tries})… kamarád musí mít hru otevřenou na obrazovce „Proti sobě“`; netRender();
+    setTimeout(() => attempt(peer.tries), 3000);
   });
-  peer.on('error', (e) => p2pFail(e));
   netRender();
 }
 function p2pWire(conn) {
