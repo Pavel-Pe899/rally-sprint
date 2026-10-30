@@ -706,7 +706,7 @@
     <h2>Dílna <em>týmu</em></h2>
     <p class="help">Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Díly platí jen pro tvou formuli. Máš <b id="shopMoney">0 $</b>.</p>
     <div class="shop-list" id="shopList"></div>
-    <div class="actions"><button class="btn" id="bShopClose">Zavřít</button></div>
+    <div class="actions"><button class="btn" id="bShopAll" hidden>Všechny díly na maximum (zdarma)</button><button class="btn ghost" id="bShopClose">Zavřít</button></div>
   </div>
 </div>
 
@@ -5540,6 +5540,9 @@ const SHOP_ITEMS = [
   { id: 'rain', name: 'Pneumatiky do deště', icon: '☂', desc: 'na mokré trati drží víc a míň klouzají', price: [700, 1600, 3000], tiers: ['Deštivé pneumatiky', 'Deštivé pneumatiky Pro', 'Extrémní deštivé pneumatiky'], base: 'Standardní deštivé', fx: (l) => `na mokru +${l * 3} % přilnavost` },
   { id: 'kers', name: 'KERS', icon: '⚡', desc: 'větší zásoba energie navíc', price: [1100, 2400, 4400], tiers: ['KERS 1', 'KERS 2', 'KERS Max'], fx: (l) => `zásoba +${l * 30} %` },
 ];
+// zkušební režim: všechny díly zdarma (po vyzkoušení stačí přepnout na false)
+const SHOP_FREE = true;
+const shopPrice = (it, l) => (SHOP_FREE ? 0 : it.price[l]);
 const shopLv = (id) => clamp((saved.shop && saved.shop[id]) | 0, 0, 3);
 const shopAny = () => SHOP_ITEMS.some((it) => shopLv(it.id) > 0);
 let shopCache = null;
@@ -7017,13 +7020,13 @@ function cockpitBuild(c3) {
   // předloktí se kreslí první, pak volant, nakonec rukavice; bez testu hloubky, aby kokpit auta volant nezakrýval
   const armMat = suit;
   const pivot = new T.Group(), wheel = new T.Group(); pivot.add(wheel);
-  cockpit.arms = [0, 1].map(() => { const a = new T.Mesh(new T.CylinderGeometry(0.024, 0.034, 1, 10, 1), armMat); group.add(a); return a; });
+  cockpit.arms = [0, 1].map(() => { const a = new T.Mesh(new T.CylinderGeometry(0.016, 0.024, 1, 10, 1), armMat); group.add(a); return a; });
   group.add(pivot);
   const gloveAt = [];
   cockpit.leds = []; cockpit.disp = null; cockpit.dispCtx = null;
   const add = (geo, mat, x, y, z) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); wheel.add(m); return m; };
   if (f1) {
-    pivot.position.set(0, -0.26, -0.7); pivot.rotation.x = -0.55; pivot.scale.setScalar(0.88);
+    pivot.position.set(0, -0.3, -0.7); pivot.rotation.x = -0.55; pivot.scale.setScalar(0.8);
     add(new T.BoxGeometry(0.2, 0.12, 0.034), carbon, 0, 0, 0);
     for (const s of [-1, 1]) {
       add(new T.CapsuleGeometry(0.034, 0.1, 4, 10), rubber, s * 0.138, -0.005, 0.004);      // rukojeť
@@ -7049,7 +7052,7 @@ function cockpitBuild(c3) {
     }
     gloveAt.push([-0.138, -0.005, 0.03], [0.138, -0.005, 0.03]);
   } else {
-    pivot.position.set(0, -0.27, -0.7); pivot.rotation.x = -0.85; pivot.scale.setScalar(0.9);
+    pivot.position.set(0, -0.31, -0.7); pivot.rotation.x = -0.85; pivot.scale.setScalar(0.82);
     add(new T.TorusGeometry(0.185, 0.019, 10, 48), rubber, 0, 0, 0);
     for (const [x, y, w, h] of [[-0.095, 0, 0.19, 0.03], [0.095, 0, 0.19, 0.03], [0, -0.095, 0.03, 0.19]]) add(new T.BoxGeometry(w, h, 0.012), carbon, x, y, 0);
     const hub = add(new T.CylinderGeometry(0.055, 0.06, 0.03, 20), carbon, 0, 0, 0.008); hub.rotation.x = Math.PI / 2;
@@ -7124,7 +7127,7 @@ function updateCamera(dt) {
     const bk = car3d.bike;
     let p;
     if (bk) p = car3d.rig.head.clone().add(new T.Vector3(0, 0.06, -0.2)).applyEuler(car3d.root.rotation).add(car3d.root.position);
-    else if (car3d.formula && car3d.helm) { car3d.root.updateMatrixWorld(true); p = car3d.helm.getWorldPosition(new T.Vector3()); p.add(new T.Vector3(0, 0.03, 0.07).applyEuler(car3d.root.rotation)); } // oči jezdce v helmě
+    else if (car3d.formula && car3d.helm) { car3d.root.updateMatrixWorld(true); p = car3d.helm.getWorldPosition(new T.Vector3()); p.add(new T.Vector3(0, 0.1, 0.07).applyEuler(car3d.root.rotation)); } // oči jezdce v helmě
     else p = new T.Vector3(0, 1.2, 1.05).applyEuler(car3d.root.rotation).add(car3d.root.position);
     camera.position.set(p.x + sx * 0.3, p.y + sy * 0.3, p.z);
     // pohled se za jízdy lehce stáčí do zatáčky
@@ -8208,7 +8211,7 @@ function resetToTrack(auto) {
   if (G.gp) { G.gp.pilot = null; G.gp.pilotLat = null; }
   if (!G.gp) G.penalty += 5; // ve Velké ceně je trestem ztráta místa (auto se vrátí kus zpátky)
   camS.init = false;
-  hud.reset.hidden = true;
+  hud.reset.hidden = true; G.parked = 0; G.stuck = 0;
   toast(G.gp ? 'Zpět na trati' : auto ? 'Mimo trať · zpět s penalizací +5 s' : 'Zpět na trati · +5 s', 2.2);
   Chat.say('reset');
 }
@@ -9247,7 +9250,7 @@ function openShop() {
   const list = $('shopList'); list.innerHTML = '';
   $('shopMoney').textContent = moneyStr(saved.money | 0);
   for (const it of SHOP_ITEMS) {
-    const l = shopLv(it.id), next = l < 3 ? it.price[l] : 0, row = document.createElement('div');
+    const l = shopLv(it.id), next = l < 3 ? shopPrice(it, l) : 0, row = document.createElement('div');
     row.className = 'shop-it' + (l >= 3 ? ' max' : '');
     row.innerHTML = '<i class="ic"></i><div class="tx"><b></b><small></small><em></em></div><span class="pips"></span><button class="btn buy"></button><div class="tiers"></div>';
     row.querySelector('.ic').textContent = it.icon;
@@ -9260,7 +9263,7 @@ function openShop() {
     const b = row.querySelector('.buy');
     if (l >= 3) { b.textContent = 'Hotovo'; b.disabled = true; }
     else {
-      b.innerHTML = `${it.tiers[l]} <small>${it.fx(l + 1)} · ${moneyStr(next)}</small>`;
+      b.innerHTML = `${it.tiers[l]} <small>${it.fx(l + 1)} · ${next ? moneyStr(next) : 'ZDARMA'}</small>`;
       b.disabled = (saved.money | 0) < next;
       b.onclick = () => shopBuy(it.id);
     }
@@ -9270,12 +9273,19 @@ function openShop() {
 }
 function shopBuy(id) {
   const it = SHOP_ITEMS.find((x) => x.id === id), l = shopLv(id);
-  if (!it || l >= 3 || (saved.money | 0) < it.price[l]) return;
-  saved.money = (saved.money | 0) - it.price[l]; saved.shop = { ...(saved.shop || {}), [id]: l + 1 }; persist();
+  if (!it || l >= 3 || (saved.money | 0) < shopPrice(it, l)) return;
+  saved.money = (saved.money | 0) - shopPrice(it, l); saved.shop = { ...(saved.shop || {}), [id]: l + 1 }; persist();
   if (saved.car === 'f1' && car3d && !G.gp) setLivery(saved.livery); // nový vzhled auta (křídla, ráfky)
   toast(`Koupeno: ${it.tiers[l]}`, 1.8);
   openShop(); renderMenu();
 }
+$('bShopAll').hidden = !SHOP_FREE;
+$('bShopAll').onclick = () => {
+  for (const it of SHOP_ITEMS) saved.shop = { ...(saved.shop || {}), [it.id]: 3 };
+  persist();
+  if (saved.car === 'f1' && car3d && !G.gp) setLivery(saved.livery);
+  toast('Všechny díly na maximum', 1.8); openShop(); renderMenu();
+};
 $('bShopClose').onclick = () => { $('shopModal').hidden = true; };
 $('bShop').onclick = () => openShop();
 // výběr týmu (druhé klepnutí na formuli v menu)
@@ -10413,7 +10423,10 @@ function tickUpdate(dt) {
       const lost = Math.abs(car.lat) > HW + 38 || (td.st.water != null && car.y < td.st.water - 0.4);
       const slow = Math.abs(car.vf) < 1.5 && car.surf === 'off';
       G.stuck = lost || slow ? G.stuck + dt : 0;
-      hud.reset.hidden = !(G.stuck > 1.5 || Math.abs(car.lat) > HW + 14);
+      // stojí na místě (u zdi, otočený proti směru, zapíchnutý v ohrazení) a nejede ani v boxech: nabídne se návrat na trať
+      const parked = Math.abs(car.vf) < 1.5 && !(G.gp && (G.gp.service > 0 || G.gp.pilot || G.gp.waiting));
+      G.parked = parked ? (G.parked || 0) + dt : 0;
+      hud.reset.hidden = !(G.stuck > 1.5 || G.parked > 3 || Math.abs(car.lat) > HW + 14);
       if (Math.abs(car.lat) > HW + 70 || (lost && G.stuck > 2.5)) resetToTrack(true);
     }
     if (G.phase === 'demo' && car.s > td.S[td.finishIdx] + 60) { placeCar(td.startIdx - 4); car.vx = Math.sin(car.h) * demoSpeed(); car.vz = Math.cos(car.h) * demoSpeed(); G.cine.fixed = null; }
@@ -10493,7 +10506,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { cockpit, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { cockpit, shopPrice, SHOP_FREE, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
