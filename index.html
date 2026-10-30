@@ -5018,7 +5018,7 @@ function buildModelCar(lv, spec) {
     // koupené díly z dílny: další lamely zadního a předního křídla (dolní díl vždy v barvě týmu, ostatní karbon)
     if (spec.shop) {
       const sh = spec.shop, carbon = new T.MeshStandardMaterial({ color: '#15171b', roughness: 0.4, metalness: 0.3 }), tint = new T.MeshStandardMaterial({ color: lv.a1, roughness: 0.35, metalness: 0.2 });
-      const plate = (w, d, x, y, z, mat, rx = 0) => { const m = new T.Mesh(new T.BoxGeometry(w, 0.018, d), mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; body.add(m); };
+      const plate = (w, d, x, y, z, mat, rx = 0) => { const m = new T.Mesh(softBox(w, 0.022, d, 0.35, 14), mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; body.add(m); };
       kersMatRef = shopBodyLook(sh, { hitAny, body, bb, lv, carbon, tint });
       const rw = hitAny(new T.Vector3(0, 3, bb.min.z + 0.3), new T.Vector3(0, -1, 0));
       if (sh.rwing > 0) for (let k = 0; k < sh.rwing; k++) plate(0.96, 0.15, 0, (rw ? rw.p.y : 0.9) + 0.06 + k * 0.075, (rw ? rw.p.z : bb.min.z + 0.3) - 0.02 * k, k === 0 ? tint : carbon, -0.12);
@@ -5109,50 +5109,94 @@ function buildModelCar(lv, spec) {
 // KERS (světelné pásky, baterie, zadní světla), kola (výplň disku), brzdy (barevný kroužek, který při brzdění žhne),
 // pneumatiky na suchu (širší, pásky na boku) a do deště (vzor drážek, který je vidět po nasazení).
 const SHOP_BRAKE = [null, { col: '#d7263d', glow: 0.5 }, { col: '#e0b13a', glow: 0.9 }, { col: '#bff4ff', glow: 1.5 }];
+// hladký zaoblený kvádr (superelipsoid): měkké hrany a plynulé stínování místo ostrých rohů; e = 1 elipsoid, k 0 ostrý kvádr
+function softBox(w, h, d, e = 0.3, seg = 16) {
+  const rows = seg + 1, cols = seg * 2 + 1, pos = new Float32Array(rows * cols * 3), idx = [];
+  const c = (a) => Math.sign(Math.cos(a)) * Math.pow(Math.abs(Math.cos(a)), e), s = (a) => Math.sign(Math.sin(a)) * Math.pow(Math.abs(Math.sin(a)), e);
+  for (let i = 0; i < rows; i++) {
+    const ph = -Math.PI / 2 + (i / seg) * Math.PI;
+    for (let j = 0; j < cols; j++) {
+      const th = -Math.PI + (j / (cols - 1)) * Math.PI * 2, k = (i * cols + j) * 3;
+      pos[k] = (w / 2) * c(ph) * c(th); pos[k + 1] = (h / 2) * s(ph); pos[k + 2] = (d / 2) * c(ph) * s(th);
+    }
+  }
+  for (let i = 0; i < rows - 1; i++) for (let j = 0; j < cols - 1; j++) { const a = i * cols + j, b2 = a + cols; idx.push(a, a + 1, b2, a + 1, b2 + 1, b2); }
+  const geo = new T.BufferGeometry();
+  geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  return geo;
+}
+// tvar upraví po vrcholech (zúžení, zešikmení): f(x, y, z) vrací nové [x, y, z]
+function warpGeo(geo, f) {
+  const p = geo.attributes.position, o = [0, 0, 0];
+  for (let i = 0; i < p.count; i++) { const r = f(p.getX(i), p.getY(i), p.getZ(i)); p.setXYZ(i, r[0], r[1], r[2]); void o; }
+  geo.computeVertexNormals(); return geo;
+}
 function shopBodyLook(sh, { hitAny, body, bb, lv, carbon, tint }) {
-  const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.set(rx, ry, 0); m.castShadow = true; body.add(m); return m; };
+  const put = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; body.add(m); return m; };
+  const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, e = 0.3) => put(softBox(w, h, d, e), mat, x, y, z, rx, ry);
   const down = (z) => { const h = hitAny(new T.Vector3(0, 3, z), new T.Vector3(0, -1, 0)); return h ? h.p.y : 0.9; };
   const side = (y, z, s) => { const h = hitAny(new T.Vector3(s * 3, y, z), new T.Vector3(-s, 0, 0)); return h ? Math.abs(h.p.x) : 0.4; };
   const glow = (c, i) => new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i, roughness: 0.4 });
-  // motor: airbox za helmou, žebro na krytu, svítící výfuky
+  const shiny = new T.MeshPhysicalMaterial({ color: '#15171b', roughness: 0.25, metalness: 0.5, clearcoat: 1, clearcoatRoughness: 0.1 });
+  const tintS = new T.MeshPhysicalMaterial({ color: lv.a1, roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.12 });
+  // motor: aerodynamický airbox za helmou (zužuje se nahoru, s oválným sáním a lemem), žebro na krytu, svítící výfuky
   if (sh.engine > 0) {
     const ty = down(-0.55), s = [0, 0.8, 1.0, 1.2][sh.engine];
-    box(0.2 * s, 0.14 * s, 0.3 * s, carbon, 0, ty + 0.05 * s, -0.5);
-    box(0.15 * s, 0.07 * s, 0.02, glow('#0a0b0d', 0), 0, ty + 0.08 * s, -0.34); // tmavý otvor sání
-    box(0.2 * s, 0.014, 0.03, tint, 0, ty + 0.125 * s, -0.355);                   // lem v barvě týmu
-    if (sh.engine >= 2) box(0.012, 0.16, 0.9, tint, 0, down(-1.4) + 0.08, -1.45);  // žebro (shark fin)
+    const ab = softBox(0.2 * s, 0.15 * s, 0.3 * s, 0.55, 18);
+    warpGeo(ab, (x, y, z) => { const t = (y / (0.17 * s) + 0.5); return [x * (1 - 0.32 * t), y, z * (1 - 0.12 * t) + (t > 0.5 ? -0.02 * s : 0)]; });
+    put(ab, shiny, 0, ty + 0.02 * s, -0.5);
+    const mouth = put(new T.CircleGeometry(0.058 * s, 20).scale(1, 0.72, 1), new T.MeshBasicMaterial({ color: '#05060a' }), 0, ty + 0.03 * s, -0.5 + 0.168 * s * 1.02);
+    mouth.rotation.x = -0.16;
+    const lip = put(new T.TorusGeometry(0.058 * s, 0.006, 8, 28).scale(1, 0.72, 1), tintS, 0, ty + 0.03 * s, -0.5 + 0.168 * s * 1.02); lip.rotation.x = -0.16;
+    if (sh.engine >= 2) {
+      const fin = softBox(0.012, 0.2, 1.05, 0.6, 14);
+      warpGeo(fin, (x, y, z) => { const t = 0.5 - z / 1.05; return [x, (y + 0.1) * (0.2 + 0.8 * t) - 0.1 + 0.0, z]; }); // vzadu výš, vpředu se ztrácí
+      put(fin, tintS, 0, down(-1.4) + 0.03, -1.45);
+    }
     if (sh.engine >= 3) {
       const rz = hitAny(new T.Vector3(0, 0.6, -6), new T.Vector3(0, 0, 1)), z = rz ? rz.p.z : bb.min.z + 0.5;
-      for (const x of [-0.07, 0.07]) {
-        const p = new T.Mesh(new T.CylinderGeometry(0.045, 0.055, 0.2, 14), carbon); p.rotation.x = Math.PI / 2; p.position.set(x, 0.62, z - 0.05); body.add(p);
-        const tip = new T.Mesh(new T.CircleGeometry(0.04, 14), glow('#ff7a1a', 2.2)); tip.rotation.y = Math.PI; tip.position.set(x, 0.62, z - 0.152); body.add(tip);
+      const flare = new T.LatheGeometry([[0.028, 0], [0.036, 0.04], [0.04, 0.1], [0.052, 0.17], [0.058, 0.2], [0.052, 0.205]].map(([r, y]) => new T.Vector2(r, y)), 20);
+      for (const x of [-0.075, 0.075]) {
+        const p = put(flare, shiny, x, 0.62, z - 0.02, -Math.PI / 2, 0, 0); p.position.z = z + 0.03;
+        const tip = new T.Mesh(new T.CircleGeometry(0.048, 20), glow('#ff7a1a', 2.4)); tip.rotation.y = Math.PI; tip.position.set(x, 0.62, z - 0.17); body.add(tip);
       }
     }
   }
-  // podlaha: boční lišta, přepážky a zadní difuzor
+  // podlaha: plynulá boční lišta s ocelovým lemem, zaoblené přepážky se sklopenou hranou a zadní difuzor s lopatkami
   if (sh.floor > 0) {
     const edge = [0, 0.015, 0.035, 0.045][sh.floor];
     for (const sd of [-1, 1]) {
       const fx = Math.max(0.5, side(0.14, -0.4, sd)) + edge;
-      box(0.035, 0.018, 2.7, sh.floor >= 3 ? tint : carbon, sd * fx, 0.1, -0.3);
-      if (sh.floor >= 2) for (const z of [0.7, 0.2, -0.3, -0.8]) box(0.01, 0.12 + 0.02 * sh.floor, 0.4, carbon, sd * (fx - 0.02), 0.17, z, 0, sd * 0.12);
+      put(softBox(0.04, 0.02, 2.7, 0.4, 14), sh.floor >= 3 ? tintS : shiny, sd * fx, 0.1, -0.3);
+      if (sh.floor >= 2) for (const z of [0.7, 0.2, -0.3, -0.8]) {
+        const fence = softBox(0.01, 0.12 + 0.02 * sh.floor, 0.42, 0.5, 14);
+        warpGeo(fence, (x, y, zz) => [x, y, zz + y * 0.35]); // přepážka se sklání dozadu
+        put(fence, shiny, sd * (fx - 0.02), 0.17, z, 0, sd * 0.12);
+      }
     }
-    if (sh.floor >= 3) for (const x of [-0.36, -0.12, 0.12, 0.36]) box(0.012, 0.22, 0.55, tint, x, 0.24, bb.min.z + 0.7);
+    if (sh.floor >= 3) for (const x of [-0.36, -0.12, 0.12, 0.36]) {
+      const st = softBox(0.012, 0.22, 0.55, 0.55, 14);
+      warpGeo(st, (xx, y, z) => [xx, y, z + (y + 0.11) * 0.45]); // lopatka se sklání k zemi dozadu
+      put(st, tintS, x, 0.24, bb.min.z + 0.7);
+    }
   }
-  // KERS: světelný pásek na bocích, baterie s chladiči, zadní světelná lišta
+  // KERS: zářivé pásky jako kapsle, baterie s žebrovaným chladičem, zadní světelná lišta a anténa se svítící špičkou
   let kmat = null;
   if (sh.kers > 0) {
     kmat = glow(sh.kers >= 3 ? '#b06bff' : '#35d0ff', 0.9);
-    for (const sd of [-1, 1]) box(0.014, 0.034 + 0.01 * sh.kers, 0.5 + 0.2 * sh.kers, kmat, sd * (side(0.8, -1.4, sd) + 0.008), 0.8, -1.4);
+    for (const sd of [-1, 1]) {
+      const len = 0.5 + 0.2 * sh.kers;
+      put(new T.CapsuleGeometry(0.014 + 0.003 * sh.kers, len, 6, 12).rotateX(Math.PI / 2), kmat, sd * (side(0.8, -1.4, sd) + 0.006), 0.8, -1.4);
+    }
     if (sh.kers >= 2) {
       const ty = down(-1.9);
-      box(0.28, 0.08, 0.5, carbon, 0, ty + 0.04, -1.9);
-      for (let k = 0; k < 4; k++) box(0.26, 0.05, 0.012, tint, 0, ty + 0.1, -1.72 - k * 0.12);
+      put(softBox(0.3, 0.09, 0.52, 0.45, 16), shiny, 0, ty + 0.04, -1.9);
+      for (let k = 0; k < 5; k++) put(softBox(0.27, 0.05, 0.014, 0.5, 10), tintS, 0, ty + 0.1, -1.7 - k * 0.1);
     }
     if (sh.kers >= 3) {
-      box(0.62, 0.028, 0.02, kmat, 0, 0.74, bb.min.z + 0.35);
-      const ant = new T.Mesh(new T.CylinderGeometry(0.004, 0.004, 0.32, 6), carbon); ant.position.set(0.12, down(-0.6) + 0.18, -0.6); body.add(ant);
-      const tipm = new T.Mesh(new T.SphereGeometry(0.014, 8, 6), kmat); tipm.position.set(0.12, down(-0.6) + 0.34, -0.6); body.add(tipm);
+      put(new T.CapsuleGeometry(0.014, 0.6, 6, 12).rotateZ(Math.PI / 2), kmat, 0, 0.74, bb.min.z + 0.35);
+      put(new T.CylinderGeometry(0.003, 0.006, 0.34, 8), shiny, 0.12, down(-0.6) + 0.18, -0.6);
+      put(new T.SphereGeometry(0.014, 12, 10), kmat, 0.12, down(-0.6) + 0.35, -0.6);
     }
   }
   return kmat;
@@ -5169,11 +5213,11 @@ function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, brakeMa
     const n = [0, 8, 5, 10][sh.wheels];
     if (sh.wheels === 1) {
       const disc = add(new T.CylinderGeometry(R * 0.5, R * 0.5, 0.012, 32), m, face, cy, 0); disc.rotation.z = Math.PI / 2;
-      for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; const sl = add(new T.BoxGeometry(0.014, R * 0.2, R * 0.07), dark, face + sg * 0.006, cy + Math.cos(a) * R * 0.33, Math.sin(a) * R * 0.33); sl.rotation.x = -a; }
+      for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; const sl = add(softBox(0.014, R * 0.2, R * 0.07, 0.6, 8), dark, face + sg * 0.006, cy + Math.cos(a) * R * 0.33, Math.sin(a) * R * 0.33); sl.rotation.x = -a; }
     } else {
       for (let k = 0; k < n; k++) {
         const a = (k / n) * Math.PI * 2, len = R * (sh.wheels === 2 ? 0.52 : 0.54);
-        const sp = add(new T.BoxGeometry(0.014, len, R * (sh.wheels === 2 ? 0.13 : 0.05)), m, face, cy + Math.cos(a) * len / 2, Math.sin(a) * len / 2); sp.rotation.x = -a;
+        const sp = add(warpGeo(softBox(0.016, len, R * (sh.wheels === 2 ? 0.13 : 0.055), 0.5, 10), (x, y, z) => [x, y, z * (1.25 - 0.5 * (y / len + 0.5))]), m, face, cy + Math.cos(a) * len / 2, Math.sin(a) * len / 2); sp.rotation.x = -a;
       }
       const hub = add(new T.CylinderGeometry(R * 0.13, R * 0.13, 0.02, sh.wheels === 3 ? 6 : 20), new T.MeshStandardMaterial({ color: sh.wheels === 3 ? '#e0b13a' : rimCol, roughness: 0.2, metalness: 0.9 }), face + sg * 0.004, cy, 0); hub.rotation.z = Math.PI / 2;
     }
@@ -5987,12 +6031,12 @@ const Sound = {
     g.gain.setTargetAtTime(0, this.ctx.currentTime + dur, 0.025);
     o.connect(f); f.connect(g); g.connect(this.out); o.start(); o.stop(this.ctx.currentTime + dur + 0.3);
   },
-  burst(type, f, q, gain, at, decay, len) {
+  burst(type, f, q, gain, at, decay, len, dest) {
     const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuf;
     const fl = this.ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
     const g = this.ctx.createGain(); g.gain.value = 0;
     g.gain.setValueAtTime(gain, at); g.gain.setTargetAtTime(0, at + 0.005, decay);
-    src.connect(fl); fl.connect(g); g.connect(this.out);
+    src.connect(fl); fl.connect(g); g.connect(dest || this.out);
     src.start(at, Math.random() * 1.5); src.stop(at + len);
     return fl;
   },
@@ -6002,6 +6046,7 @@ const Sound = {
   impact(strength, kind = 'hit') {
     if (!this.ctx || !this.noiseBuf) return;
     const c = this.ctx, t = c.currentTime, s = clamp(strength, 0, 1.2);
+    if (kind !== 'land' && kind !== 'splash' && carType().formula) { this.crashF1(s, kind); return; }
     this.burst('lowpass', kind === 'land' ? 180 : 260, 0.7, Math.min(1.2, s) * (kind === 'land' ? 1.1 : 1), t, 0.06, 0.5);
     if (kind === 'land') { this.burst('lowpass', 90, 1, 0.8 * s, t, 0.1, 0.5); return; }
     const hollow = kind === 'tree' || kind === 'bale' || kind === 'splash';
@@ -6013,6 +6058,49 @@ const Sound = {
       o.connect(g); g.connect(this.out); o.start(t); o.stop(t + 0.7);
     }
     if (s > 0.6 && kind !== 'tree') for (let k = 0; k < 5; k++) this.burst('highpass', 5200 + Math.random() * 2500, 5, 0.05 * s, t + 0.04 + k * (0.03 + Math.random() * 0.05), 0.012, 0.08); // střepy
+  },
+  // náraz formule: kompozit praská a tříští se, ne plech. Hluboká rána monokoku, ostré prasknutí karbonu, zvonění
+  // ulomených dílů, tříšť, která se rozletí a odskakuje (stále řidčeji a tišeji, každá kus z jiné strany), a dunivé doznění
+  crashF1(s, kind) {
+    s *= 0.8; // několik vrstev se sčítá, kompresor hlídá zbytek
+    const c = this.ctx, t = c.currentTime;
+    const pan = c.createStereoPanner ? c.createStereoPanner() : null;
+    const dest = pan ? (pan.connect(this.out), pan) : this.out;
+    if (pan) pan.pan.value = (Math.random() - 0.5) * 0.7;
+    const hollow = kind === 'tree' || kind === 'bale';
+    // hluboká rána: sinus klesá z 120 na 42 Hz + šum
+    const o = c.createOscillator(), og = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.22);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.55 * s, t + 0.004); og.gain.setTargetAtTime(0, t + 0.05, 0.07);
+    o.connect(og); og.connect(dest); o.start(t); o.stop(t + 0.5);
+    this.burst('lowpass', 240, 0.8, 0.9 * s, t, 0.07, 0.5, dest);
+    // praskání karbonu: dvě ostré vlny šumu
+    this.burst('bandpass', hollow ? 1800 : 3300, 1.6, 0.6 * s, t + 0.002, 0.012, 0.15, dest);
+    this.burst('bandpass', hollow ? 900 : 2100, 1.2, 0.5 * s, t + 0.014, 0.03, 0.25, dest);
+    if (!hollow && s > 0.3) this.burst('highpass', 7000, 0.7, 0.28 * s, t + 0.004, 0.02, 0.2, dest); // jiskřivý třesk
+    // zvonění ulomených dílů (karbonové trubky a křídla): vyšší, krátké a nesouměrné
+    if (!hollow && s > 0.25) for (const [f, a, d] of [[780 + Math.random() * 160, 0.1, 0.05], [1950 + Math.random() * 400, 0.07, 0.035], [4300 + Math.random() * 900, 0.04, 0.02]]) {
+      const so = c.createOscillator(), sg = c.createGain();
+      so.type = 'sine'; so.frequency.value = f; sg.gain.setValueAtTime(a * s, t + 0.004); sg.gain.setTargetAtTime(0, t + 0.01, d);
+      so.connect(sg); sg.connect(dest); so.start(t); so.stop(t + 0.5);
+    }
+    // tříšť: kousky se odrážejí od asfaltu, mezery rostou a hlasitost klesá (jako míček)
+    if (!hollow) {
+      let at = t + 0.05, gap = 0.018, vol = 0.3 * s;
+      const n = Math.round(6 + 12 * Math.min(1, s));
+      for (let k = 0; k < n; k++) {
+        const pp = c.createStereoPanner ? c.createStereoPanner() : null; if (pp) { pp.pan.value = (Math.random() - 0.5) * 1.6; pp.connect(this.out); }
+        if (Math.random() < 0.5) this.burst('bandpass', 1400 + Math.random() * 5600, 4 + Math.random() * 6, vol, at, 0.006 + Math.random() * 0.01, 0.07, pp || this.out);
+        else { const to = c.createOscillator(), tg = c.createGain(); to.type = 'triangle'; to.frequency.value = 1800 + Math.random() * 3400; tg.gain.setValueAtTime(vol * 0.35, at); tg.gain.setTargetAtTime(0, at + 0.003, 0.012); to.connect(tg); tg.connect(pp || this.out); to.start(at); to.stop(at + 0.12); }
+        at += gap; gap *= 1.22 + Math.random() * 0.2; vol *= 0.84;
+      }
+      if (s > 0.55) { // odlétlý kus s odskoky po zemi
+        let a2 = t + 0.2;
+        for (let k = 0; k < 4; k++) { this.burst('lowpass', 520 - k * 70, 1, 0.34 * s * Math.pow(0.55, k), a2, 0.03, 0.2, dest); a2 += 0.1 * Math.pow(0.72, k) + 0.07; }
+      }
+    }
+    // doznění: dunivý ohlas
+    this.burst('lowpass', 320, 0.6, 0.22 * s, t + 0.06, 0.28, 1.0, dest);
   },
   // utahovák kol v boxech: čtyři krátká zavrčení za sebou, pak ještě jedno při nasazení
   gun(delay = 0) {
@@ -7027,10 +7115,10 @@ function cockpitBuild(c3) {
   const add = (geo, mat, x, y, z) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); wheel.add(m); return m; };
   if (f1) {
     pivot.position.set(0, -0.3, -0.7); pivot.rotation.x = -0.55; pivot.scale.setScalar(0.8);
-    add(new T.BoxGeometry(0.2, 0.12, 0.034), carbon, 0, 0, 0);
+    add(softBox(0.2, 0.12, 0.034, 0.4, 14), carbon, 0, 0, 0);
     for (const s of [-1, 1]) {
       add(new T.CapsuleGeometry(0.034, 0.1, 4, 10), rubber, s * 0.138, -0.005, 0.004);      // rukojeť
-      const bar = add(new T.BoxGeometry(0.05, 0.06, 0.03), carbon, s * 0.105, 0.028, 0); bar.rotation.z = s * 0.1;
+      const bar = add(softBox(0.05, 0.06, 0.03, 0.5, 10), carbon, s * 0.105, 0.028, 0); bar.rotation.z = s * 0.1;
       add(new T.BoxGeometry(0.014, 0.1, 0.012), accent, s * 0.172, -0.005, 0.017);           // proužek v barvě týmu
     }
     // displej se stupněm a rychlostí
