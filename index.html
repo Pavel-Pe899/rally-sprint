@@ -2812,6 +2812,21 @@ function buildWorld(td) {
     const d = trackDist(x, z) - 1, i = trackDist.i, lat = (x - X[i]) * NX[i] + (z - Z[i]) * NZ[i];
     return d >= r + trailShoulder(td, i, Math.sign(lat) || 1) - 1.4;
   };
+  // Okruh: je bod za zdí (svodidlem) vzhledem ke VŠEM úsekům trati v okolí 30 m? (stromy nesmí stát před zdí ani mezi
+  // dvěma blízkými úseky trati, kde by je kontrola jen podle vlastního úseku nechala v únikové zóně druhého)
+  function behindWalls(x, z, margin) {
+    const cx = Math.floor(x / 10), cz = Math.floor(z / 10), half = td.ds * 0.75;
+    for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) {
+      const l = tHash.get((cx + a) * 100000 + cz + b); if (!l) continue;
+      for (const j of l) {
+        const dx = x - X[j], dz = z - Z[j];
+        if (Math.abs(dx * TX[j] + dz * TZ[j]) > half) continue;
+        const lat = dx * NX[j] + dz * NZ[j];
+        if (Math.abs(lat) < (lat > 0 ? td.wallR[j] : td.wallL[j]) + margin) return false;
+      }
+    }
+    return true;
+  }
   function roadDistAt(x, z) {
     const gx = Math.round((x - gx0) / CELL), gz = Math.round((z - gz0) / CELL);
     if (gx < 0 || gz < 0 || gx >= GW || gz >= GH) return 1e4;
@@ -3051,7 +3066,7 @@ function buildWorld(td) {
         const forest = st.trail ? 1 : smooth(-0.15, 0.25, noise.fbm(px / 160, pz / 160, 2)) * (1 - fmin) + fmin;
         if (rnd() > forest) continue;
         if (!st.trail && roadDistAt(px, pz) < HW + 5.5) continue;
-        if (st.circuit && off < (side > 0 ? td.wallR[i] : td.wallL[i]) + 3) continue; // ne v únikové zóně před zdí
+        if (st.circuit && (off < (side > 0 ? td.wallR[i] : td.wallL[i]) + 3 || !behindWalls(px, pz, 4.5))) continue; // jen za zdí, od žádného úseku trati blíž
         if (inPaddock(i, side, off)) continue;
         // ani podél celé boxové uličky a u vjezdu (stromy by překážely ve výhledu do boxů)
         if (td.pit && side === td.pit.side) { const pr = td.pit.relOf(S[i]); if (pr > td.pit.entry - 160 && pr < td.pit.exit + 60 && off < td.pit.edge + 40) continue; }
@@ -3071,7 +3086,7 @@ function buildWorld(td) {
       const side = rnd() < 0.5 ? -1 : 1;
       const off = HW + 4 + rnd() * 30;
       const px = X[i] + NX[i] * side * off, pz = Z[i] + NZ[i] * side * off;
-      if (clearOf(px, pz, HW + (st.trail ? 2.8 : 3.8))) {
+      if (clearOf(px, pz, HW + (st.trail ? 2.8 : 3.8)) && (!st.circuit || behindWalls(px, pz, 3))) {
         const py = terrainAt(px, pz);
         if (st.water == null || py > st.water - 0.5) {
           const sc = 0.5 + rnd() * rnd() * 2.2;
@@ -3099,6 +3114,7 @@ function buildWorld(td) {
           const pz = Z[i] + NZ[i] * side * off + TZ[i] * (rnd() - 0.5) * 8;
           if (rnd() > smooth(-0.1, 0.25, noise.fbm(px / 160, pz / 160, 2))) continue;
           if (roadDistAt(px, pz) < 100) continue;
+          if (st.circuit && !behindWalls(px, pz, 4.5)) continue;
           const py = terrainAt(px, pz);
           if (st.water != null && py < st.water + 0.6) continue;
           const cell = FAR_SPRITE[pickKind()];
