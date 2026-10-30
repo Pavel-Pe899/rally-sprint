@@ -3573,14 +3573,19 @@ function buildWorld(td) {
       g.fillStyle = 'rgba(0,0,0,.08)'; for (let x = 0; x < w; x += 64) g.fillRect(x, 0, 2, h); // spáry mezi dílci
     });
     // ochranný plot: kosočtverečné pletivo s napínacími dráty nahoře a dole
-    const fenceTex = canvasTex(128, 128, (g, w, h) => {
-      g.clearRect(0, 0, w, h); g.strokeStyle = 'rgba(205,211,218,1)'; g.lineWidth = 2;
-      for (let k = -128; k < 256; k += 16) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + 128, 128); g.stroke(); g.beginPath(); g.moveTo(k + 128, 0); g.lineTo(k, 128); g.stroke(); }
+    const fenceTex = canvasTex(256, 256, (g, w, h) => {
+      g.clearRect(0, 0, w, h);
+      // pletivo: každý drát má tmavý okraj, světlé jádro a lesklý pruh (vypadá jako oblý kovový drát, ne čára)
+      for (const [lw, col] of [[7, 'rgba(40,44,50,1)'], [4.5, 'rgba(150,158,168,1)'], [2, 'rgba(236,241,247,1)']]) {
+        g.strokeStyle = col; g.lineWidth = lw;
+        for (let k = -256; k < 512; k += 32) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + 256, 256); g.stroke(); g.beginPath(); g.moveTo(k + 256, 0); g.lineTo(k, 256); g.stroke(); }
+      }
     }, false);
     fenceTex.wrapS = fenceTex.wrapT = T.RepeatWrapping;
-    const wallMat = new T.MeshLambertMaterial({ map: adTex }), capMat = new T.MeshLambertMaterial({ map: concreteTex, side: T.DoubleSide });
-    const fenceMat = new T.MeshLambertMaterial({ map: fenceTex, transparent: true, alphaTest: 0.25, side: T.DoubleSide, depthWrite: false });
-    const railMat = new T.MeshLambertMaterial({ color: '#8f979f', side: T.DoubleSide });
+    fenceTex.repeat.set(2.6, 2.6); fenceTex.anisotropy = 8;
+    const wallMat = addShine(new T.MeshStandardMaterial({ map: adTex, roughness: 0.38, metalness: 0.1 }), 'wall', { gloss: 0.9 }), capMat = new T.MeshLambertMaterial({ map: concreteTex, side: T.DoubleSide });
+    const fenceMat = addShine(new T.MeshStandardMaterial({ map: fenceTex, transparent: true, alphaTest: 0.3, side: T.DoubleSide, depthWrite: false, metalness: 0.7, roughness: 0.35 }), 'fence', { gloss: 1.1 });
+    const railMat = addShine(new T.MeshStandardMaterial({ color: '#9aa2ab', side: T.DoubleSide, metalness: 0.8, roughness: 0.3 }), 'rail', { gloss: 1.2 });
     const postsPos = [];
     const mk = (pos, uv, idx, mat, cast) => {
       const g = new T.BufferGeometry();
@@ -3592,6 +3597,7 @@ function buildWorld(td) {
     for (const side of [-1, 1]) {
       const wa = side > 0 ? td.wallR : td.wallL;
       const fp = [], fu = [], cp = [], cu = [], fp2 = [], fu2 = [], fp3 = [], rp = [], fi = [], ci = [], ri = [];
+      const fp2b = [];
       let u = 0;
       for (let i = r0; i <= r1; i++) {
         const o = wa[i] * side, x = X[i] + NX[i] * o, z = Z[i] + NZ[i] * o, y = Y[i] - 0.1;
@@ -3608,6 +3614,7 @@ function buildWorld(td) {
         // plot nad zdí a nahoře přesah k trati, na hraně trubka
         const fx = x + nx * 0.2, fz = z + nz * 0.2;
         fp2.push(fx, y + 1.05, fz, fx, y + 4.3, fz); fu2.push(u * 16, 0, u * 16, 1.6);
+        fp2b.push(fx - nx * 0.07, y + 1.05, fz - nz * 0.07, fx - nx * 0.07, y + 4.3, fz - nz * 0.07);
         fp3.push(fx, y + 4.3, fz, fx - nx * 0.55, y + 4.95, fz - nz * 0.55);
         rp.push(fx - nx * 0.55, y + 4.9, fz - nz * 0.55, fx - nx * 0.55, y + 5.02, fz - nz * 0.55, fx, y + 1.0, fz, fx, y + 1.12, fz);
         if ((i - r0) % 3 === 0 && !hidden) postsPos.push([fx, y + 1.05, fz, Math.atan2(nx, nz)]);
@@ -3623,13 +3630,15 @@ function buildWorld(td) {
       mk(fp, fu, fi, wallMat, true);
       mk(cp, cu, ci, capMat, false);
       mk(fp2, fu2, fi, fenceMat, false);
+      mk(fp2b, fu2.map((v, k) => (k % 2 ? v : v + 0.5)), fi, fenceMat, false);   // druhá vrstva pletiva (síť má tloušťku)
       mk(fp3, fu2.map((v, k) => (k % 2 ? v * 0.3 : v)), fi, fenceMat, false);
       mk(rp, null, ri, railMat, false);
     }
     // sloupky plotu (nahoře zalomené k trati)
     const postGeo = new T.CylinderGeometry(0.06, 0.06, 3.3, 6).translate(0, 1.65, 0);
     const postTop = new T.CylinderGeometry(0.05, 0.05, 0.86, 6).rotateX(-0.87).translate(0, 3.6, -0.28);
-    const posts = new T.InstancedMesh(mergeColored([{ geo: postGeo }, { geo: postTop }]), new T.MeshLambertMaterial({ color: '#7f878f' }), postsPos.length);
+    const postBase = new T.CylinderGeometry(0.16, 0.2, 0.12, 10).translate(0, 0.06, 0), postBrace = new T.CylinderGeometry(0.03, 0.03, 1.4, 5).rotateX(0.95).translate(0, 0.6, -0.55);
+    const posts = new T.InstancedMesh(mergeColored([{ geo: postGeo }, { geo: postTop }, { geo: postBase }, { geo: postBrace }]), addShine(new T.MeshStandardMaterial({ color: '#8d959e', metalness: 0.8, roughness: 0.32 }), 'post', { gloss: 1.2 }), postsPos.length);
     postsPos.forEach(([x, y, z, a], k) => posts.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, a, 0)), vS.set(1, 1, 1))));
     posts.computeBoundingSphere(); group.add(posts);
     // velké reklamní tabule na lešení za zdí na výjezdech ze zatáček
@@ -6281,9 +6290,44 @@ const Sound = {
   thump(strength, kind = 'hit') { this.impact(strength, kind); },
   // náraz po vrstvách: hluboká rána, drcení plechu, kovový zvuk (s ladícími dozvuky) a při silném nárazu cinkání skla;
   // strom a balík zní hluchě, zeď a kámen kovově, přistání jen dunivě
+  // velký náraz: hluboký třesk, exploze šumu, drcení plechu a ostré kovové prasknutí, k tomu dozvuk (dlouhý ohlas jako ve velké hale)
+  boom(s, kind) {
+    const c = this.ctx, t = c.currentTime;
+    if (!this.verb) {
+      const len = Math.floor(c.sampleRate * 1.9), ir = c.createBuffer(2, len, c.sampleRate);
+      for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+      const cv = c.createConvolver(); cv.buffer = ir; const wg = c.createGain(); wg.gain.value = 0.5; cv.connect(wg); wg.connect(this.out);
+      this.verb = cv;
+    }
+    const wet = c.createGain(); wet.gain.value = 0.9; wet.connect(this.verb);
+    const dry = (n) => { n.connect(this.out); n.connect(wet); return n; };
+    const k = Math.min(1.25, s * 1.15);
+    // hluboký třesk (sinus klesá z 110 na 24 Hz) s mírným zkreslením
+    const o = c.createOscillator(), og = c.createGain(), ws = c.createWaveShaper(), cvv = new Float32Array(256);
+    for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; cvv[i] = Math.tanh(x * 2.2); } ws.curve = cvv;
+    o.type = 'sine'; o.frequency.setValueAtTime(115, t); o.frequency.exponentialRampToValueAtTime(24, t + 0.55);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.9 * k, t + 0.006); og.gain.setTargetAtTime(0, t + 0.08, 0.17);
+    o.connect(ws); ws.connect(og); dry(og); o.start(t); o.stop(t + 1.2);
+    // exploze šumu
+    const nb = (type, f, q, gain, at, dec, len) => { const src = c.createBufferSource(); src.buffer = this.noiseBuf; const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const gg = c.createGain(); gg.gain.setValueAtTime(gain, at); gg.gain.setTargetAtTime(0, at + 0.004, dec); src.connect(fl); fl.connect(gg); dry(gg); src.start(at, Math.random() * 1.2); src.stop(at + len); return fl; };
+    const lf = nb('lowpass', 900, 0.7, 1.1 * k, t, 0.11, 1.2); lf.frequency.setTargetAtTime(150, t, 0.12);
+    nb('bandpass', 1800, 0.8, 0.9 * k, t + 0.002, 0.05, 0.5);
+    // drcení plechu: několik ostrých nepravidelných ran za sebou
+    const hollow = kind === 'tree' || kind === 'bale';
+    for (let i = 0; i < (hollow ? 3 : 7); i++) nb('bandpass', (hollow ? 600 : 1200) + Math.random() * 3200, 2 + Math.random() * 3, (0.5 - i * 0.04) * k, t + 0.012 + i * (0.02 + Math.random() * 0.03), 0.018 + Math.random() * 0.02, 0.2);
+    // kovové prasknutí a zvonění
+    if (!hollow) for (const [f, a, d] of [[430 + Math.random() * 150, 0.2, 0.2], [1190 + Math.random() * 300, 0.12, 0.14], [3100 + Math.random() * 900, 0.07, 0.09]]) {
+      const so = c.createOscillator(), sg = c.createGain(); so.type = 'triangle'; so.frequency.value = f; so.detune.value = (Math.random() - 0.5) * 40;
+      sg.gain.setValueAtTime(a * k, t + 0.004); sg.gain.setTargetAtTime(0, t + 0.02, d); so.connect(sg); dry(sg); so.start(t); so.stop(t + 1.3);
+    }
+    // sypající se střepy a díly (po dopadu, každý jinde)
+    const n = Math.round(6 + 10 * Math.min(1, k)); let at = t + 0.09, gap = 0.02;
+    for (let i = 0; i < n; i++) { const pp = c.createStereoPanner ? c.createStereoPanner() : null; if (pp) { pp.pan.value = (Math.random() - 0.5) * 1.6; pp.connect(this.out); } const f = nb('bandpass', 1500 + Math.random() * 5000, 4 + Math.random() * 5, 0.2 * k * Math.pow(0.88, i), at, 0.01 + Math.random() * 0.01, 0.08); void f; at += gap; gap *= 1.2; }
+  },
   impact(strength, kind = 'hit') {
     if (!this.ctx || !this.noiseBuf) return;
-    const c = this.ctx, t = c.currentTime, s = clamp(strength, 0, 1.2);
+    const c = this.ctx, t = c.currentTime, s = clamp(strength * 1.5, 0, 1.4);   // nárazy hrají o polovinu silněji než dřív
+    if (kind !== 'land' && kind !== 'splash' && s > 0.18) { const now = performance.now(); if (!this.boomT || now - this.boomT > 220) { this.boomT = now; this.boom(s, kind); } }
     if (kind !== 'land' && kind !== 'splash' && carType().formula) { this.crashF1(s, kind); return; }
     this.burst('lowpass', kind === 'land' ? 180 : 260, 0.7, Math.min(1.2, s) * (kind === 'land' ? 1.1 : 1), t, 0.06, 0.5);
     if (kind === 'land') { this.burst('lowpass', 90, 1, 0.8 * s, t, 0.1, 0.5); return; }
@@ -9162,7 +9206,7 @@ function gpCollide() {
       car.omega += (Math.random() - 0.5) * Math.min(1.5, hit * 0.08);
     }
     if (hit > 2.5) {
-      Sound.thump(Math.min(1, hit / 10)); car.shake = Math.min(1, car.shake + hit / 18);
+      Sound.thump(Math.min(1, hit / 6), 'car'); car.shake = Math.min(1, car.shake + hit / 14);
       sparkBurst(car.x + (a.c3d.root.position.x - car.x) / 2, car.y + 0.3, car.z + (a.c3d.root.position.z - car.z) / 2, Math.min(30, 6 + hit * 3), Math.min(1.5, hit / 10));
     }
   }
@@ -10311,7 +10355,7 @@ function netTick(dt) {
         car.x += nx * push; car.z += nz * push;
         const vn = car.vx * nx + car.vz * nz, ov = (Math.sin(s[3]) * nx + Math.cos(s[3]) * nz) * s[6];
         if (vn < ov) { car.vx += (ov - vn) * 0.8 * nx; car.vz += (ov - vn) * 0.8 * nz; }
-        if (!NET.bumpT || performance.now() - NET.bumpT > 600) { NET.bumpT = performance.now(); Sound.beep(160, 0.08); car.shake = Math.max(car.shake || 0, 0.4); }
+        if (!NET.bumpT || performance.now() - NET.bumpT > 600) { NET.bumpT = performance.now(); Sound.thump(0.7, 'car'); car.shake = Math.max(car.shake || 0, 0.4); }
       }
     }
     if (o.pres && o.pres.fin != null && !NET.said[o.peer]) { NET.said[o.peer] = 1; toast(`${o.name} je v cíli · ${fmt(o.pres.fin)}`, 2.5); }
@@ -10804,25 +10848,38 @@ resize();
 // Scéna se vykreslí do HDR bufferu, pak přijde záře (bloom), barevné ladění etapy
 // a při velké rychlosti jemné rozmazání okrajů. Na nízké kvalitě se kreslí rovnou.
 const GRADE_SHADER = {
-  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.08 }, uContrast: { value: 1.06 }, uTint: { value: new T.Vector3(1, 1, 1) }, uBlur: { value: 0 } },
+  uniforms: { tDiffuse: { value: null }, uSat: { value: 1.08 }, uContrast: { value: 1.06 }, uTint: { value: new T.Vector3(1, 1, 1) }, uBlur: { value: 0 }, uTime: { value: 0 }, uTexel: { value: new T.Vector2(1 / 1280, 1 / 720) } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float uSat; uniform float uContrast; uniform vec3 uTint; uniform float uBlur;
+    uniform sampler2D tDiffuse; uniform float uSat; uniform float uContrast; uniform vec3 uTint; uniform float uBlur; uniform float uTime; uniform vec2 uTexel;
     varying vec2 vUv;
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
       vec2 dir = vUv - 0.5;
-      vec3 c = texture2D(tDiffuse, vUv).rgb;
+      float rr = length(dir * vec2(1.25, 1.0));
+      // jemná chromatická vada objektivu k okrajům (červená a modrá se mírně rozcházejí)
+      vec2 ca = dir * (0.0016 * rr * rr);
+      vec3 c = vec3(texture2D(tDiffuse, vUv + ca).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - ca).b);
       if (uBlur > 0.001) {
         float k = uBlur * smoothstep(0.12, 0.6, length(dir));
         vec3 acc = c;
         for (int i = 1; i < 6; i++) acc += texture2D(tDiffuse, vUv - dir * k * (float(i) / 6.0)).rgb;
         c = acc / 6.0;
       }
+      // doostření: odečte rozmazání okolních bodů (drobné detaily, pletivo a písmo jsou ostřejší)
+      vec3 bl = (texture2D(tDiffuse, vUv + vec2(uTexel.x, 0.0)).rgb + texture2D(tDiffuse, vUv - vec2(uTexel.x, 0.0)).rgb + texture2D(tDiffuse, vUv + vec2(0.0, uTexel.y)).rgb + texture2D(tDiffuse, vUv - vec2(0.0, uTexel.y)).rgb) * 0.25;
+      c += clamp(c - bl, -0.18, 0.18) * 0.55;
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
       c = mix(vec3(l), c, uSat);
       c = max((c - 0.18) * uContrast + 0.18, 0.0) * uTint;
-      // jemná vinětace jako u objektivu kamery
-      c *= 1.0 - 0.22 * smoothstep(0.38, 0.95, length(dir * vec2(1.25, 1.0)));
+      // S-křivka: hlubší stíny, čistší světla (filmový kontrast)
+      c = c * c * (3.0 - 2.0 * min(c, vec3(1.0))) * 0.35 + c * 0.65;
+      // teplejší světla a chladnější stíny (rozdělené tónování)
+      float lm = dot(c, vec3(0.2126, 0.7152, 0.0722));
+      c += vec3(0.018, 0.008, -0.014) * smoothstep(0.45, 1.0, lm) + vec3(-0.008, 0.002, 0.016) * (1.0 - smoothstep(0.0, 0.35, lm));
+      // vinětace jako u objektivu a jemné filmové zrno
+      c *= 1.0 - 0.26 * smoothstep(0.36, 0.95, rr);
+      c += (hash(vUv * vec2(1920.0, 1080.0) + uTime) - 0.5) * 0.022;
       gl_FragColor = vec4(c, 1.0);
     }`,
 };
@@ -10843,6 +10900,7 @@ const GRADE = {
   mtbR: { sat: 1.08, con: 1.08, tint: [1.04, 1.0, 0.94], bloom: [0.4, 1.6] },
   mtbK: { sat: 1.08, con: 1.08, tint: [1.04, 1.0, 0.94], bloom: [0.4, 1.6] },
 };
+let tmpV2 = null;
 function setupPost() {
   if (post) { post.composer.renderTarget1.dispose(); post.composer.renderTarget2.dispose(); post = null; }
   const P = window.THREE_POST, cfg = Q().post;
@@ -10962,6 +11020,7 @@ function tick(now) {
   try { updateGlare(); updateTreeLod(); if (W.specLod) W.specLod(camera.position.x, camera.position.z); updateTerrainLod(); } catch (e) { tickErrors++; }
   if (post) {
     if (post.blur) post.grade.uniforms.uBlur.value = (smooth(26, 52, Math.abs(car.vf)) * 0.05 + car.nosFx * 0.04) * (G.mode === 'race' ? 1 : 0);
+    post.grade.uniforms.uTime.value = (performance.now() % 1000) * 0.37; { const sz = renderer.getDrawingBufferSize(tmpV2 || (tmpV2 = new T.Vector2())); post.grade.uniforms.uTexel.value.set(1 / sz.x, 1 / sz.y); }
     post.composer.render(dt);
   } else renderer.render(scene, camera);
   if (DIAG.on) diagProbe(rawDt);
