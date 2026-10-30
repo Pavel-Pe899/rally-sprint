@@ -485,6 +485,7 @@
   @media (max-height: 450px) { body.touch .gp-tower { --row: 16px; width: 120px; top: calc(100px + env(safe-area-inset-top, 0px)); } body.touch .gt-row { grid-template-columns: 17px 4px 1fr auto 8px; gap: 4px; font-size: 11px; } body.touch .gt-row .pos { font-size: 10px; } body.touch .gt-row .gap { font-size: 9px; } body.touch .gt-row .ty { width: 8px; height: 8px; border-width: 2px; } }
   @media (max-width: 600px) { .gp-tower { top: calc(236px + env(safe-area-inset-top, 0px)); } }
   /* dílna týmu */
+  .shop-top { width: 100%; margin: 4px 0 10px; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; border: 3px solid #07041f; box-shadow: 0 5px 0 #07041f, inset 0 3px 0 rgba(255, 255, 255, .45); text-shadow: 0 2px 0 #0b4d0a; }
   .shop-card { width: min(1000px, 100%); background: radial-gradient(120% 90% at 50% 0%, #3b2a9a 0%, #20156b 55%, #130c45 100%); border: 4px solid #07041f; box-shadow: 0 0 0 3px rgba(120, 100, 255, .45), 0 24px 60px rgba(0, 0, 0, .7); }
   .shop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .shop-card h2 { margin: 0; font-size: 40px; color: #fff; transform: rotate(-1.5deg); -webkit-text-stroke: 7px #07041f; paint-order: stroke fill; text-shadow: 0 5px 0 #07041f; letter-spacing: .5px; }
@@ -634,6 +635,7 @@
       <h1 class="logo"><span id="logoA">RALLY</span><br><em id="secret">SPRINT</em></h1>
       <p class="tagline" id="tagline">Pět rychlostních zkoušek, přes 27 km šotoliny, sněhu, asfaltu a písku. Spolujezdec hlásí každou zatáčku.</p>
     </div>
+    <button class="btn shop-top" id="bShopTop">Dílna týmu <small>díly formule</small></button>
     <p class="label" id="lblStages">Rychlostní zkoušky</p>
     <div class="stages" id="stageList"></div>
     <div class="detail" id="stageDetail"></div>
@@ -694,18 +696,6 @@
       <button class="btn ghost" id="bQuit">Do menu</button>
     </div>
     <p class="help net-diag" id="diagLine"></p>
-  </div>
-</div>
-
-<div id="modeModal" class="modal" hidden>
-  <div class="card mode-card">
-    <h2>Rally <em>Sprint</em></h2>
-    <p class="help">Co dneska pojedeme?</p>
-    <div class="actions">
-      <button class="btn" id="bModeRally">Rally <small>šotolina, sníh, asfalt a písek · spolujezdec</small></button>
-      <button class="btn gp" id="bModeF1">Formule 1 <small>Velká cena · výběr týmu a okruhu</small></button>
-      <button class="btn ghost" id="bModeNet">S kamarádem po internetu <small>jiná Wi-Fi nevadí · kód hry</small></button>
-    </div>
   </div>
 </div>
 
@@ -4944,7 +4934,7 @@ function buildModelCar(lv, spec) {
   }
   // formule: barevný proužek směsi na boku pneumatik (měkké červené, po zastávce v boxech střední žluté)
   let tyreMat = null;
-  const tyreLooks = [], wetGroups = [], brakeMats = [];
+  const tyreLooks = [], wetGroups = [], dryGroups = [], brakeMats = [];
   let kersMatRef = null;
   if (spec.formula) {
     tyreMat = new T.MeshStandardMaterial({ color: '#e8102a', roughness: 0.5, emissive: '#e8102a', emissiveIntensity: 0.15 });
@@ -4963,7 +4953,7 @@ function buildModelCar(lv, spec) {
       const pr = new T.Mesh(new T.RingGeometry(R * 0.66, R * 0.78, 64), new T.MeshBasicMaterial({ map: pirelliTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, side: T.DoubleSide }));
       pr.rotation.y = sg * Math.PI / 2; pr.position.set(outer - w.pivot.position.x + sg * 0.007, (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, 0);
       w.spin.add(pr);
-      shopWheelLook(w, spec.shop || {}, { sg, R, outer, cy: (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, cx: (bbT.max.x + bbT.min.x) / 2 - w.pivot.position.x, tw: bbT.max.x - bbT.min.x, lv, tyreLooks, wetGroups, brakeMats });
+      shopWheelLook(w, spec.shop || {}, { sg, R, outer, cy: (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, cx: (bbT.max.x + bbT.min.x) / 2 - w.pivot.position.x, tw: bbT.max.x - bbT.min.x, lv, tyreLooks, wetGroups, dryGroups, brakeMats });
     }
   }
 
@@ -4976,6 +4966,7 @@ function buildModelCar(lv, spec) {
   tailMat = tailMat || new T.MeshStandardMaterial();
   tailMat.emissive = new T.Color('#ff2010'); tailMat.emissiveIntensity = 0.4;
   for (const mt of clones.values()) {
+    if (spec.formula && mt.isMeshStandardMaterial && !mt.userData.shined && mt !== paint) { addShine(mt, 'f1mat', { gloss: 0.5 }); mt.userData.shined = true; mt.needsUpdate = true; }   // odlesk slunce na všem lesklém na formuli
     if (P.rim.test(mt.name)) { mt.color.set(lv.rim); if (spec.formula && !mt.userData.shined) { addShine(mt, 'rim', { gloss: 1.1 }); mt.userData.shined = true; mt.needsUpdate = true; } }
     if (P.accent && P.accent.test(mt.name)) mt.color.set(lv.a1);
     if (P.cover && P.cover.test(mt.name)) mt.color.set(lv.cov || lv.body); // kryt motoru a bočnice
@@ -4998,6 +4989,23 @@ function buildModelCar(lv, spec) {
     d.lookAt(d.position.clone().add(h.n));
     body.add(d); return d;
   };
+  // koupené křídlo nahradí původní: z modelu se odřízne (zadní: za koncem krytu motoru nad zemí, přední: celá šířka před nosem)
+  const sw = spec.formula && spec.shop ? spec.shop : null, cutR = sw && sw.rwing > 0, cutF = sw && sw.fwing > 0;
+  if (cutR || cutF) {
+    const cm = new T.Vector3();
+    body.traverse((o) => {
+      if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+      const geo = o.geometry.clone(), p = geo.attributes.position, ix = geo.index, n = ix ? ix.count : p.count, keep = [];
+      o.updateMatrix();
+      for (let i = 0; i < n; i += 3) {
+        const a = ix ? ix.getX(i) : i, b2 = ix ? ix.getX(i + 1) : i + 1, c2 = ix ? ix.getX(i + 2) : i + 2;
+        cm.set((p.getX(a) + p.getX(b2) + p.getX(c2)) / 3, (p.getY(a) + p.getY(b2) + p.getY(c2)) / 3, (p.getZ(a) + p.getZ(b2) + p.getZ(c2)) / 3).applyMatrix4(o.matrix);
+        const gone = (cutR && cm.z < -2.28 && cm.y > 0.7 && Math.abs(cm.x) < 0.66) || (cutF && cm.z > 1.85 && cm.y < 0.27 && (Math.abs(cm.x) > 0.16 || cm.y < 0.18));
+        if (!gone) keep.push(a, b2, c2);
+      }
+      geo.setIndex(keep); o.geometry = geo;
+    });
+  }
   const midZ = (bb.min.z + bb.max.z) / 2;
   for (const side of [-1, 1]) {
     // formule má číslo menší, na bočnici za kokpitem
@@ -5079,9 +5087,9 @@ function buildModelCar(lv, spec) {
     for (const side of [-1, 1]) {
       const hc = hitAny(new T.Vector3(side * 3, 0.8, -1.15), new T.Vector3(-side, 0, 0)); if (hc) decal(hc, 0.72, 0.18, nameTex, 0.014); // bok krytu motoru
     }
-    const wing = hitAny(new T.Vector3(0, 0.86, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (wing) decal(wing, 0.82, 0.2, wingTex, 0.01);
+    const wing = cutR ? null : hitAny(new T.Vector3(0, 0.86, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (wing) decal(wing, 0.82, 0.2, wingTex, 0.01);
     const sw2 = (lv.sp || []).find((x) => x[0] === 'wing2');
-    if (sw2) { const w2 = hitAny(new T.Vector3(0, 0.6, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (w2) { const { tex, aspect } = sponsorTex(sw2), w = Math.min(0.62, 0.1 * aspect); decal(w2, w, w / aspect, tex, 0.01); } }
+    if (sw2 && !cutR) { const w2 = hitAny(new T.Vector3(0, 0.6, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (w2) { const { tex, aspect } = sponsorTex(sw2), w = Math.min(0.62, 0.1 * aspect); decal(w2, w, w / aspect, tex, 0.01); } }
     const nose = hitAny(new T.Vector3(0, 3, 1.55), new T.Vector3(0, -1, 0));
     if (nose) { const d = decal(nose, 0.26, 0.26, doorTexture(lv.num || '4', lv), 0.01); d.rotation.set(-Math.PI / 2, 0, Math.PI); }
     // koupené díly z dílny (křídla, motor, podlaha, KERS): hladké tvary navazující na karoserii
@@ -5160,14 +5168,13 @@ function buildModelCar(lv, spec) {
   blob.rotation.x = -Math.PI / 2; blob.renderOrder = 1;
   const flame = makeFlame(0.42, 0.24, bb.min.z - 0.02);
   body.add(flame);
-  return { root, body, wheels, pod, beams, beamMat, headMat, tailMat, blob, flame, tyreMat, materials: { paint, acc1, acc2 }, baseColor: new T.Color(lv.body), wetGroups, brakeMats, kersMat: kersMatRef, driver, lv, formula: !!spec.formula, helm: driver[0] || null };
+  return { root, body, wheels, pod, beams, beamMat, headMat, tailMat, blob, flame, tyreMat, materials: { paint, acc1, acc2 }, baseColor: new T.Color(lv.body), wetGroups, dryGroups, brakeMats, kersMat: kersMatRef, driver, lv, formula: !!spec.formula, helm: driver[0] || null };
 }
 
 // ---------------------------------------------------------------- vzhled koupených dílů formule
 // Každý stupeň každého dílu vypadá jinak: motor (sací airbox, žebro, výfuky), podlaha (lišty, přepážky, difuzor),
 // KERS (světelné pásky, baterie, zadní světla), kola (výplň disku), brzdy (barevný kroužek, který při brzdění žhne),
 // pneumatiky na suchu (širší, pásky na boku) a do deště (vzor drážek, který je vidět po nasazení).
-const SHOP_BRAKE = [null, { col: '#d7263d', glow: 0.5 }, { col: '#e0b13a', glow: 0.9 }, { col: '#bff4ff', glow: 1.5 }];
 // hladký zaoblený kvádr (superelipsoid): měkké hrany a plynulé stínování místo ostrých rohů; e = 1 elipsoid, k 0 ostrý kvádr
 function softBox(w, h, d, e = 0.3, seg = 16) {
   const rows = seg + 1, cols = seg * 2 + 1, pos = new Float32Array(rows * cols * 3), idx = [];
@@ -5259,33 +5266,35 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
   const shiny = addShine(new T.MeshPhysicalMaterial({ color: '#15171b', roughness: 0.22, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.08, map: carbonTex() }), 'part-carbon', { gloss: 1.2 });
   const tintS = addShine(new T.MeshPhysicalMaterial({ color: (() => { const k = new T.Color(lv.a1); return 0.2126 * k.r + 0.7152 * k.g + 0.0722 * k.b; })() > 0.22 ? lv.a1 : lv.body, roughness: 0.25, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.1 }), 'part-tint', { gloss: 1.1 });
   const wing = (chord, width, camber, x, y, z, pitch, mat) => put(airfoilGeo(chord, width, camber), mat, x, y, z, pitch);
-  // ---- zadní křídlo: nové profily nad původním křídlem, boční desky a zadní hrana (gurney); každý stupeň o prvek víc
+  const platePaint = addShine(new T.MeshPhysicalMaterial({ color: lv.body, roughness: 0.35, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1 }), 'plate-paint', { gloss: 0.8 });
+  // ---- zadní křídlo: celé nové (původní se z modelu odřízne), počet profilů = stupeň, boční desky, nosník a gurney
   if (sh.rwing > 0) {
-    const L = sh.rwing, rw = hitAny(new T.Vector3(0, 3, bb.min.z + 0.3), new T.Vector3(0, -1, 0));
-    const y0 = rw ? rw.p.y : 0.92, z0 = rw ? rw.p.z : bb.min.z + 0.3, hw = 0.455;
-    const chords = [0.21, 0.18, 0.15];
-    for (let k = 0; k < L; k++) wing(chords[k], hw * 2, -0.075, 0, y0 + 0.04 + 0.066 * k, z0 + 0.1 - 0.072 * k, 0.17 + 0.12 * k, k === L - 1 ? tintS : shiny);
-    const zTe = z0 + 0.1 - 0.072 * (L - 1) - chords[L - 1], yTop = y0 + 0.04 + 0.066 * (L - 1) + 0.07;
-    for (const s of [-1, 1]) {                                                    // boční desky s uříznutým rohem a žebry
-      put(plateGeo(roundedPlatePts(zTe - 0.015, z0 + 0.12, y0 - 0.02, yTop, 0.03, 0.05), 0.012), tintS, s * (hw + 0.008), 0, 0);
-    }
-    if (L >= 3) {
-      put(softBox(hw * 2, 0.016, 0.01, 0.5, 10), tintS, 0, y0 + 0.04 + 0.066 * 2 + 0.005, zTe + 0.01, 0.17 + 0.24);    // gurney na odtokové hraně
-      put(new T.CapsuleGeometry(0.018, 0.08, 6, 12).rotateX(Math.PI / 2), shiny, 0, y0 + 0.1, z0 + 0.0);           // zásuvka DRS uprostřed
-      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) put(softBox(0.01, 0.01, 0.1, 0.6, 8), tintS, s * (hw + 0.032), y0 + 0.02 + k * 0.055, z0 - 0.02);   // žaluzie v desce
-    }
-  }
-  // ---- přední křídlo: profily po obou stranách, boční kaskády, nosníky z nosu
-  if (sh.fwing > 0) {
-    const L = sh.fwing, fw = hitAny(new T.Vector3(0.5, 3, bb.max.z - 0.3), new T.Vector3(0, -1, 0));
-    const y0 = fw ? fw.p.y : 0.12, z0 = fw ? fw.p.z : bb.max.z - 0.3;
+    const L = sh.rwing, hw = 0.56, chords = [0.27, 0.21, 0.17], pitches = [0.1, 0.3, 0.5];
+    const els = [];
+    for (let k = 0; k < L; k++) els.push({ le: -2.31 - 0.088 * k, y: 0.8 + 0.078 * k, c: chords[k], p: pitches[k] });
+    els.forEach((e, k) => wing(e.c, hw * 2, -0.075, 0, e.y, e.le, e.p, k === L - 1 && L > 1 ? tintS : shiny));
+    const last = els[L - 1], zTe = last.le - last.c - 0.03, yTop = last.y + 0.1;
     for (const s of [-1, 1]) {
-      for (let k = 0; k < L; k++) wing(0.17 - 0.016 * k, 0.62, -0.09, s * 0.47, y0 + 0.028 + 0.045 * k, z0 + 0.04 - 0.058 * k, 0.1 + 0.1 * k, k === L - 1 ? tintS : shiny);
-      const zTe = z0 + 0.04 - 0.058 * (L - 1) - (0.17 - 0.016 * (L - 1)), yT = y0 + 0.028 + 0.045 * (L - 1) + 0.035;
-      put(plateGeo(roundedPlatePts(zTe - 0.01, z0 + 0.16, y0 - 0.015, yT + 0.02, 0.02, 0.035), 0.01), tintS, s * 0.8, 0, 0);               // koncová deska
-      if (L >= 2) put(plateGeo(roundedPlatePts(zTe + 0.02, z0 + 0.08, y0 + 0.01, yT + 0.01, 0.015, 0.015), 0.008), shiny, s * 0.68, 0, 0);   // vnitřní kaskáda
-      if (L >= 3) { put(plateGeo(roundedPlatePts(zTe + 0.04, z0 + 0.04, y0 + 0.02, yT, 0.012, 0.01), 0.007), tintS, s * 0.58, 0, 0); put(softBox(0.1, 0.012, 0.05, 0.6, 8), tintS, s * 0.74, yT + 0.03, z0 - 0.01, 0, 0, s * 0.3); }
-      put(pylonGeo([[s * 0.06, y0 + 0.24, z0 - 0.52], [s * 0.075, y0 + 0.13, z0 - 0.26], [s * 0.1, y0 + 0.05, z0 - 0.04]], 0.019, 0.5), shiny, 0, 0, 0);  // nosník z nosu k profilu
+      put(plateGeo(roundedPlatePts(zTe, -2.27, 0.7, yTop, 0.045, 0.07), 0.014), platePaint, s * (hw + 0.008), 0, 0);               // boční deska s uříznutým rohem
+      put(plateGeo(roundedPlatePts(zTe + 0.06, -2.4, 0.72, 0.8, 0.02, 0.0), 0.006), shiny, s * (hw + 0.017), 0, 0);                  // tmavý pruh u paty desky
+      if (L >= 3) for (let k = 0; k < 3; k++) put(softBox(0.008, 0.012, 0.16, 0.6, 8), tintS, s * (hw + 0.018), 0.86 + k * 0.05, -2.52);   // žaluzie v desce
+    }
+    put(pylonGeo([[0, 0.55, -2.0], [0, 0.66, -2.3], [0, 0.78, -2.5]], 0.03, 0.4), shiny, 0, 0, 0);                                    // nosník (labutí krk) z krytu motoru
+    if (L >= 2) put(softBox(hw * 2, 0.014, 0.012, 0.5, 10), tintS, 0, last.y + 0.028, last.le - last.c, last.p);                       // gurney
+    if (L >= 3) put(new T.CapsuleGeometry(0.02, 0.1, 6, 12).rotateX(Math.PI / 2), shiny, 0, 0.9, -2.46);                                // zásuvka DRS
+  }
+  // ---- přední křídlo: celé nové přes celou šířku, počet profilů = stupeň, boční desky, kaskády, nosníky z nosu
+  if (sh.fwing > 0) {
+    const L = sh.fwing, hw = 1.0, chords = [0.4, 0.33, 0.27], pitches = [0.06, 0.16, 0.26];
+    const els = [];
+    for (let k = 0; k < L; k++) els.push({ le: 2.76 - 0.21 * k, y: 0.085 + 0.05 * k, c: chords[k], p: pitches[k] });
+    els.forEach((e, k) => wing(e.c, hw * 2, -0.07, 0, e.y, e.le, e.p, k === L - 1 && L > 1 ? tintS : shiny));
+    const zT = els[L - 1].le - els[L - 1].c - 0.02, yT = els[L - 1].y + 0.07;
+    for (const s of [-1, 1]) {
+      put(plateGeo(roundedPlatePts(zT, 2.78, 0.04, yT + 0.1, 0.035, 0.07), 0.014), platePaint, s * (hw + 0.01), 0, 0);                  // koncová deska
+      if (L >= 2) put(plateGeo(roundedPlatePts(zT + 0.1, 2.62, 0.09, yT + 0.03, 0.02, 0.03), 0.008), shiny, s * 0.76, 0, 0);            // vnitřní kaskáda
+      if (L >= 3) { put(plateGeo(roundedPlatePts(zT + 0.12, 2.5, 0.1, yT + 0.01, 0.015, 0.02), 0.007), tintS, s * 0.52, 0, 0); put(softBox(0.18, 0.012, 0.07, 0.6, 8), tintS, s * 0.9, yT + 0.1, 2.5, 0, 0, s * 0.3); }
+      put(pylonGeo([[s * 0.07, 0.3, 2.1], [s * 0.085, 0.2, 2.4], [s * 0.1, 0.12, 2.6]], 0.024, 0.45), shiny, 0, 0, 0);                  // nosník z nosu
     }
   }
   // ---- motor: aerodynamický airbox (zužuje se nahoru a u paty přechází do krytu), žebro, svítící výfuky
@@ -5351,52 +5360,74 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
   }
   return kmat;
 }
-// výplň disku kola, kroužek brzd, pásky na pneumatice a drážky do deště pro jedno kolo
-function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, brakeMats }) {
+// kola (ráfky), brzdový kotouč a vzorek běhounu pro jedno kolo formule. Barvy jsou jako ve skutečné F1: kovové a černé ráfky,
+// žhnoucí brzdový kotouč, černá guma; pneumatiky se liší jen vzorkem (drážky a nepravidelné bloky), žádné barevné pruhy.
+function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, dryGroups, brakeMats }) {
   const face = outer - w.pivot.position.x + sg * 0.012;
   const add = (geo, mat, x, y, z, parent = w.spin) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  const rubber = new T.MeshStandardMaterial({ color: '#2a2c30', roughness: 0.88 });
+  const cut = new T.MeshStandardMaterial({ color: '#030304', roughness: 1 });
+  if (w.tire) w.tire.material = rubber;                                            // světlejší guma, aby byl vidět vzorek
   const rimCol = SHOP_RIMS[sh.wheels || 0] || '#222';
-  // kola: 1 = stříbrný disk s drážkami, 2 = zlatá hvězda o pěti ramenech, 3 = kovaná červená s deseti paprsky a matkou
+  // kola: 1 = stříbrný disk s větracími otvory, 2 = zlatá hvězda o pěti ramenech, 3 = černá kovaná s deseti paprsky a matkou
   if (sh.wheels >= 1) {
-    const m = new T.MeshStandardMaterial({ color: rimCol, roughness: 0.25, metalness: 0.85 });
+    const m = addShine(new T.MeshStandardMaterial({ color: rimCol, roughness: sh.wheels === 3 ? 0.35 : 0.22, metalness: 0.9 }), 'rimshop', { gloss: 1 });
     const dark = new T.MeshStandardMaterial({ color: '#0d0e10', roughness: 0.6 });
     const n = [0, 8, 5, 10][sh.wheels];
     if (sh.wheels === 1) {
-      const disc = add(new T.CylinderGeometry(R * 0.5, R * 0.5, 0.012, 32), m, face, cy, 0); disc.rotation.z = Math.PI / 2;
-      for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; const sl = add(softBox(0.014, R * 0.2, R * 0.07, 0.6, 8), dark, face + sg * 0.006, cy + Math.cos(a) * R * 0.33, Math.sin(a) * R * 0.33); sl.rotation.x = -a; }
+      const disc = add(new T.CylinderGeometry(R * 0.55, R * 0.55, 0.012, 40), m, face, cy, 0); disc.rotation.z = Math.PI / 2;
+      for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; const sl = add(softBox(0.014, R * 0.2, R * 0.07, 0.6, 8), dark, face + sg * 0.006, cy + Math.cos(a) * R * 0.34, Math.sin(a) * R * 0.34); sl.rotation.x = -a; }
     } else {
       for (let k = 0; k < n; k++) {
-        const a = (k / n) * Math.PI * 2, len = R * (sh.wheels === 2 ? 0.52 : 0.54);
-        const sp = add(warpGeo(softBox(0.016, len, R * (sh.wheels === 2 ? 0.13 : 0.055), 0.5, 10), (x, y, z) => [x, y, z * (1.25 - 0.5 * (y / len + 0.5))]), m, face, cy + Math.cos(a) * len / 2, Math.sin(a) * len / 2); sp.rotation.x = -a;
+        const a = (k / n) * Math.PI * 2, len = R * (sh.wheels === 2 ? 0.55 : 0.56);
+        const sp = add(warpGeo(softBox(0.018, len, R * (sh.wheels === 2 ? 0.14 : 0.06), 0.5, 10), (x, y, z) => [x, y, z * (1.3 - 0.55 * (y / len + 0.5))]), m, face, cy + Math.cos(a) * len / 2, Math.sin(a) * len / 2); sp.rotation.x = -a;
       }
-      const hub = add(new T.CylinderGeometry(R * 0.13, R * 0.13, 0.02, sh.wheels === 3 ? 6 : 20), new T.MeshStandardMaterial({ color: sh.wheels === 3 ? '#e0b13a' : rimCol, roughness: 0.2, metalness: 0.9 }), face + sg * 0.004, cy, 0); hub.rotation.z = Math.PI / 2;
+      add(new T.CylinderGeometry(R * 0.14, R * 0.14, 0.022, sh.wheels === 3 ? 6 : 24), new T.MeshStandardMaterial({ color: sh.wheels === 3 ? '#c9a24a' : rimCol, roughness: 0.2, metalness: 0.95 }), face, cy, 0).rotation.z = Math.PI / 2;
     }
   }
-  // brzdy: kroužek na náboji, při brzdění žhne
+  // brzdy: kotouč za paprsky (L1 plný ocelový, L2 vrtaný, L3 karbonový se zářezy), třmen; při brzdění žhne dooranžova
   if (sh.brakes >= 1) {
-    const b = SHOP_BRAKE[sh.brakes], bm = new T.MeshStandardMaterial({ color: b.col, emissive: b.col, emissiveIntensity: 0.25, roughness: 0.4 });
-    const ring = add(new T.TorusGeometry(R * (sh.brakes === 3 ? 0.4 : 0.34), R * (0.025 + 0.012 * sh.brakes), 8, 36), bm, face + sg * 0.006, cy, 0); ring.rotation.y = Math.PI / 2;
-    brakeMats.push({ m: bm, glow: b.glow });
-  }
-  // pneumatiky na suchu: širší (o 3 % za stupeň) a pásky na boku
-  if (sh.tyres >= 1) {
-    w.spin.scale.x = 1 + 0.03 * sh.tyres;
-    const bands = [[0.9, 0.012, '#ffffff', 0], [0.9, 0.016, '#ffffff', 0, 0.94, '#ffd200'], [0.9, 0.03, '#b06bff', 1.3]][sh.tyres - 1];
-    const mk = (col, em) => new T.MeshStandardMaterial({ color: col, roughness: 0.45, emissive: em ? col : '#000000', emissiveIntensity: em });
-    const r1 = add(new T.TorusGeometry(R * bands[0], R * bands[1], 6, 48), mk(bands[2], bands[3]), outer - w.pivot.position.x + sg * 0.004, cy, 0); r1.rotation.y = Math.PI / 2;
-    if (bands[4]) { const r2 = add(new T.TorusGeometry(R * bands[4], R * 0.012, 6, 48), mk(bands[5], 0), outer - w.pivot.position.x + sg * 0.004, cy, 0); r2.rotation.y = Math.PI / 2; }
-  }
-  // pneumatiky do deště: drážky po obvodu běhounu (vidět jen s nasazenými deštivými)
-  {
-    const wl = sh.rain || 0, n = 2 + wl;
-    const grp = new T.Group(); grp.visible = false; w.spin.add(grp);
-    const col = ['#0e131a', '#1a3a5c', '#1f5f99', '#6fe3ff'][wl];
-    const gm = new T.MeshStandardMaterial({ color: col, roughness: 0.4, emissive: wl >= 3 ? '#6fe3ff' : '#000000', emissiveIntensity: wl >= 3 ? 1.1 : 0 });
-    for (let k = 0; k < n; k++) {
-      const t = n === 1 ? 0 : (k / (n - 1) - 0.5) * 0.72;
-      const gr = add(new T.TorusGeometry(R * 1.004, R * (0.012 + 0.004 * wl), 6, 56), gm, cx + t * tw, cy, 0, grp); gr.rotation.y = Math.PI / 2;
+    const bm = new T.MeshStandardMaterial({ color: ['', '#4a4d54', '#3a3d43', '#16171a'][sh.brakes], roughness: 0.4, metalness: 0.8, emissive: '#ff4a00', emissiveIntensity: 0 });
+    const fx = face - sg * 0.03;
+    const disc = add(new T.CylinderGeometry(R * 0.5, R * 0.5, 0.014, 48), bm, fx, cy, 0); disc.rotation.z = Math.PI / 2;
+    const holes = sh.brakes === 2 ? 30 : sh.brakes === 3 ? 20 : 0;
+    for (let k = 0; k < holes; k++) {
+      const a = (k / holes) * Math.PI * 2, r = R * (sh.brakes === 2 ? 0.4 : 0.42);
+      if (sh.brakes === 2) add(new T.CylinderGeometry(R * 0.022, R * 0.022, 0.016, 8), cut, fx + sg * 0.001, cy + Math.cos(a) * r, Math.sin(a) * r).rotation.z = Math.PI / 2;
+      else { const sl = add(softBox(0.016, R * 0.14, R * 0.025, 0.5, 6), cut, fx + sg * 0.001, cy + Math.cos(a) * r, Math.sin(a) * r); sl.rotation.x = -a; }
     }
-    wetGroups.push(grp);
+    add(new T.CylinderGeometry(R * 0.2, R * 0.2, 0.018, 20), new T.MeshStandardMaterial({ color: '#202226', roughness: 0.5, metalness: 0.7 }), fx, cy, 0).rotation.z = Math.PI / 2;
+    const cal = add(softBox(0.05, R * 0.2, R * 0.3, 0.4, 8), new T.MeshStandardMaterial({ color: ['', '#26282c', '#9c1d2a', '#c9a24a'][sh.brakes], roughness: 0.4, metalness: 0.5 }), fx, cy + R * 0.42, 0);
+    void cal; brakeMats.push({ m: bm, glow: [0, 0.8, 1.2, 1.8][sh.brakes] });
+  }
+  // vzorek běhounu: drážky po obvodu a nepravidelné bloky; suché jsou hladší, deštivé hrubší a hustší
+  const treadX = (t) => cx + t * tw;                                           // t = podíl šířky pneumatiky od středu (±0,5 = okraj)
+  const groove = (grp, t, wd, rr = 1.004) => { const gr = add(new T.TorusGeometry(R * rr, R * wd, 6, 72), cut, treadX(t), cy, 0, grp); gr.rotation.y = Math.PI / 2; };
+  const lugs = (grp, count, rows, len, wid, yaw) => {
+    const im = new T.InstancedMesh(new T.BoxGeometry(wid, 0.006, len), cut, count * rows.length), mtx = new T.Matrix4(), q = new T.Quaternion(), qy = new T.Quaternion(), pos = new T.Vector3(), one = new T.Vector3(1, 1, 1);
+    let i = 0;
+    for (const [row, sgn] of rows) for (let k = 0; k < count; k++) {
+      const th = ((k + (row > 0 ? 0.5 : 0)) / count) * Math.PI * 2;
+      q.setFromAxisAngle(new T.Vector3(1, 0, 0), th); qy.setFromAxisAngle(new T.Vector3(0, 1, 0), sgn * yaw); q.multiply(qy);
+      pos.set(treadX(row), cy + Math.cos(th) * R * 1.003, Math.sin(th) * R * 1.003);
+      im.setMatrixAt(i++, mtx.compose(pos, q, one));
+    }
+    grp.add(im);
+  };
+  if (sh.tyres >= 1) w.spin.scale.x = 1 + 0.03 * sh.tyres;
+  {
+    const grp = new T.Group(); grp.visible = sh.tyres >= 1; w.spin.add(grp); dryGroups.push(grp);
+    const l = sh.tyres || 0;
+    if (l >= 1) for (let k = 0; k < l + 2; k++) groove(grp, ((k + 0.5) / (l + 2) - 0.5) * 0.86, 0.007 + 0.002 * l);                         // L1 3 drážky, L2 4, L3 5
+    if (l >= 3) lugs(grp, 56, [[-0.4, 1], [0.4, -1]], 0.05, 0.016, 0.5);                                                                 // kvalifikační: bloky na ramenou
+    else if (l >= 2) lugs(grp, 40, [[-0.41, 1], [0.41, -1]], 0.03, 0.012, 0.0);
+  }
+  // pneumatiky do deště: hluboké drážky a šípový vzorek, se stupněm hustší
+  {
+    const wl = sh.rain || 0, grp = new T.Group(); grp.visible = false; w.spin.add(grp); wetGroups.push(grp);
+    const n = 3 + (wl >= 2 ? 1 : 0) + (wl >= 3 ? 1 : 0);
+    for (let k = 0; k < n; k++) groove(grp, ((k + 0.5) / n - 0.5) * 0.9, 0.011 + 0.003 * wl);
+    lugs(grp, 22 + wl * 8, [[-0.18, 1], [0.18, -1], [-0.36, 1], [0.36, -1]], 0.07 + 0.01 * wl, 0.014 + 0.003 * wl, 0.55);
   }
 }
 function add3(geo, mat, x, y, z, parent) { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; }
@@ -5722,14 +5753,14 @@ const isBike = () => saved.mode === 'bike';
 // ---------------------------------------------------------------- dílna týmu (obchod s díly formule)
 // Za umístění ve Velké ceně (1. až 3. místo) dostaneš peníze, v dílně za ně koupíš lepší díly formule. Každý díl má
 // tři stupně; díly platí jen pro tvou formuli (soupeři jedou ve standardní výbavě) a nijak neovlivní ostatní auta.
-const SHOP_RIMS = ['', '#c9ced6', '#e0b13a', '#d7263d'];
+const SHOP_RIMS = ['', '#b9bec7', '#c9a24a', '#30333a'];
 const SHOP_ITEMS = [
   { id: 'engine', name: 'Motor', icon: '⚙', desc: 'víc výkonu a vyšší maximální rychlost', price: [1200, 2600, 4800], tiers: ['Zesílený motor', 'Závodní motor', 'Motor pro kvalifikaci'], fx: (l) => `+${l * 5} % výkon, +${l * 2} % rychlost` },
   { id: 'rwing', name: 'Zadní křídlo (spoiler)', icon: '◢', desc: 'víc přítlaku v zatáčkách, o kousek menší maximálka', price: [1000, 2200, 4200], tiers: ['Větší spoiler', 'Dvoulamelový spoiler', 'Třílamelový spoiler'], fx: (l) => `+${(l * 3.5).toFixed(1).replace('.0', '')} % přilnavost, −${(l * 1.2).toFixed(1)} % rychlost` },
   { id: 'fwing', name: 'Přední křídlo', icon: '◣', desc: 'lepší nájezd do zatáček', price: [800, 1800, 3400], tiers: ['Přední lamela', 'Dvě lamely', 'Tři lamely'], fx: (l) => `+${(l * 2.5).toFixed(1).replace('.0', '')} % přilnavost` },
   { id: 'floor', name: 'Podlaha a difuzor', icon: '▬', desc: 'přítlak od země, víc držení ve vysoké rychlosti', price: [900, 2000, 3800], tiers: ['Sportovní podlaha', 'Závodní podlaha', 'Karbonový difuzor'], fx: (l) => `+${(l * 2.5).toFixed(1).replace('.0', '')} % přilnavost, +${l} % rychlost` },
   { id: 'brakes', name: 'Brzdy', icon: '◉', desc: 'kratší brzdná dráha', price: [700, 1600, 3000], tiers: ['Sportovní brzdy', 'Závodní brzdy', 'Karbonové brzdy'], fx: (l) => `+${l * 6} % brzdný výkon` },
-  { id: 'wheels', name: 'Kola a ráfky', icon: '◎', desc: 'základní kola se dají vyměnit za lehčí závodní', price: [900, 2000, 3600], tiers: ['Závodní kola (stříbrná)', 'Lehká karbonová kola (zlatá)', 'Kovaná závodní kola (červená)'], base: 'Základní kola', fx: (l) => `pneumatiky o ${l * 12} % déle, +${l} % zrychlení` },
+  { id: 'wheels', name: 'Kola a ráfky', icon: '◎', desc: 'základní kola se dají vyměnit za lehčí závodní', price: [900, 2000, 3600], tiers: ['Závodní kola (stříbrná)', 'Lehká karbonová kola (zlatá)', 'Kovaná závodní kola (černá)'], base: 'Základní kola', fx: (l) => `pneumatiky o ${l * 12} % déle, +${l} % zrychlení` },
   { id: 'tyres', name: 'Pneumatiky na suchu', icon: '●', desc: 'měkčí směs pro suchou trať', price: [800, 1800, 3400], tiers: ['Měkčí směs', 'Závodní slicky', 'Kvalifikační slicky'], base: 'Standardní pneumatiky', fx: (l) => `+${l * 2} % přilnavost, o ${l * 4} % rychleji se sjíždějí` },
   { id: 'rain', name: 'Pneumatiky do deště', icon: '☂', desc: 'na mokré trati drží víc a míň klouzají', price: [700, 1600, 3000], tiers: ['Deštivé pneumatiky', 'Deštivé pneumatiky Pro', 'Extrémní deštivé pneumatiky'], base: 'Standardní deštivé', fx: (l) => `na mokru +${l * 3} % přilnavost` },
   { id: 'kers', name: 'KERS', icon: '⚡', desc: 'větší zásoba energie navíc', price: [1100, 2400, 4400], tiers: ['KERS 1', 'KERS 2', 'KERS Max'], fx: (l) => `zásoba +${l * 30} %` },
@@ -7378,19 +7409,26 @@ function cockpitBuild(c3) {
     add(softBox(0.02, 0.034, 0.012, 0.6, 8), accent, 0, 0.185, 0.0);
     cockpit.holdY = 0.0; cockpit.holdX = 0.185;
   }
-  // ruce: hřbet rukavice vždy směrem k řidiči, prsty obtočené kolem rukojeti, palec nahoře, manžeta rukávu
+  // ruce v rukavicích: hřbet ruky směrem k řidiči (zaoblený, s pruhem přes klouby), čtyři prsty a palec jako hladké trubky, které se
+  // obtáčejí kolem rukojeti (po vnitřní straně dozadu), prstové kloubky, manžeta rukávu v barvě týmu
+  const gloveMat = addShine(new T.MeshStandardMaterial({ color: '#1b1c20', roughness: 0.55, metalness: 0.1 }), 'glove', { gloss: 0.5 });
+  const seamMat = new T.MeshStandardMaterial({ color: lv.a1 && new T.Color(lv.a1).getHSL({}).l > 0.2 ? lv.a1 : '#d8dce2', roughness: 0.5 });
   for (const s of [-1, 1]) {
     const h = new T.Group(); h.position.set(s * cockpit.holdX, cockpit.holdY, 0.03); wheel.add(h);
-    add(softBox(0.082, 0.1, 0.04, 0.5, 12), glove, 0, 0, 0.022, h);                              // hřbet ruky
-    add(softBox(0.06, 0.03, 0.044, 0.6, 8), gloveDark, 0, -0.036, 0.024, h);                      // zesílení u zápěstí
-    add(softBox(0.052, 0.022, 0.006, 0.6, 8), accent, 0, 0.012, 0.042, h);                        // pruh přes klouby
-    for (let k = 0; k < 4; k++) {                                                                  // čtyři prsty kolem rukojeti
-      const f = add(new T.CapsuleGeometry(0.0088, 0.036, 6, 10).rotateZ(Math.PI / 2), glove, s * 0.034, 0.033 - k * 0.0215, -0.006, h);
-      add(new T.SphereGeometry(0.0092, 10, 8), glove, s * 0.058, 0.033 - k * 0.0215, -0.02, h);
-      void f;
+    const back = softBox(0.088, 0.108, 0.036, 0.55, 20);
+    warpGeo(back, (x, y, z) => [x * (1 - 0.1 * (y / 0.108 + 0.5)), y, z + 0.006 * (1 - Math.abs(x) / 0.044)]);       // lehce vypouklý hřbet, zúžený k zápěstí
+    add(back, gloveMat, 0, 0.004, 0.05, h);
+    add(softBox(0.07, 0.02, 0.012, 0.6, 10), seamMat, 0, 0.034, 0.072, h);                                          // pruh přes klouby
+    const tube = (pts, r) => new T.TubeGeometry(new T.CatmullRomCurve3(pts.map((p) => new T.Vector3(...p))), 16, r, 10, false);
+    for (let k = 0; k < 4; k++) {
+      const y = 0.039 - k * 0.0225, r = 0.0098 - (k === 3 ? 0.0012 : 0);
+      add(tube([[0, y, 0.062], [-s * 0.034, y, 0.052], [-s * 0.053, y, 0.012], [-s * 0.04, y, -0.03], [-s * 0.012, y, -0.044]], r), gloveMat, 0, 0, 0, h);   // prst kolem rukojeti
+      add(new T.SphereGeometry(r * 1.02, 10, 8), gloveMat, -s * 0.012, y, -0.044, h);                                                                   // špička
+      add(new T.TorusGeometry(r * 1.02, 0.0012, 5, 12).rotateY(Math.PI / 2), seamMat, -s * 0.045, y, 0.034, h);                                         // šev na kloubu
     }
-    const th = add(new T.CapsuleGeometry(0.0095, 0.04, 6, 10), glove, -s * 0.026, 0.056, 0.0, h); th.rotation.z = -s * 0.6;
-    add(new T.CylinderGeometry(0.0365, 0.0365, 0.02, 16), accent, 0, -0.062, 0.032, h);   // manžeta
+    add(tube([[-s * 0.01, 0.04, 0.06], [-s * 0.034, 0.066, 0.05], [-s * 0.056, 0.058, 0.018], [-s * 0.05, 0.04, -0.016]], 0.0108), gloveMat, 0, 0, 0, h);    // palec
+    add(softBox(0.072, 0.03, 0.04, 0.6, 12), gloveMat, 0, -0.058, 0.056, h);                                        // zesílení zápěstí
+    add(new T.CylinderGeometry(0.037, 0.04, 0.026, 20), accent, 0, -0.082, 0.06, h).rotation.x = 0.0;               // manžeta
     cockpit.hands.push(h);
   }
   cockpit.elbows = [new T.Vector3(-0.44, -0.66, 0.4), new T.Vector3(0.44, -0.66, 0.4)];
@@ -7413,7 +7451,7 @@ function cockpitUpdate(dt, on) {
   cockpit.group.updateMatrixWorld(true);
   // předloktí spojí zápěstí (manžeta v rukavici) s loktem u okraje obrazu
   cockpit.hands.forEach((h, i) => {
-    _cv.set(0, -0.062, 0.03); h.localToWorld(_cv); camera.worldToLocal(_cv);
+    _cv.set(0, -0.09, 0.06); h.localToWorld(_cv); camera.worldToLocal(_cv);
     _cs.copy(cockpit.elbows[i]).sub(_cv);
     const len = _cs.length(), arm = cockpit.arms[i], cuff = cockpit.cuffs[i];
     _cs.normalize();
@@ -7884,7 +7922,7 @@ function updateCarVisual(dt, inp) {
     updateRider(car3d.rig, dt, inp, flying, G.camMode === 2 && G.mode === 'race' && G.phase !== 'done');
   }
   car3d.tailMat.emissiveIntensity = inp.brake > 0 ? 3.2 : W.td.st.night ? 1.2 : 0.4;
-  if (car3d.brakeMats && car3d.brakeMats.length) { const bk = clamp(inp.brake, 0, 1) * clamp(Math.abs(car.vf) / 30, 0, 1); for (const b of car3d.brakeMats) b.m.emissiveIntensity = 0.25 + bk * 2.4 * b.glow; } // kroužky brzd při brzdění žhnou
+  if (car3d.brakeMats && car3d.brakeMats.length) { const bk = clamp(inp.brake, 0, 1) * clamp(Math.abs(car.vf) / 30, 0, 1); for (const b of car3d.brakeMats) b.m.emissiveIntensity = bk * 0.7 * b.glow; } // kroužky brzd při brzdění žhnou
   if (car3d.kersMat) car3d.kersMat.emissiveIntensity = 0.9 + (car.nosOn ? 1.6 : 0) + 0.2 * Math.sin(performance.now() / 160);
   car.flame -= dt;
   car.nosFx += ((car.nosOn ? 1 : 0) - car.nosFx) * Math.min(1, dt * 6);
@@ -8866,7 +8904,7 @@ function gpProfile(td) {
 }
 const gpTeamsOrder = () => Object.keys(F1_TEAMS);
 const TYRE_SOFT = '#e8102a', TYRE_MEDIUM = '#ffd200';
-const setTyre = (c, col) => { if (c && c.tyreMat) { c.tyreMat.color.set(col); c.tyreMat.emissive.set(col); } if (c && c.wetGroups) for (const gr of c.wetGroups) gr.visible = col === TYRE_WET; };
+const setTyre = (c, col) => { if (c && c.tyreMat) { c.tyreMat.color.set(col); c.tyreMat.emissive.set(col); } if (c && c.wetGroups) { for (const gr of c.wetGroups) gr.visible = col === TYRE_WET; for (const gr of c.dryGroups || []) gr.visible = col !== TYRE_WET && (shopLv('tyres') > 0 || c !== car3d); } };
 function gpBuildAI(key) {
   if (G.gpModels && G.gpModels[key]) return G.gpModels[key];
   const c = buildModelCar({ ...LIVERIES[0], team: key }, CAR_TYPES.f1);
@@ -9611,10 +9649,10 @@ function shopThumb2D(id, l) {
 // a z ní do plátna; hotové náhledy se pamatují. Do doby, než jsou hotové, plátno zůstane tmavé.
 const shopPrev = { rt: null, cache: new Map(), queue: [], timer: 0 };
 const SHOP_VIEWS = {
-  engine: { p: [1.1, 1.5, -2.8], t: [0, 0.85, -1.0], fov: 30 }, rwing: { p: [1.9, 1.35, -4.9], t: [0, 0.97, -2.5], fov: 14 },
-  fwing: { p: [1.9, 0.75, 3.7], t: [0, 0.15, 1.8], fov: 17 }, floor: { p: [2.6, 0.45, -0.2], t: [0.3, 0.12, -1.0], fov: 40 },
+  engine: { p: [1.1, 1.5, -2.8], t: [0, 0.85, -1.0], fov: 30 }, rwing: { p: [2.2, 1.4, -5.0], t: [0, 0.9, -2.5], fov: 20 },
+  fwing: { p: [2.6, 1.1, 4.4], t: [0, 0.14, 2.35], fov: 28 }, floor: { p: [1.4, 0.35, -4.3], t: [0, 0.14, -2.0], fov: 36 },
   brakes: { p: [3.0, 0.4, 1.56], t: [0.82, 0.33, 1.56], fov: 17 }, wheels: { p: [3.0, 0.4, 1.56], t: [0.82, 0.33, 1.56], fov: 17 },
-  tyres: { p: [2.6, 0.9, 2.9], t: [0.82, 0.3, 1.56], fov: 22 }, rain: { p: [2.6, 0.9, 2.9], t: [0.82, 0.3, 1.56], fov: 22 },
+  tyres: { p: [1.9, 1.5, 2.3], t: [0.85, 0.15, 1.56], fov: 20 }, rain: { p: [1.9, 1.5, 2.3], t: [0.85, 0.15, 1.56], fov: 20 },
   kers: { p: [1.5, 1.3, -0.4], t: [0.3, 0.75, -1.5], fov: 30 },
 };
 function shopProxy(lv, sh) {
@@ -9624,42 +9662,48 @@ function shopProxy(lv, sh) {
   const tyreM = new T.MeshStandardMaterial({ color: '#0c0d0f', roughness: 0.9 });
   const add = (geo, mat, x, y, z, parent = body) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
   add(warpGeo(softBox(0.62, 0.44, 2.3, 0.45, 22), (x, y, z) => { const t = Math.max(0, (z - 0.2) / 0.95); return [x * (1 - 0.5 * t), y * (1 - 0.3 * t) - 0.12 * t, z]; }), paint, 0, 0.62, -0.15);
-  add(warpGeo(softBox(0.3, 0.2, 1.1, 0.5, 18), (x, y, z) => { const t = (z + 0.55) / 1.1; return [x * (1 - 0.7 * t), y * (1 - 0.5 * t), z]; }), paint, 0, 0.36, 1.45);
+  add(warpGeo(softBox(0.3, 0.2, 1.9, 0.5, 20), (x, y, z) => { const t = (z + 0.95) / 1.9; return [x * (1 - 0.75 * t), y * (1 - 0.5 * t) - 0.1 * t, z]; }), paint, 0, 0.4, 1.8);
   add(warpGeo(softBox(0.5, 0.52, 1.6, 0.55, 20), (x, y, z) => { const t = clamp((-z + 0.0) / 0.8, 0, 1); return [x * (1 - 0.6 * t), y * (1 - 0.15 * t), z]; }), paint, 0, 0.62, -1.55);
   for (const s of [-1, 1]) add(softBox(0.4, 0.36, 1.5, 0.5, 18), paint, s * 0.52, 0.4, -0.5);
   add(softBox(1.5, 0.03, 3.5, 0.2, 16), dark, 0, 0.1, -0.3);
   add(new T.SphereGeometry(0.13, 20, 14), new T.MeshStandardMaterial({ color: lv.a2 || '#ffffff', roughness: 0.3 }), 0, 0.86, -0.1);
-  add(softBox(0.92, 0.03, 0.34, 0.4, 14), dark, 0, 0.76, -2.54);                                          // původní hlavní profil křídla
-  add(softBox(0.9, 0.02, 0.2, 0.4, 14), dark, 0, 0.9, -2.64);
-  for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(-2.74, -2.38, 0.74, 0.98, 0.03, 0.05), 0.012), paint, s * 0.468, 0, 0);
-  add(softBox(0.06, 0.34, 0.1, 0.5, 8), dark, 0, 0.58, -2.4);
-  add(softBox(1.7, 0.025, 0.4, 0.4, 14), dark, 0, 0.1, 1.78);                                              // původní přední profil
-  for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(1.6, 1.98, 0.05, 0.22, 0.02, 0.04), 0.012), paint, s * 0.86, 0, 0);
-  const wetGroups = [], brakeMats = [];
+  if (!(sh.rwing > 0)) {                                                                                    // původní zadní křídlo (nahradí ho koupené)
+    add(softBox(1.1, 0.03, 0.34, 0.4, 14), dark, 0, 0.78, -2.54);
+    add(softBox(1.08, 0.02, 0.2, 0.4, 14), dark, 0, 0.92, -2.62);
+    for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(-2.74, -2.3, 0.72, 1.0, 0.03, 0.05), 0.012), paint, s * 0.585, 0, 0);
+    add(softBox(0.06, 0.3, 0.1, 0.5, 8), dark, 0, 0.62, -2.4);
+  }
+  if (!(sh.fwing > 0)) {                                                                                    // původní přední křídlo
+    add(softBox(2.0, 0.025, 0.6, 0.4, 14), dark, 0, 0.1, 2.45);
+    add(softBox(2.0, 0.02, 0.3, 0.4, 14), dark, 0, 0.17, 2.3);
+    for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(1.95, 2.76, 0.05, 0.25, 0.03, 0.06), 0.014), paint, s * 1.02, 0, 0);
+  }
+  const wetGroups = [], dryGroups = [], brakeMats = [];
   for (const [sx, z, R, wd] of [[-1, 1.56, 0.33, 0.4], [1, 1.56, 0.33, 0.4], [-1, -2.07, 0.36, 0.5], [1, -2.07, 0.36, 0.5]]) {
     const pivot = new T.Group(); pivot.position.set(sx * 0.82, 0.34, z); body.add(pivot);
     const spin = new T.Group(); pivot.add(spin);
-    const tire = add(new T.CylinderGeometry(R, R, wd, 40).rotateZ(Math.PI / 2), tyreM, 0, 0, 0, spin);
+    const prof = [[R * 0.58, -wd / 2], [R * 0.94, -wd / 2], [R * 0.995, -wd * 0.38], [R, -wd * 0.2], [R, wd * 0.2], [R * 0.995, wd * 0.38], [R * 0.94, wd / 2], [R * 0.58, wd / 2]].map(([r, y]) => new T.Vector2(r, y * sx));
+    const tire = add(new T.LatheGeometry(sx > 0 ? prof : prof.reverse(), 48).rotateZ(-Math.PI / 2), tyreM, 0, 0, 0, spin);
+    add(new T.CylinderGeometry(R * 0.6, R * 0.6, 0.01, 32).rotateZ(Math.PI / 2), new T.MeshStandardMaterial({ color: '#2a2d33', roughness: 0.5, metalness: 0.6 }), -sx * 0.04, 0, 0, spin);   // dno kola za brzdovým kotoučem
     const ring = add(new T.TorusGeometry(R * 0.8, R * 0.045, 6, 40), new T.MeshStandardMaterial({ color: '#e8102a', roughness: 0.5, emissive: '#e8102a', emissiveIntensity: 0.15 }), sx * (wd / 2 + 0.004), 0, 0, spin); ring.rotation.y = Math.PI / 2;
-    const hub = add(new T.CylinderGeometry(R * 0.5, R * 0.5, 0.012, 28).rotateZ(Math.PI / 2), new T.MeshStandardMaterial({ color: '#2a2d33', roughness: 0.5, metalness: 0.6 }), sx * (wd / 2 + 0.002), 0, 0, spin); void hub;
-    shopWheelLook({ pivot, spin, tire }, sh, { sg: sx, R, outer: pivot.position.x + sx * wd / 2, cy: 0, cx: 0, tw: wd, lv, wetGroups, brakeMats });
+    shopWheelLook({ pivot, spin, tire }, sh, { sg: sx, R, outer: pivot.position.x + sx * wd / 2, cy: 0, cx: 0, tw: wd, lv, wetGroups, dryGroups, brakeMats });
   }
   const meshes = []; body.traverse((o) => { if (o.isMesh) meshes.push(o); });
   root.updateMatrixWorld(true);
   const ray = new T.Raycaster();
   const hitAny = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(meshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone() } : null; };
-  const bb = { min: { z: -2.71 }, max: { z: 1.93 } };
+  const bb = { min: { z: -2.75 }, max: { z: 2.75 } };
   shopBodyLook(sh, { hitAny, body, bb, lv });
-  return { root, wetGroups };
+  return { root, wetGroups, dryGroups };
 }
 function renderShopThumb(id, l) {
   const W2 = 256, H2 = 160;
   if (!shopPrev.rt) { shopPrev.rt = new T.WebGLRenderTarget(W2, H2, { samples: 4 }); shopPrev.rt.texture.colorSpace = T.SRGBColorSpace; shopPrev.buf = new Uint8Array(W2 * H2 * 4); }
   const sh = {}; for (const it of SHOP_ITEMS) sh[it.id] = it.id === id ? l : 0;
   const lv = { ...(F1_TEAMS[f1Team()] || F1_TEAMS.mclaren) };
-  const { root, wetGroups } = shopProxy(lv, sh);
-  if (id === 'rain') for (const gr of wetGroups) gr.visible = l > 0;
-  else for (const gr of wetGroups) gr.visible = false;
+  const { root, wetGroups, dryGroups } = shopProxy(lv, sh);
+  for (const gr of wetGroups) gr.visible = id === 'rain';
+  for (const gr of dryGroups) gr.visible = id !== 'rain' && sh.tyres > 0;
   const sc = new T.Scene();
   sc.background = new T.Color('#241b86'); sc.environment = envRT ? envRT.texture : null;
   sc.add(new T.HemisphereLight('#cfe0ff', '#3a2c55', 1.0));
@@ -9748,6 +9792,7 @@ $('bShopAll').onclick = () => {
 };
 $('bShopClose').onclick = () => { $('shopModal').hidden = true; };
 $('bShop').onclick = () => openShop();
+$('bShopTop').onclick = () => openShop();
 // výběr týmu (druhé klepnutí na formuli v menu)
 function openTeams() {
   const list = $('teamList');
@@ -9784,6 +9829,7 @@ function openTeams() {
   $('bGp').firstChild.textContent = GP_TRACKS[gpTrackId()] + ' ';
   $('bGp').querySelector('small').textContent = `3 kola · povinná zastávka v boxech${best}`;
   $('bShop').querySelector('small').textContent = `kup díly za vyhrané peníze · máš ${moneyStr(saved.money | 0)}`;
+  $('bShopTop').hidden = isBike(); $('bShopTop').querySelector('small').textContent = `díly formule · máš ${moneyStr(saved.money | 0)}`;
   $('teamModal').hidden = false;
 }
 $('bTeamOk').onclick = () => { $('teamModal').hidden = true; };
@@ -10968,26 +11014,6 @@ function perfCheck(dt, now) {
   }
 }
 
-// ---------------------------------------------------------------- po spuštění: rally, nebo formule?
-function askMode() {
-  if (navigator.webdriver || isBike()) return; // testy a režim kol se neptají
-  const m = $('modeModal');
-  m.hidden = false;
-  $('bModeRally').onclick = () => {
-    m.hidden = true;
-    if (carType().formula) { saved.car = 'bmw'; persist(); ensureCarModel(carType().model).then(() => { setLivery(saved.livery); renderMenu(); }); }
-  };
-  $('bModeNet').onclick = () => { m.hidden = true; $('bNet').click(); };
-  $('bModeF1').onclick = async () => {
-    m.hidden = true;
-    saved.car = 'f1'; persist();
-    await ensureCarModel('f1');
-    setLivery(saved.livery);
-    renderMenu();
-    openTeams();
-  };
-}
-
 // ---------------------------------------------------------------- start
 async function boot(data) {
   setupPost();
@@ -11001,7 +11027,6 @@ async function boot(data) {
   $('secret').addEventListener('click', toggleMode);
   setLivery(clamp(saved.livery | 0, 0, LIVERIES.length - 1));
   loadStage(idx, startDemo);
-  askMode();
   recConnect();
   requestAnimationFrame(tick);
   Sound.prepare();
