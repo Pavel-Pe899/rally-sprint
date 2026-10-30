@@ -672,6 +672,7 @@
     <div class="actions">
       <button class="btn" id="bModeRally">Rally <small>šotolina, sníh, asfalt a písek · spolujezdec</small></button>
       <button class="btn gp" id="bModeF1">Formule 1 <small>Velká cena · výběr týmu a okruhu</small></button>
+      <button class="btn ghost" id="bModeNet">S kamarádem po internetu <small>jiná Wi-Fi nevadí · kód hry</small></button>
     </div>
   </div>
 </div>
@@ -6361,7 +6362,9 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   // (u slicků jen mírně: zadek povolí, ale formule zůstane řiditelná)
   let worn = cs.formula && G.gp ? smooth(0.3, 1, G.gp.wear) : 0;
   if (cs.formula && G.gp && WX.cfg && G.gp.tyre !== 'wet') worn = Math.max(worn, smooth(0.12, 0.6, WX.wet) * 0.85); // suché pneumatiky na mokru: zadek utíká
-  const capF = mu * Fzf * (slick ? 1 - 0.1 * worn : 1), capR = mu * Fzr * h.rear * (slick ? 1.3 - 0.25 * worn : 1 - 0.26 * worn);
+  // rozbité pneumatiky (sjeté úplně): zadek skoro nedrží a stabilizace povolí, formule driftuje a hlídat ji musí hráč
+  const blown = cs.formula && G.gp ? smooth(0.85, 1.2, G.gp.wear) : 0;
+  const capF = mu * Fzf * (slick ? 1 - 0.1 * worn - 0.15 * blown : 1), capR = mu * Fzr * h.rear * (slick ? (1.3 - 0.25 * worn) * (1 - 0.7 * blown) : 1 - 0.26 * worn);
   const uu = Math.max(Math.abs(u), 5);
   const beta = u > 1 ? Math.atan2(v, u) : 0;
   // řízení: rejd se s rychlostí zmenšuje, asistent přidá část protismyku (hráč na tlačítkách to sám nestihne)
@@ -6434,8 +6437,8 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   // s ruční brzdou slabší, aby šly vracáky
   const b2 = Math.atan2(v, Math.max(1, Math.abs(u)));
   // formule na slicích: smyk nad ~4° (se sjetými pneumatikami nad ~10°) se rychle srovná
-  const bx = Math.abs(b2) - (slick ? 0.07 + 0.1 * worn : h.stab + 0.12 * worn);
-  if (bx > 0 && u > 4) wR += Math.sign(b2) * (bx * 5 + bx * bx * 12) * (slick ? 4 : h.stabK) * (inp.hb ? 0.3 : 1) * (1 - 0.4 * worn) * dt;
+  const bx = Math.abs(b2) - (slick ? 0.07 + 0.1 * worn + 0.6 * blown : h.stab + 0.12 * worn);
+  if (bx > 0 && u > 4) wR += Math.sign(b2) * (bx * 5 + bx * bx * 12) * (slick ? 4 : h.stabK) * (inp.hb ? 0.3 : 1) * (1 - 0.4 * worn - 0.5 * blown) * dt;
   if (absHold) {
     // auto jede tam, kam míří kola: natáčení podle rejdu (jen tolik, kolik pneumatiky udrží), skluz do boku zmizí
     const wK = (u * Math.tan(delta)) / WHEELBASE, wMax = (mu * 9.81 * 0.95) / Math.max(1, u);
@@ -8560,6 +8563,7 @@ function gpTick(dt) {
   if (G.phase === 'run') {
     wxTick(dt);
     gp.wear += (Math.abs(car.vf) * dt) / (lap * gpWearLaps()) * (carType().wearK || 1) * (gp.tyre === 'wet' && !(WX.cfg && WX.wet > 0.2) ? 2.2 : gp.tyre === 'soft' ? 1.3 : 1); // bez zastávky jsou pneumatiky po dvou kolech sjeté (dlouhý závod po ~4)
+    if (gp.wear > 0.95 && !gp.said.blown) { gp.said.blown = true; toast('Pneumatiky jsou rozbité, auto driftuje! Ťukni na BOX', 3); }
     gp.serviceCD = Math.max(0, gp.serviceCD - dt);
     const rel = p.relOf(car.s), lat = car.lat * p.side, myRel = p.boxes[gp.myBox];
     // omezovač a navigace k boxu
@@ -8589,7 +8593,7 @@ function gpTick(dt) {
       car.h += wrapAngle(gp.snap.h - car.h) * Math.min(1, dt * 6);
       car.vx = car.vz = 0; car.vf = car.vr = 0; car.omega = 0;
       if (gp.service <= 0) {
-        gp.service = 0; gp.wear = 0; gp.pitted = true; gp.serviceCD = 8; gpCrew(gp.myBox, false);
+        gp.service = 0; gp.wear = 0; gp.said.blown = false; gp.pitted = true; gp.serviceCD = 8; gpCrew(gp.myBox, false);
         gp.pilot = 'out'; gp.pitReq = false; // auto samo vyjede z boxu na trať
         gp.tyre = gp.tyreWant || gpTyreAdvice(); gp.tyreWant = null; gp.tyreAsked = false;
         setTyre(car3d, gp.tyre === 'wet' ? TYRE_WET : gp.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM);
@@ -10007,6 +10011,7 @@ function askMode() {
     m.hidden = true;
     if (carType().formula) { saved.car = 'bmw'; persist(); ensureCarModel(carType().model).then(() => { setLivery(saved.livery); renderMenu(); }); }
   };
+  $('bModeNet').onclick = () => { m.hidden = true; $('bNet').click(); };
   $('bModeF1').onclick = async () => {
     m.hidden = true;
     saved.car = 'f1'; persist();
