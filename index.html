@@ -9995,7 +9995,11 @@ const P2P_OPTS = { debug: 0, config: { iceCandidatePoolSize: 4, iceServers: [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:global.stun.twilio.com:3478'] },
   { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' },
   { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp', 'turns:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: ['turn:freestun.net:3478', 'turns:freestun.net:5349'], username: 'free', credential: 'free' },
+  { urls: ['turn:turn.anyfirewall.com:443?transport=tcp'], username: 'webrtc', credential: 'webrtc' },
 ] } };
+// relay = jen přes převodní (TURN) servery: projde i přes mobilní sítě a přísné domácí směrovače, kde přímé spojení selže
+const p2pOpts = (relay) => ({ ...P2P_OPTS, config: { ...P2P_OPTS.config, iceTransportPolicy: relay ? 'relay' : 'all' } });
 const P2P_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const p2pId = (code) => 'rallysprint-' + code.toLowerCase();
 function p2pStop() {
@@ -10007,7 +10011,7 @@ function p2pFail(e) {
   const t = e && e.type;
   P2P.status = t === 'peer-unavailable' ? 'Hra s tímhle kódem neexistuje (zkontroluj kód, kamarád musí mít hru založenou).'
     : t === 'network' || t === 'server-error' || t === 'socket-error' || t === 'socket-closed' || t === 'signal-timeout' ? 'Nedaří se spojit se serverem, který telefony spáruje (0.peerjs.com). Zkontroluj internet a zkus to za chvíli znovu.'
-    : t === 'ice-timeout' ? 'Telefony se našly, ale přímé spojení mezi sítěmi se nepovedlo. Zkus jinou síť (třeba mobilní data na jednom telefonu) a spojení znovu.'
+    : t === 'ice-timeout' ? 'Telefony se našly, ale spojení mezi sítěmi se nepovedlo ani přes převodní servery. Zkus jinou síť (třeba mobilní data na jednom telefonu) a spojení znovu.' + (P2P.diag ? ` [${P2P.diag}]` : '')
     : t === 'browser-incompatible' ? 'Tenhle prohlížeč přímé spojení neumí.'
     : window.claude ? `Spojení se nepodařilo. Otevři hru přes odkaz ${GAME_URL.replace('https://', '')} a zkus to znovu.` : 'Spojení se nepodařilo (internet?). Zkus to znovu.';
   if (t === 'peer-unavailable') { if (P2P.peer) P2P.peer.gone = true; } else { p2pStop(); P2P.status = P2P.status || ''; }
@@ -10038,13 +10042,14 @@ function p2pResume() {
 document.addEventListener('visibilitychange', p2pResume);
 window.addEventListener('pageshow', p2pResume);
 setInterval(p2pResume, 4000);
-function p2pJoin(code) {
+function p2pJoin(code, relay = false) {
   code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (code.length !== 4) { P2P.status = 'Kód má 4 znaky.'; netRender(); return; }
   if (typeof window.Peer !== 'function') { p2pFail({ type: 'browser-incompatible' }); return; }
   p2pStop();
-  const peer = new window.Peer(undefined, P2P_OPTS);
-  Object.assign(P2P, { peer, host: false, code, status: `Připojuji ke hře ${code}…` });
+  const peer = new window.Peer(undefined, p2pOpts(relay));
+  Object.assign(P2P, { peer, host: false, code, status: relay ? `Zkouším spojení přes převodní server (hra ${code})…` : `Připojuji ke hře ${code}…`, diag: '' });
+  peer.cand = { host: 0, srflx: 0, relay: 0 };
   setTimeout(() => { if (P2P.peer === peer && !P2P.open) p2pFail({ type: 'signal-timeout' }); }, 15000);
   // kamarád může mít hru chvíli mimo obrazovku (poslal kód): hledá se opakovaně, ~40 s
   const attempt = (n) => {
@@ -10055,9 +10060,13 @@ function p2pJoin(code) {
     P2P.status = n ? `Kamarádova hra ${code} zatím není vidět, zkouším znovu (${n})… kamarád musí mít hru otevřenou na obrazovce „Proti sobě“` : `Hledám hru ${code}…`;
     netRender();
     const pc = conn.peerConnection;
+    if (pc) pc.addEventListener('icecandidate', (ev) => { const m = ev.candidate && / typ (host|srflx|relay)/.exec(ev.candidate.candidate); if (m) { peer.cand[m[1]]++; P2P.diag = `kandidáty: přímé ${peer.cand.host}, veřejné ${peer.cand.srflx}, převodní ${peer.cand.relay}`; } });
     if (pc) pc.addEventListener('iceconnectionstatechange', () => { if (!conn.open && P2P.peer === peer && !peer.gone) { P2P.status = `Spojuji se hrou ${code} (${pc.iceConnectionState})…`; netRender(); } });
     conn.on('open', () => { peer.joined = true; });
-    setTimeout(() => { if (P2P.peer === peer && !conn.open && !peer.joined && !peer.gone) p2pFail({ type: 'ice-timeout' }); }, 25000);
+    setTimeout(() => {
+      if (P2P.peer !== peer || conn.open || peer.joined || peer.gone) return;
+      if (!relay) { const d = P2P.diag; p2pJoin(code, true); P2P.diag = d; } else p2pFail({ type: 'ice-timeout' }); // napoprvé přímo, pak jen přes převodní servery
+    }, relay ? 30000 : 18000);
   };
   peer.on('open', () => { P2P.open = true; attempt(0); });
   peer.on('error', (e) => {
