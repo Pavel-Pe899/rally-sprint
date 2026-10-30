@@ -5000,7 +5000,7 @@ function buildModelCar(lv, spec) {
       for (let i = 0; i < n; i += 3) {
         const a = ix ? ix.getX(i) : i, b2 = ix ? ix.getX(i + 1) : i + 1, c2 = ix ? ix.getX(i + 2) : i + 2;
         cm.set((p.getX(a) + p.getX(b2) + p.getX(c2)) / 3, (p.getY(a) + p.getY(b2) + p.getY(c2)) / 3, (p.getZ(a) + p.getZ(b2) + p.getZ(c2)) / 3).applyMatrix4(o.matrix);
-        const gone = (cutR && cm.z < -2.28 && cm.y > 0.7 && Math.abs(cm.x) < 0.66) || (cutF && cm.z > 1.85 && cm.y < 0.27 && (Math.abs(cm.x) > 0.16 || cm.y < 0.18));
+        const gone = (cutR && cm.z < -2.28 && cm.y > 0.7 && Math.abs(cm.x) < 0.66) || (cutF && ((cm.z > 1.85 && cm.y < 0.27 && (Math.abs(cm.x) > 0.16 || cm.y < 0.18)) || (cm.z > 2.0 && cm.y < 0.5 && Math.abs(cm.x) > 0.19)));
         if (!gone) keep.push(a, b2, c2);
       }
       geo.setIndex(keep); o.geometry = creaseNormals(geo); o.userData.smooth = true;
@@ -5318,22 +5318,24 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
     const crash = softBox(0.26, 0.2, 0.62, 0.55, 20);
     warpGeo(crash, (x, y, z) => { const t = 0.5 - z / 0.62; return [x * (1 - 0.35 * t), y * (1 - 0.3 * t), z]; });                       // zužuje se dozadu
     put(crash, platePaint, 0, 0.55, -2.46);
-    put(softBox(0.1, 0.045, 0.02, 0.5, 8), glow('#ff1a1a', 2.2), 0, 0.5, -2.775);                                                   // dešťové světlo
-    put(new T.CylinderGeometry(0.036, 0.042, 0.2, 20).rotateX(Math.PI / 2), shiny, 0, 0.63, -2.66);                                       // výfuk
-    put(new T.CircleGeometry(0.034, 20), glow('#ff7a1a', 1.2), 0, 0.63, -2.765, 0, Math.PI, 0);
-    put(airfoilGeo(0.15, 0.62, -0.05, 0.1), shiny, 0, 0.42, -2.5, 0.3);                                                                // spodní křídélko (beam wing)
+    put(softBox(0.1, 0.05, 0.02, 0.5, 8), glow('#ff1a1a', 2.2), 0, 0.44, -2.77);                                                       // dešťové světlo (dole, pod výfukem)
+    put(new T.CylinderGeometry(0.034, 0.04, 0.2, 20).rotateX(Math.PI / 2), shiny, 0, 0.58, -2.66);                                        // výfuk
+    put(new T.CircleGeometry(0.032, 20), glow('#ff7a1a', 1.2), 0, 0.58, -2.764, 0, Math.PI, 0);
+    put(airfoilGeo(0.14, 0.7, -0.05, 0.1), new T.MeshStandardMaterial({ color: '#17191d', roughness: 0.55, metalness: 0.3 }), 0, 0.3, -2.62, 0.2);                                                                  // spodní křídélko (beam wing), níž a ne přes výfuk
   }
-  // ---- přední křídlo: vždy celé nové přes celou šířku; L0 dva profily, L1 větší, L2 tři, L3 čtyři s kaskádami
+  // ---- přední křídlo: jedna čistá sestava přes celou šířku. Hlavní profil dole, nad ním (a o kousek za ním) další, žádný nepřečnívá
+  // přes koncové desky; pod nosem má výřez. Koncové desky mají patku u země, vnitřní kaskády jsou nízké a v barvě desek.
   {
-    const L = sh.fwing | 0, n = [2, 2, 3, 4][L], hw = [0.96, 1.0, 1.0, 1.0][L], chords = [0.4, 0.33, 0.27, 0.22].map((c) => c * (L === 1 ? 1.1 : 1)), pitches = [0.06, 0.16, 0.26, 0.36];
+    const L = sh.fwing | 0, n = [2, 2, 3, 4][L], hw = 0.98, chords = [0.36, 0.3, 0.25, 0.21].map((c) => c * (L === 1 ? 1.08 : 1)), pitches = [0.05, 0.13, 0.21, 0.29];
     const els = [];
-    for (let k = 0; k < n; k++) els.push({ le: 2.76 - 0.21 * k, y: 0.085 + 0.05 * k, c: chords[k], p: pitches[k] });
+    for (let k = 0; k < n; k++) els.push({ le: 2.74 - 0.15 * k, y: 0.07 + 0.045 * k, c: chords[k], p: pitches[k] });
     els.forEach((e, k) => wing(e.c, hw * 2, -0.07, 0, e.y, e.le, e.p, k === n - 1 ? tintS : k === 0 ? platePaint : shiny));
-    const zT = els[n - 1].le - els[n - 1].c - 0.02, yT = els[n - 1].y + 0.07;
+    const zT = els[n - 1].le - els[n - 1].c - 0.02, yT = els[n - 1].y + 0.08;
     for (const s of [-1, 1]) {
-      put(plateGeo(roundedPlatePts(zT, 2.78, 0.04, yT + 0.1, 0.035, 0.07), 0.014), platePaint, s * (hw + 0.01), 0, 0);                  // koncová deska
-      if (L >= 1) put(plateGeo(roundedPlatePts(zT + 0.1, 2.62, 0.09, yT + 0.03, 0.02, 0.03), 0.008), shiny, s * 0.76, 0, 0);            // vnitřní kaskáda
-      if (L >= 2) { put(plateGeo(roundedPlatePts(zT + 0.12, 2.5, 0.1, yT + 0.01, 0.015, 0.02), 0.007), tintS, s * 0.52, 0, 0); put(softBox(0.18, 0.012, 0.07, 0.6, 8), tintS, s * 0.9, yT + 0.1, 2.5, 0, 0, s * 0.3); }
+      put(plateGeo(roundedPlatePts(zT, 2.78, 0.03, yT + 0.06, 0.03, 0.06), 0.014), platePaint, s * (hw + 0.012), 0, 0);                 // koncová deska
+      put(softBox(0.1, 0.012, 0.5, 0.5, 8), shiny, s * (hw - 0.05), 0.035, 2.5);                                                           // patka desky u země
+      if (L >= 1) put(plateGeo(roundedPlatePts(zT + 0.12, 2.6, 0.08, yT - 0.01, 0.02, 0.03), 0.007), platePaint, s * 0.72, 0, 0);          // vnitřní kaskáda (nízká, stejná barva)
+      if (L >= 3) put(plateGeo(roundedPlatePts(zT + 0.16, 2.5, 0.09, yT - 0.03, 0.015, 0.02), 0.006), platePaint, s * 0.5, 0, 0);
       put(pylonGeo([[s * 0.07, 0.3, 2.1], [s * 0.085, 0.2, 2.4], [s * 0.1, 0.12, 2.6]], 0.024, 0.45), shiny, 0, 0, 0);                  // nosník z nosu
     }
   }
@@ -5401,7 +5403,7 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
       for (let k = 0; k < 5; k++) put(softBox(0.27, 0.05, 0.014, 0.5, 10), tintS, 0, ty + 0.09, -1.7 - k * 0.1);
     }
     if (sh.kers >= 3) {
-      put(new T.CapsuleGeometry(0.014, 0.6, 6, 12).rotateZ(Math.PI / 2), kmat, 0, 0.74, bb.min.z + 0.35);
+      put(new T.CapsuleGeometry(0.012, 0.5, 6, 12).rotateZ(Math.PI / 2), kmat, 0, 0.7, -2.36);
       put(new T.CylinderGeometry(0.003, 0.006, 0.34, 8), shiny, 0.12, down(-0.6) + 0.17, -0.6);
       put(new T.SphereGeometry(0.014, 12, 10), kmat, 0.12, down(-0.6) + 0.34, -0.6);
     }
