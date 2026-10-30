@@ -7093,68 +7093,153 @@ function autopilot(aggr, stopAfter, latOff = 0) {
 
 
 // ---------------------------------------------------------------- pohled z kabiny: volant a ruce řidiče
-// Volant a ruce se vykreslují jako potomci kamery, takže jsou vždy před očima. Volant se otáčí podle řízení (car.steer),
-// ruce ho drží a předloktí se natahují k ramenům. Formule má hranatý volant s displejem (rychlostní stupeň a rychlost)
-// a řadou světel otáček, ostatní auta kulatý volant s paprsky.
-const cockpit = { group: null, forCar: null, wheel: null, gloves: [], arms: [], shoulders: [], disp: null, dispCtx: null, dispT: 0, leds: [], kind: '', ang: 0 };
+// Volant a ruce se vykreslují jako potomci kamery (bez testu hloubky, vždy před očima). Volant se otáčí podle řízení
+// (car.steer) a drží ho rukavice s prsty obtočenými kolem rukojetí; předloktí v rukávu kombinézy se k nim natahují z rohů obrazu.
+// Formule: karbonový volant skutečného tvaru (širší střed, dole sklesající rukojeti), displej s převodovým stupněm,
+// rychlostí, odstupem a baterií, řada světel otáček, barevná tlačítka a otočné voliče. Ostatní auta: kožený volant se třemi paprsky.
+const cockpit = { group: null, forCar: null, wheel: null, hands: [], arms: [], elbows: [], disp: null, dispCtx: null, dispT: 0, leds: [], kind: '', ang: 0 };
+// z nepřipojených trojúhelníků (ExtrudeGeometry) udělá spojitou síť s hladkými normálami
+function smoothGeo(geo) {
+  const g = geo.index ? geo.toNonIndexed() : geo, p = g.attributes.position, map = new Map(), pos = [], idx = [];
+  for (let i = 0; i < p.count; i++) {
+    const k = Math.round(p.getX(i) * 4000) + '|' + Math.round(p.getY(i) * 4000) + '|' + Math.round(p.getZ(i) * 4000);
+    let j = map.get(k); if (j === undefined) { j = pos.length / 3; map.set(k, j); pos.push(p.getX(i), p.getY(i), p.getZ(i)); }
+    idx.push(j);
+  }
+  const out = new T.BufferGeometry();
+  out.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); out.setIndex(idx); out.computeVertexNormals();
+  return out;
+}
+function carbonTex() {
+  const t = canvasTex(128, 128, (g, w, h) => {
+    g.fillStyle = '#0c0d0f'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 8) for (let x = 0; x < w; x += 8) {
+      const a = ((x + y) / 8) % 2 === 0;
+      const gr = g.createLinearGradient(x, y, x + 8, y + 8); gr.addColorStop(0, a ? '#2a2c31' : '#121316'); gr.addColorStop(1, a ? '#121316' : '#2a2c31');
+      g.fillStyle = gr; g.fillRect(x, y, 8, 8);
+      g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1; g.strokeRect(x + 0.5, y + 0.5, 7, 7);
+    }
+  });
+  t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(2.2, 2.2); t.anisotropy = 4;
+  return t;
+}
+function suitTex(col, stripe) {
+  return canvasTex(64, 64, (g, w, h) => {
+    g.fillStyle = col; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(0,0,0,.10)'; for (let y = 0; y < h; y += 2) g.fillRect(0, y, w, 1);   // tkanina Nomex
+    g.fillStyle = 'rgba(255,255,255,.06)'; for (let x = 0; x < w; x += 2) g.fillRect(x, 0, 1, h);
+    g.fillStyle = stripe; g.fillRect(0, h * 0.42, w, h * 0.1);
+  });
+}
 function cockpitBuild(c3) {
   const lv = c3.lv || LIVERIES[0], f1 = !!c3.formula;
   if (cockpit.group) { camera.remove(cockpit.group); disposeGroup(cockpit.group); }
   const group = new T.Group(); group.visible = false;
-  const carbon = new T.MeshStandardMaterial({ color: '#16181c', roughness: 0.42, metalness: 0.35 });
-  const rubber = new T.MeshStandardMaterial({ color: '#0c0d0f', roughness: 0.92 });
-  const accent = new T.MeshStandardMaterial({ color: lv.a1 || '#ff8000', roughness: 0.4, metalness: 0.2 });
-  const suit = new T.MeshStandardMaterial({ color: lv.body || '#cccccc', roughness: 0.8 });
-  const glove = new T.MeshStandardMaterial({ color: '#111214', roughness: 0.85 });
-  // předloktí se kreslí první, pak volant, nakonec rukavice; bez testu hloubky, aby kokpit auta volant nezakrýval
-  const armMat = suit;
+  const cf = carbonTex();
+  const carbon = new T.MeshPhysicalMaterial({ map: cf, roughness: 0.38, metalness: 0.45, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const rubber = new T.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.95 });
+  const leather = new T.MeshStandardMaterial({ color: '#141416', roughness: 0.7 });
+  const accent = new T.MeshStandardMaterial({ color: lv.a1 || '#ff8000', roughness: 0.4, metalness: 0.15 });
+  const suitMat = new T.MeshStandardMaterial({ map: suitTex(f1 ? '#' + new T.Color(lv.body || '#cccccc').multiplyScalar(0.42).getHexString() : '#23262c', lv.a1 || '#ffffff'), roughness: 0.85 });
+  const glove = new T.MeshStandardMaterial({ color: '#141518', roughness: 0.8 });
+  const palm = new T.MeshStandardMaterial({ color: '#d8dade', roughness: 0.7 });
   const pivot = new T.Group(), wheel = new T.Group(); pivot.add(wheel);
-  cockpit.arms = [0, 1].map(() => { const a = new T.Mesh(new T.CylinderGeometry(0.016, 0.024, 1, 10, 1), armMat); group.add(a); return a; });
-  group.add(pivot);
-  const gloveAt = [];
-  cockpit.leds = []; cockpit.disp = null; cockpit.dispCtx = null;
-  const add = (geo, mat, x, y, z) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); wheel.add(m); return m; };
-  if (f1) {
-    pivot.position.set(0, -0.3, -0.7); pivot.rotation.x = -0.55; pivot.scale.setScalar(0.8);
-    add(softBox(0.2, 0.12, 0.034, 0.4, 14), carbon, 0, 0, 0);
-    for (const s of [-1, 1]) {
-      add(new T.CapsuleGeometry(0.034, 0.1, 4, 10), rubber, s * 0.138, -0.005, 0.004);      // rukojeť
-      const bar = add(softBox(0.05, 0.06, 0.03, 0.5, 10), carbon, s * 0.105, 0.028, 0); bar.rotation.z = s * 0.1;
-      add(new T.BoxGeometry(0.014, 0.1, 0.012), accent, s * 0.172, -0.005, 0.017);           // proužek v barvě týmu
+  cockpit.leds = []; cockpit.disp = null; cockpit.dispCtx = null; cockpit.hands = [];
+  const add = (geo, mat, x, y, z, parent = wheel) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  // rallyové auto (model nemá interiér): palubní deska s přístroji, sloupky a horní hrana čelního skla, aby volant nevisel nad kapotou
+  cockpit.clu = null;
+  if (!f1) {
+    const dashM = new T.MeshStandardMaterial({ color: '#131417', roughness: 0.82 });
+    const trimM = new T.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.9 });
+    const dash = add(softBox(3.0, 0.34, 0.8, 0.35, 18), dashM, 0, -0.5, -0.95, group);
+    dash.rotation.x = -0.1;
+    add(softBox(2.9, 0.01, 0.02, 0.5, 8), accent, 0, -0.325, -0.7, group);                               // prošití / lišta v barvě auta
+    add(softBox(0.52, 0.2, 0.2, 0.45, 14), trimM, 0, -0.275, -0.85, group);                                // kryt přístrojů
+    const cv = document.createElement('canvas'); cv.width = 320; cv.height = 128;
+    const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = 4;
+    cockpit.clu = { ctx: cv.getContext('2d'), tex, t: 0 };
+    add(new T.PlaneGeometry(0.46, 0.184), new T.MeshBasicMaterial({ map: tex }), 0, -0.272, -0.744, group).rotation.x = -0.35;
+    for (const s of [-1, 1]) {                                                                              // sloupky čelního skla
+      const pil = add(softBox(0.09, 1.1, 0.12, 0.45, 12), trimM, s * 0.86, 0.12, -0.78, group); pil.rotation.z = -s * 0.2; pil.rotation.x = 0.0;
     }
-    // displej se stupněm a rychlostí
-    const cv = document.createElement('canvas'); cv.width = 160; cv.height = 80;
-    const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace;
+    add(softBox(2.4, 0.2, 0.3, 0.4, 14), trimM, 0, 0.72, -0.7, group);                                     // horní hrana skla s lištou
+  }
+  // předloktí (kreslí se první, pod volantem)
+  cockpit.arms = [0, 1].map(() => { const a = new T.Mesh(new T.CylinderGeometry(0.03, 0.04, 1, 14, 1), suitMat); group.add(a); return a; });
+  cockpit.cuffs = [0, 1].map(() => { const c = new T.Mesh(new T.CylinderGeometry(0.033, 0.033, 0.02, 14), accent); group.add(c); return c; });
+  group.add(pivot);
+  if (f1) {
+    pivot.position.set(0, -0.255, -0.72); pivot.rotation.x = -0.52; pivot.scale.setScalar(1.3);
+    // tělo volantu: obrys skutečného tvaru (široký střed, rukojeti klesají a jsou zaoblené), vytlačený s hranou
+    const sh = new T.Shape();
+    sh.moveTo(-0.085, 0.064); sh.lineTo(0.085, 0.064);
+    sh.quadraticCurveTo(0.128, 0.064, 0.141, 0.042); sh.quadraticCurveTo(0.162, 0.006, 0.162, -0.034);
+    sh.quadraticCurveTo(0.162, -0.088, 0.122, -0.088); sh.quadraticCurveTo(0.097, -0.088, 0.092, -0.06);
+    sh.quadraticCurveTo(0.088, -0.05, 0.07, -0.05); sh.lineTo(-0.07, -0.05);
+    sh.quadraticCurveTo(-0.088, -0.05, -0.092, -0.06); sh.quadraticCurveTo(-0.097, -0.088, -0.122, -0.088);
+    sh.quadraticCurveTo(-0.162, -0.088, -0.162, -0.034); sh.quadraticCurveTo(-0.162, 0.006, -0.141, 0.042);
+    sh.quadraticCurveTo(-0.128, 0.064, -0.085, 0.064);
+    const bodyGeo = smoothGeo(new T.ExtrudeGeometry(sh, { depth: 0.018, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.005, bevelSegments: 4, curveSegments: 18 }).translate(0, 0, -0.009));
+    const uv = bodyGeo.attributes.position; const uvs = new Float32Array(uv.count * 2);
+    for (let i = 0; i < uv.count; i++) { uvs[i * 2] = uv.getX(i) * 3; uvs[i * 2 + 1] = uv.getY(i) * 3; }
+    bodyGeo.setAttribute('uv', new T.BufferAttribute(uvs, 2));
+    add(bodyGeo, carbon, 0, 0, 0);
+    // pogumované rukojeti s drážkami a proužkem v barvě týmu
+    for (const s of [-1, 1]) {
+      const g = add(new T.CapsuleGeometry(0.0305, 0.085, 6, 16), rubber, s * 0.134, -0.03, 0.006); g.rotation.z = s * 0.1;
+      for (let k = 0; k < 6; k++) { const r = add(new T.TorusGeometry(0.0314, 0.0017, 6, 20), leather, s * (0.134 + (-0.06 + k * 0.0125 + 0.03) * 0.1 * -s * -1), -0.066 + k * 0.0125, 0.006); r.rotation.x = Math.PI / 2; }
+      add(softBox(0.007, 0.07, 0.004, 0.5, 8), accent, s * 0.164, -0.03, 0.008);
+    }
+    // rám displeje a displej
+    add(softBox(0.126, 0.078, 0.01, 0.45, 12), new T.MeshStandardMaterial({ color: '#07080a', roughness: 0.25, metalness: 0.6 }), 0, 0.006, 0.012);
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 140;
+    const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = 4;
     cockpit.dispCtx = cv.getContext('2d'); cockpit.disp = tex;
-    add(new T.PlaneGeometry(0.12, 0.06), new T.MeshBasicMaterial({ map: tex }), 0, 0.01, 0.0185);
-    // tlačítka a otočné voliče kolem displeje
-    const cols = ['#e8102a', '#ffd200', '#2fdc6b', '#2f7bff', '#ffffff', '#e8102a'];
-    [[-0.075, -0.045], [-0.045, -0.045], [-0.015, -0.047], [0.015, -0.047], [0.045, -0.045], [0.075, -0.045]].forEach(([x, y], i) => {
-      const b = add(new T.CylinderGeometry(0.0095, 0.0095, 0.012, 12), new T.MeshStandardMaterial({ color: cols[i], roughness: 0.5, emissive: cols[i], emissiveIntensity: 0.25 }), x, y, 0.02); b.rotation.x = Math.PI / 2;
-    });
-    for (const s of [-1, 1]) { const k = add(new T.CylinderGeometry(0.016, 0.016, 0.014, 16), accent, s * 0.09, 0.044, 0.02); k.rotation.x = Math.PI / 2; }
-    // řada světel otáček
-    for (let i = 0; i < 9; i++) {
-      const m = new T.MeshBasicMaterial({ color: '#202226' });
-      add(new T.CircleGeometry(0.0075, 10), m, (i - 4) * 0.021, 0.0615, 0.0185);
+    add(new T.PlaneGeometry(0.112, 0.0613), new T.MeshBasicMaterial({ map: tex }), 0, 0.006, 0.0176);
+    // řada 15 světel otáček nad displejem
+    for (let i = 0; i < 15; i++) {
+      const m = new T.MeshBasicMaterial({ color: '#1b1d21' });
+      add(new T.CircleGeometry(0.0034, 12), m, (i - 7) * 0.0098, 0.0505 + Math.abs(i - 7) * 0.00025, 0.0152);
       cockpit.leds.push(m);
     }
-    gloveAt.push([-0.138, -0.005, 0.03], [0.138, -0.005, 0.03]);
+    // tlačítka (kopulky) a otočné voliče
+    const cols = ['#e8102a', '#ffd200', '#2fdc6b', '#2f7bff', '#ffffff', '#ff7a1a', '#c34bff', '#2fdc6b'];
+    const btn = (x, y, r, col) => { const b = add(new T.SphereGeometry(r, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.55, 1), new T.MeshStandardMaterial({ color: col, roughness: 0.45, emissive: col, emissiveIntensity: 0.12 }), x, y, 0.0125); b.rotation.x = Math.PI / 2; add(new T.CylinderGeometry(r * 1.2, r * 1.2, 0.004, 14).rotateX(Math.PI / 2), carbon, x, y, 0.011); };
+    [[-0.104, 0.036], [-0.082, 0.036], [-0.104, 0.014], [-0.082, 0.014], [0.082, 0.036], [0.104, 0.036], [0.082, 0.014], [0.104, 0.014]].forEach(([x, y], i) => btn(x, y, 0.0072, cols[i % cols.length]));
+    for (let i = 0; i < 7; i++) btn(-0.054 + i * 0.018, -0.0385, 0.0062, cols[(i + 2) % cols.length]);
+    for (const s of [-1, 1]) {
+      const k = add(new T.CylinderGeometry(0.0155, 0.0165, 0.012, 28).rotateX(Math.PI / 2), new T.MeshStandardMaterial({ color: '#1b1d22', roughness: 0.3, metalness: 0.7 }), s * 0.1, -0.012, 0.0145);
+      add(softBox(0.0025, 0.012, 0.003, 0.5, 6), accent, s * 0.1, -0.007, 0.0215);
+      for (let a = 0; a < 18; a++) { const t = add(new T.BoxGeometry(0.0016, 0.0016, 0.012), carbon, s * 0.1 + Math.cos(a / 18 * 6.283) * 0.0162, -0.012 + Math.sin(a / 18 * 6.283) * 0.0162, 0.0145); t.rotation.z = a / 18 * 6.283; }
+    }
+    cockpit.holdY = -0.032; cockpit.holdX = 0.137;
   } else {
-    pivot.position.set(0, -0.31, -0.7); pivot.rotation.x = -0.85; pivot.scale.setScalar(0.82);
-    add(new T.TorusGeometry(0.185, 0.019, 10, 48), rubber, 0, 0, 0);
-    for (const [x, y, w, h] of [[-0.095, 0, 0.19, 0.03], [0.095, 0, 0.19, 0.03], [0, -0.095, 0.03, 0.19]]) add(new T.BoxGeometry(w, h, 0.012), carbon, x, y, 0);
-    const hub = add(new T.CylinderGeometry(0.055, 0.06, 0.03, 20), carbon, 0, 0, 0.008); hub.rotation.x = Math.PI / 2;
-    add(new T.TorusGeometry(0.04, 0.005, 8, 24), accent, 0, 0, 0.024);
-    add(new T.BoxGeometry(0.022, 0.034, 0.024), accent, 0, 0.185, 0.003);                  // značka na dvanácté hodině
-    gloveAt.push([-0.185, 0, 0.02], [0.185, 0, 0.02]);
+    pivot.position.set(0, -0.26, -0.74); pivot.rotation.x = -0.82; pivot.scale.setScalar(1.15);
+    // kožený věnec, tři paprsky a hlavice s logem
+    add(new T.TorusGeometry(0.185, 0.0195, 16, 64), leather, 0, 0, 0);
+    for (let k = 0; k < 32; k++) { const a = k / 32 * 6.283; const st = add(new T.BoxGeometry(0.0025, 0.002, 0.014), rubber, Math.cos(a) * 0.185, Math.sin(a) * 0.185, 0.02); st.rotation.z = a + Math.PI / 2; st.position.z = 0.0; }
+    const spoke = (x, y, w, h) => add(softBox(w, h, 0.012, 0.5, 10), new T.MeshStandardMaterial({ color: '#1d1f24', roughness: 0.4, metalness: 0.7 }), x, y, 0);
+    spoke(-0.098, -0.004, 0.2, 0.032); spoke(0.098, -0.004, 0.2, 0.032); spoke(0, -0.1, 0.034, 0.2);
+    add(new T.CylinderGeometry(0.058, 0.064, 0.034, 28).rotateX(Math.PI / 2), new T.MeshStandardMaterial({ color: '#17181c', roughness: 0.35, metalness: 0.6 }), 0, 0, 0.006);
+    add(new T.TorusGeometry(0.046, 0.0045, 8, 32), accent, 0, 0, 0.024);
+    add(softBox(0.02, 0.034, 0.012, 0.6, 8), accent, 0, 0.185, 0.0);
+    cockpit.holdY = 0.0; cockpit.holdX = 0.185;
   }
-  cockpit.gloves = gloveAt.map((p) => {
-    const m = new T.Mesh(new T.SphereGeometry(0.04, 14, 10).scale(1.0, 1.2, 0.95), glove); m.position.set(...p); wheel.add(m);
-    const cuff = new T.Mesh(new T.TorusGeometry(0.036, 0.009, 6, 14), accent); cuff.position.set(0, -0.05, 0); cuff.rotation.x = Math.PI / 2; m.add(cuff);
-    return m;
-  });
-  cockpit.shoulders = [new T.Vector3(-0.34, -0.8, 0.2), new T.Vector3(0.34, -0.8, 0.2)];
+  // ruce: hřbet rukavice vždy směrem k řidiči, prsty obtočené kolem rukojeti, palec nahoře, manžeta rukávu
+  for (const s of [-1, 1]) {
+    const h = new T.Group(); h.position.set(s * cockpit.holdX, cockpit.holdY, 0.03); wheel.add(h);
+    add(softBox(0.074, 0.095, 0.036, 0.5, 12), glove, 0, 0, 0.022, h);                            // hřbet ruky
+    add(softBox(0.052, 0.022, 0.006, 0.6, 8), accent, 0, 0.012, 0.042, h);                        // pruh přes klouby
+    for (let k = 0; k < 4; k++) {                                                                  // čtyři prsty kolem rukojeti
+      const f = add(new T.CapsuleGeometry(0.0088, 0.036, 6, 10).rotateZ(Math.PI / 2), glove, s * 0.034, 0.033 - k * 0.0215, -0.006, h);
+      add(new T.SphereGeometry(0.0092, 10, 8), glove, s * 0.058, 0.033 - k * 0.0215, -0.02, h);
+      void f;
+    }
+    const th = add(new T.CapsuleGeometry(0.0095, 0.04, 6, 10), glove, -s * 0.026, 0.056, 0.0, h); th.rotation.z = -s * 0.6;
+    add(new T.CylinderGeometry(0.0365, 0.0365, 0.02, 16), accent, 0, -0.062, 0.032, h);   // manžeta
+    cockpit.hands.push(h);
+  }
+  cockpit.elbows = [new T.Vector3(-0.44, -0.66, 0.4), new T.Vector3(0.44, -0.66, 0.4)];
   let ro = 1000;
   group.traverse((o) => { if (o.isMesh) { o.renderOrder = ro++; o.castShadow = false; o.receiveShadow = false; o.frustumCulled = false; for (const m of Array.isArray(o.material) ? o.material : [o.material]) { m.depthTest = false; m.depthWrite = false; } } });
   camera.add(group);
@@ -7166,34 +7251,63 @@ function cockpitUpdate(dt, on) {
   cockpit.group.visible = on;
   if (car3d.driver) for (const o of car3d.driver) o.visible = !on;
   if (!on) return;
-  // volant: plný rejd = asi 70° u formule (jako u skutečného volantu), u ostatních aut skoro půl otáčky
-  const low = clamp(1 - Math.abs(car.vf) / (cockpit.kind === 'f1' ? 70 : 45), 0, 1); // za jízdy se volant otáčí míň (jako rejd kol)
+  // plný rejd = asi 70° u formule (jako u skutečného volantu), u ostatních aut skoro půl otáčky; za jízdy míň
+  const low = clamp(1 - Math.abs(car.vf) / (cockpit.kind === 'f1' ? 70 : 45), 0, 1);
   const target = -clamp(car.steer, -1, 1) * (cockpit.kind === 'f1' ? 0.35 + 0.95 * low : 1.0 + 1.5 * low);
   cockpit.ang += (target - cockpit.ang) * Math.min(1, dt * 18);
   cockpit.wheel.rotation.z = cockpit.ang;
   cockpit.group.updateMatrixWorld(true);
-  cockpit.gloves.forEach((gl, i) => {
-    gl.getWorldPosition(_cv); camera.worldToLocal(_cv);
-    _cs.copy(cockpit.shoulders[i]).sub(_cv);
-    const len = _cs.length(), arm = cockpit.arms[i];
-    arm.position.copy(_cv).addScaledVector(_cs, 0.5); arm.scale.set(1, len, 1);
-    arm.quaternion.setFromUnitVectors(_cy, _cs.normalize());
+  // předloktí spojí zápěstí (manžeta v rukavici) s loktem u okraje obrazu
+  cockpit.hands.forEach((h, i) => {
+    _cv.set(0, -0.062, 0.03); h.localToWorld(_cv); camera.worldToLocal(_cv);
+    _cs.copy(cockpit.elbows[i]).sub(_cv);
+    const len = _cs.length(), arm = cockpit.arms[i], cuff = cockpit.cuffs[i];
+    _cs.normalize();
+    arm.position.copy(_cv).addScaledVector(_cs, len * 0.5); arm.scale.set(1, len, 1); arm.quaternion.setFromUnitVectors(_cy, _cs);
+    cuff.position.copy(_cv).addScaledVector(_cs, 0.012); cuff.quaternion.copy(arm.quaternion);
   });
+  if (cockpit.clu) {
+    cockpit.clu.t -= dt;
+    if (cockpit.clu.t <= 0) {
+      cockpit.clu.t = 0.08;
+      const g = cockpit.clu.ctx;
+      g.fillStyle = '#06080b'; g.fillRect(0, 0, 320, 128);
+      const dial = (cx, label, val, max, ticks, redFrom) => {
+        g.strokeStyle = '#2a2f38'; g.lineWidth = 3; g.beginPath(); g.arc(cx, 70, 54, Math.PI * 0.75, Math.PI * 2.25); g.stroke();
+        for (let i = 0; i <= ticks; i++) { const a = Math.PI * 0.75 + (i / ticks) * Math.PI * 1.5; g.strokeStyle = i / ticks >= redFrom ? '#e8402a' : '#cfd6e0'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx + Math.cos(a) * 46, 70 + Math.sin(a) * 46); g.lineTo(cx + Math.cos(a) * 54, 70 + Math.sin(a) * 54); g.stroke(); }
+        const a = Math.PI * 0.75 + clamp(val / max, 0, 1) * Math.PI * 1.5;
+        g.strokeStyle = '#ff6a1a'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx, 70); g.lineTo(cx + Math.cos(a) * 46, 70 + Math.sin(a) * 46); g.stroke();
+        g.fillStyle = '#cfd6e0'; g.beginPath(); g.arc(cx, 70, 4, 0, 7); g.fill();
+        g.fillStyle = '#8a97a8'; g.font = '700 12px Arial, sans-serif'; g.textAlign = 'center'; g.fillText(label, cx, 112);
+      };
+      dial(76, 'km/h', Math.abs(car.vf) * 3.6, 240, 12, 0.9); dial(244, 'ot/min ×1000', car.rpm, 8000, 8, 0.82);
+      g.fillStyle = '#ffffff'; g.font = '900 30px Arial, sans-serif'; g.textAlign = 'center'; g.fillText(car.gear < 0 ? 'R' : car.vf < 1 && car.gear <= 1 ? 'N' : String(car.gear), 160, 58);
+      g.fillStyle = '#ffd200'; g.font = '700 14px Arial, sans-serif'; g.fillText(String(Math.round(Math.abs(car.vf) * 3.6)), 160, 90);
+      cockpit.clu.tex.needsUpdate = true;
+    }
+  }
   if (cockpit.disp) {
     cockpit.dispT -= dt;
     if (cockpit.dispT <= 0) {
       cockpit.dispT = 0.08;
-      const g = cockpit.dispCtx;
-      g.fillStyle = '#04070b'; g.fillRect(0, 0, 160, 80);
-      g.fillStyle = '#3fdc86'; g.font = '900 54px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(car.gear < 0 ? 'R' : car.vf < 1 && car.gear <= 1 ? 'N' : String(car.gear), 44, 34);
-      g.fillStyle = '#ffffff'; g.font = '700 30px Arial, sans-serif'; g.fillText(String(Math.round(Math.abs(car.vf) * 3.6)), 116, 28);
-      g.fillStyle = '#8a97a8'; g.font = '700 16px Arial, sans-serif'; g.fillText('km/h', 116, 52);
-      g.fillStyle = car.nosOn ? '#8f5bff' : '#2f7bff'; g.fillRect(14, 66, 132 * clamp(car.nos / Math.max(0.1, nosTank()), 0, 1), 7);
+      const g = cockpit.dispCtx, W2 = 256, H2 = 140;
+      g.fillStyle = '#05080c'; g.fillRect(0, 0, W2, H2);
+      const gear = car.gear < 0 ? 'R' : car.vf < 1 && car.gear <= 1 ? 'N' : String(car.gear);
+      g.fillStyle = '#122033'; g.fillRect(0, 0, W2, 26);
+      g.fillStyle = '#7fb4ff'; g.font = '700 16px Arial, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+      const lap = G.gp ? `KOLO ${Math.min(G.gp.lap + 1, gpTotal())}/${gpTotal()}` : 'SPRINT';
+      g.fillText(lap, 8, 13);
+      g.fillStyle = '#3fdc86'; g.font = '900 78px Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(gear, 62, 76);
+      g.fillStyle = '#ffffff'; g.font = '800 46px Arial, sans-serif'; g.fillText(String(Math.round(Math.abs(car.vf) * 3.6)), 178, 66);
+      g.fillStyle = '#8a97a8'; g.font = '700 15px Arial, sans-serif'; g.fillText('km/h', 178, 94);
+      const nf = clamp(car.nos / Math.max(0.1, nosTank()), 0, 1);
+      g.fillStyle = '#1a2230'; g.fillRect(14, 116, 228, 12);
+      g.fillStyle = car.nosOn ? '#b06bff' : '#2f9bff'; g.fillRect(14, 116, 228 * nf, 12);
+      g.fillStyle = '#8a97a8'; g.font = '700 12px Arial, sans-serif'; g.textAlign = 'left'; g.fillText('KERS', 14, 108);
       cockpit.disp.needsUpdate = true;
     }
-    const f = clamp((car.rpm - 4200) / 3400, 0, 1.05);
-    cockpit.leds.forEach((m, i) => { const lit = f > (i + 0.5) / 9; m.color.set(lit ? (i < 3 ? '#2fdc6b' : i < 6 ? '#ff2a2a' : '#4d8bff') : '#202226'); });
+    const f = clamp((car.rpm - 4200) / 3400, 0, 1.05), n = cockpit.leds.length;
+    cockpit.leds.forEach((m, i) => { const lit = f > (i + 0.5) / n; const k = Math.abs(i - (n - 1) / 2) / ((n - 1) / 2); m.color.set(lit ? (k < 0.4 ? '#2fdc6b' : k < 0.75 ? '#ff2a2a' : '#4d8bff') : '#1b1d21'); });
   }
 }
 
