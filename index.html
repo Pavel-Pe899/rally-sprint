@@ -485,27 +485,53 @@
   @media (max-height: 450px) { body.touch .gp-tower { --row: 16px; width: 120px; top: calc(100px + env(safe-area-inset-top, 0px)); } body.touch .gt-row { grid-template-columns: 17px 4px 1fr auto 8px; gap: 4px; font-size: 11px; } body.touch .gt-row .pos { font-size: 10px; } body.touch .gt-row .gap { font-size: 9px; } body.touch .gt-row .ty { width: 8px; height: 8px; border-width: 2px; } }
   @media (max-width: 600px) { .gp-tower { top: calc(236px + env(safe-area-inset-top, 0px)); } }
   /* dílna týmu */
-  .shop-card { width: min(560px, 100%); }
-  .shop-list { display: grid; gap: 8px; }
-  .shop-it { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; grid-template-areas: "ic tx pips" "ic tx buy" "tiers tiers tiers"; align-items: center; gap: 4px 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255, 255, 255, .04); }
-  .shop-it .ic { grid-area: ic; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-size: 20px; background: rgba(255, 196, 25, .14); color: var(--accent); }
-  .shop-it .tx { grid-area: tx; min-width: 0; }
-  .shop-it .tx b { display: block; font-family: var(--display); font-size: 17px; font-weight: 800; line-height: 1.1; }
-  .shop-it .tx small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .shop-it .tx em { display: block; font-style: normal; color: var(--good); font-size: 12px; margin-top: 3px; }
-  .shop-it .tiers { grid-area: tiers; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
-  .shop-it .tiers figure { margin: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, .03); opacity: .85; }
-  .shop-it .tiers figure.own { opacity: .95; border-color: rgba(255, 196, 25, .35); }
-  .shop-it .tiers figure.cur { opacity: 1; border-color: var(--accent); box-shadow: 0 0 10px rgba(255, 196, 25, .35); }
+  .shop-card { width: min(1000px, 100%); background: radial-gradient(120% 90% at 50% 0%, #3b2a9a 0%, #20156b 55%, #130c45 100%); border: 4px solid #07041f; box-shadow: 0 0 0 3px rgba(120, 100, 255, .45), 0 24px 60px rgba(0, 0, 0, .7); }
+  .shop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .shop-card h2 { margin: 0; font-size: 40px; color: #fff; transform: rotate(-1.5deg); -webkit-text-stroke: 7px #07041f; paint-order: stroke fill; text-shadow: 0 5px 0 #07041f; letter-spacing: .5px; }
+  .shop-card h2 em { color: #ffd23f; font-style: italic; }
+  .shop-money { display: inline-flex; align-items: center; gap: 8px; background: #07041f; border: 3px solid #4a3cc4; border-radius: 999px; padding: 4px 16px 4px 5px; font: 900 22px var(--display); color: #fff; box-shadow: 0 4px 0 rgba(0, 0, 0, .4); }
+  .coin { width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center; font: 900 16px var(--display); color: #7a4a00; border: 2px solid #7a4a00; background: radial-gradient(circle at 35% 28%, #fff7b0 0%, #ffd23f 45%, #e09a00 100%); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .18); }
+  .shop-help { color: #c9c4ff; font-size: 13px; margin: 8px 0 12px; }
+  .shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+  .shop-it { --rc: #4fd35a; --rc2: #1f9a2f; position: relative; display: flex; flex-direction: column; border-radius: 18px; border: 4px solid #07041f; background: #1a1262; overflow: hidden; box-shadow: 0 7px 0 #07041f; transition: transform .15s; }
+  .shop-it:hover { transform: translateY(-3px); }
+  .shop-it.r1 { --rc: #36b4ff; --rc2: #1561d8; }
+  .shop-it.r2 { --rc: #c85bff; --rc2: #7a22d8; }
+  .shop-it.r3 { --rc: #ffd23f; --rc2: #e58a00; }
+  .shop-it.pop { animation: shopPop .55s cubic-bezier(.2, 1.6, .4, 1); }
+  @keyframes shopPop { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+  .shop-it::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .28), transparent); transform: skewX(-18deg); animation: shopShine 5s ease-in-out infinite; pointer-events: none; }
+  @keyframes shopShine { 0%, 62% { left: -60%; } 100% { left: 140%; } }
+  .shop-it .hd { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 10px 6px; background: linear-gradient(180deg, var(--rc), var(--rc2)); border-bottom: 4px solid #07041f; }
+  .shop-it .nm { font: 900 21px/1.05 var(--display); color: #fff; -webkit-text-stroke: 5px #07041f; paint-order: stroke fill; text-shadow: 0 3px 0 #07041f; }
+  .shop-it .stars { display: flex; gap: 1px; font-size: 20px; line-height: 1; flex: none; }
+  .shop-it .stars u { text-decoration: none; color: #2a1f80; -webkit-text-stroke: 2px #07041f; paint-order: stroke fill; }
+  .shop-it .stars u.on { color: #ffd23f; text-shadow: 0 0 8px rgba(255, 210, 63, .8); }
+  .shop-it .art { position: relative; display: grid; place-items: center; padding: 12px 0 10px; overflow: hidden; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 45%, #1a1262) 0%, #1a1262 72%); }
+  .shop-it .art::before { content: ''; position: absolute; inset: -80%; background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .13) 0 7deg, transparent 7deg 18deg); animation: shopSpin 28s linear infinite; }
+  @keyframes shopSpin { to { transform: rotate(360deg); } }
+  .shop-it .art canvas.thumb { position: relative; width: 74%; height: auto; border-radius: 14px; border: 3px solid #07041f; box-shadow: 0 6px 0 rgba(0, 0, 0, .35); animation: shopBob 3.2s ease-in-out infinite; }
+  @keyframes shopBob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-5px) rotate(1deg); } }
+  .shop-it .badge { position: absolute; top: 12px; left: -34px; z-index: 2; padding: 3px 38px; background: #ff3b4e; color: #fff; font: 900 13px var(--display); letter-spacing: .5px; transform: rotate(-35deg); border: 2px solid #07041f; text-shadow: 0 2px 0 #07041f; }
+  .shop-it .badge.mx { background: #ffb400; color: #4a2c00; text-shadow: none; }
+  .shop-it .ds { padding: 8px 12px 0; color: #cfd0ff; font-size: 12.5px; line-height: 1.3; min-height: 3.2em; }
+  .shop-it .fx { padding: 4px 12px 0; color: #7dff9a; font: 800 13.5px var(--display); text-shadow: 0 2px 0 #07041f; }
+  .shop-it .own { padding: 2px 12px 0; color: #ffd23f; font-size: 12px; font-weight: 700; }
+  .shop-it .tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 8px 10px 0; }
+  .shop-it .tiers figure { margin: 0; border: 2px solid #07041f; border-radius: 8px; overflow: hidden; background: #0f0a45; opacity: .75; }
+  .shop-it .tiers figure.own { opacity: 1; border-color: #4a3cc4; }
+  .shop-it .tiers figure.cur { opacity: 1; border-color: var(--rc); box-shadow: 0 0 10px var(--rc); }
   .shop-it .tiers canvas { display: block; width: 100%; height: auto; }
-  .shop-it .tiers figcaption { font-size: 10px; line-height: 1.15; padding: 3px 4px 4px; color: var(--muted); text-align: center; min-height: 2.4em; }
-  .shop-it .pips { grid-area: pips; display: flex; gap: 4px; justify-content: flex-end; }
-  .shop-it .pips u { width: 18px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .15); }
-  .shop-it .pips u.on { background: var(--accent); box-shadow: 0 0 8px rgba(255, 196, 25, .6); }
-  .shop-it .buy { grid-area: buy; padding: 7px 12px; font-size: 14px; min-width: 150px; }
-  .shop-it .buy small { display: block; font-size: 11px; font-weight: 600; opacity: .85; }
-  .shop-it.max { opacity: .75; }
-  @media (max-width: 520px) { .shop-it { grid-template-columns: 34px minmax(0, 1fr); grid-template-areas: "ic tx" "pips pips" "buy buy" "tiers tiers"; } .shop-it .tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); } .shop-it .pips { justify-content: flex-start; } .shop-it .buy { min-width: 0; } }
+  .shop-it .tiers figcaption { font-size: 9.5px; line-height: 1.12; padding: 2px 3px 3px; color: #b9b6ff; text-align: center; min-height: 2.3em; }
+  .bs-buy { margin: 10px 12px 12px; padding: 10px 12px 9px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 13px; border: 3px solid #07041f; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; font: 900 21px var(--display); -webkit-text-stroke: 4px #0b4d0a; paint-order: stroke fill; text-shadow: 0 2px 0 #0b4d0a; box-shadow: 0 5px 0 #07041f, inset 0 3px 0 rgba(255, 255, 255, .45); cursor: pointer; animation: shopBuyPulse 2.2s ease-in-out infinite; }
+  .bs-buy small { display: block; -webkit-text-stroke: 0; text-shadow: none; font: 700 11px var(--display); opacity: .95; color: #eaffd9; }
+  .bs-buy:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #07041f, inset 0 3px 0 rgba(255, 255, 255, .45); }
+  .bs-buy:disabled { animation: none; filter: grayscale(.7) brightness(.75); cursor: default; }
+  .shop-it.max .bs-buy { background: linear-gradient(180deg, #ffe680 0%, #ffb400 100%); -webkit-text-stroke: 4px #6a3d00; text-shadow: 0 2px 0 #6a3d00; filter: none; }
+  @keyframes shopBuyPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+  .shop-it .bs-txt { display: block; line-height: 1.05; text-align: center; }
+  .shop-all { display: flex; gap: 10px; margin-top: 16px; justify-content: center; flex-wrap: wrap; }
+  @media (max-width: 520px) { .shop-card h2 { font-size: 30px; } .shop-list { grid-template-columns: 1fr 1fr; gap: 10px; } .shop-it .nm { font-size: 16px; } .shop-it .tiers { display: none; } }
   .gp-table .rrow.gt { display: grid; grid-template-columns: 30px 6px 46px 1fr auto auto; align-items: center; gap: 8px; padding: 0 10px 0 0; height: 32px; overflow: hidden; }
   .gp-table .rrow.gt .pos { align-self: stretch; display: grid; place-items: center; font-style: normal; font-weight: 900; font-family: var(--display); background: rgba(255, 255, 255, .9); color: #0a0e18; }
   .gp-table .rrow.gt.p1 .pos { background: #ffc419; } .gp-table .rrow.gt.p2 .pos { background: #d3d8df; } .gp-table .rrow.gt.p3 .pos { background: #d8955a; }
@@ -703,10 +729,10 @@
 
 <div id="shopModal" class="modal" hidden>
   <div class="card shop-card">
-    <h2>Dílna <em>týmu</em></h2>
-    <p class="help">Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Díly platí jen pro tvou formuli. Máš <b id="shopMoney">0 $</b>.</p>
+    <div class="shop-head"><h2>Dílna <em>týmu</em></h2><div class="shop-money"><span class="coin">$</span><b id="shopMoney">0</b></div></div>
+    <p class="shop-help">Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Díly platí jen pro tvou formuli.</p>
     <div class="shop-list" id="shopList"></div>
-    <div class="actions"><button class="btn" id="bShopAll" hidden>Všechny díly na maximum (zdarma)</button><button class="btn ghost" id="bShopClose">Zavřít</button></div>
+    <div class="shop-all"><button class="btn" id="bShopAll" hidden>Všechny díly na maximum (zdarma)</button><button class="btn ghost" id="bShopClose">Zavřít</button></div>
   </div>
 </div>
 
@@ -2574,6 +2600,30 @@ function addWind(mat, strength, key, fade = 0) {
       transformed *= 1.0 - smoothstep(${(fade * 0.6).toFixed(1)}, ${fade.toFixed(1)}, fadeD);` : ''}`);
   };
   mat.customProgramCacheKey = () => 'wind-' + key + (fade ? '-f' : '');
+  return mat;
+}
+
+
+// Lesk pomocí shaderu: falešný odraz oblohy podle směru pohledu (fresnel) a světelný pruh, který se po povrchu pomalu posouvá.
+// Přidává se do emisní složky standardního materiálu, takže se hodí na lak, kovové ráfky, nálepky sponzorů i díly z dílny.
+function addShine(mat, key, { sweep = 0.5, env = 0.4 } = {}) {
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev(sh, r);
+    sh.uniforms.uWindT = windTime;
+    sh.fragmentShader = 'uniform float uWindT;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      {
+        vec3 shN = normalize(normal), shV = normalize(vViewPosition);
+        float shF = pow(1.0 - clamp(dot(shN, shV), 0.0, 1.0), 2.2);
+        vec3 shR = reflect(-shV, shN);
+        float shSky = smoothstep(-0.25, 0.85, shR.y);
+        vec3 shEnv = mix(vec3(0.05, 0.055, 0.07), vec3(0.78, 0.88, 1.0), shSky) + vec3(1.0, 0.92, 0.75) * pow(max(shR.x * 0.5 + shR.y * 0.6 + 0.3, 0.0), 6.0) * 0.35;
+        float shP = fract(dot(vViewPosition.xy, vec2(0.75, 0.55)) * 0.55 - uWindT * 0.3);
+        float shS = smoothstep(0.0, 0.05, shP) * smoothstep(0.16, 0.07, shP);
+        totalEmissiveRadiance += shEnv * (${env.toFixed(3)} * (0.25 + shF * 1.2)) + vec3(1.0, 0.97, 0.9) * shS * ${sweep.toFixed(3)} * (0.4 + shF);
+      }`);
+  };
+  mat.customProgramCacheKey = () => 'shine-' + key + (prev ? '+' : '');
   return mat;
 }
 
@@ -4919,6 +4969,7 @@ function buildModelCar(lv, spec) {
   }
 
   paint = paint || new T.MeshPhysicalMaterial();
+  if (spec.formula && !paint.userData.shined) { addShine(paint, 'paint', { sweep: 0.14, env: 0.07 }); paint.userData.shined = true; paint.needsUpdate = true; }
   paint.color.set(lv.body); paint.map = null; paint.metalness = spec.look ? spec.look.metal : 0.08; paint.roughness = spec.look ? spec.look.rough : 0.38;
   if ('clearcoat' in paint) { paint.clearcoat = 1; paint.clearcoatRoughness = 0.08; }
   headMat = headMat || new T.MeshStandardMaterial();
@@ -4926,7 +4977,7 @@ function buildModelCar(lv, spec) {
   tailMat = tailMat || new T.MeshStandardMaterial();
   tailMat.emissive = new T.Color('#ff2010'); tailMat.emissiveIntensity = 0.4;
   for (const mt of clones.values()) {
-    if (P.rim.test(mt.name)) mt.color.set(lv.rim);
+    if (P.rim.test(mt.name)) { mt.color.set(lv.rim); if (spec.formula && !mt.userData.shined) { addShine(mt, 'rim', { sweep: 0.5, env: 0.5 }); mt.userData.shined = true; mt.needsUpdate = true; } }
     if (P.accent && P.accent.test(mt.name)) mt.color.set(lv.a1);
     if (P.cover && P.cover.test(mt.name)) mt.color.set(lv.cov || lv.body); // kryt motoru a bočnice
     if (P.carbon && P.carbon.test(mt.name)) mt.color.set(lv.a2);
@@ -4943,7 +4994,7 @@ function buildModelCar(lv, spec) {
   const ray = new T.Raycaster();
   const hit = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
   const decal = (h, w, hgt, map, offset = 0.012) => { // nálepka na povrch
-    const d = new T.Mesh(new T.PlaneGeometry(w, hgt), new T.MeshStandardMaterial({ map, transparent: true, roughness: 0.4, polygonOffset: true, polygonOffsetFactor: -2 }));
+    const d = new T.Mesh(new T.PlaneGeometry(w, hgt), addShine(new T.MeshStandardMaterial({ map, transparent: true, roughness: 0.3, metalness: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }), 'decal', { sweep: 0.55, env: 0.3 }));
     d.position.copy(h.p).addScaledVector(h.n, offset);
     d.lookAt(d.position.clone().add(h.n));
     body.add(d); return d;
@@ -4977,19 +5028,35 @@ function buildModelCar(lv, spec) {
       const sp = kind === 'thin' ? 10 : kind === 'box' ? 3 : 0;
       if (m.letterSpacing !== undefined) m.letterSpacing = sp + 'px';
       const tw = m.measureText(txt).width + (m.letterSpacing !== undefined ? 0 : sp * txt.length) + 4;
-      const pad = kind === 'box' ? 44 : 22, W2 = Math.min(1400, Math.ceil(tw + pad * 2));
+      // drobný znak před názvem (šikmé pruhy, kroužek, šipka), jako mívají značky na skutečných vozech
+      const hs = Array.from(txt).reduce((s, c) => s + c.charCodeAt(0), 0) % 4, markW = kind === 'box' || kind === 'thin' || hs === 3 ? 0 : 74;
+      const pad = kind === 'box' ? 44 : 22, W2 = Math.min(1500, Math.ceil(tw + markW + pad * 2));
+      const mix = (c, k) => { const t = new T.Color(c); return '#' + (k >= 0 ? t.lerp(new T.Color('#ffffff'), k) : t.lerp(new T.Color('#000000'), -k)).getHexString(); };
       const tex = canvasTex(W2, H, (g, cw, ch) => {
         g.clearRect(0, 0, cw, ch);
         g.font = font; g.textAlign = 'left'; g.textBaseline = 'middle';
         if (g.letterSpacing !== undefined) g.letterSpacing = sp + 'px';
-        const x0 = pad;
+        const x0 = pad + markW;
         if (kind === 'box') {
-          g.fillStyle = bg || '#ffffff'; g.beginPath(); g.roundRect ? g.roundRect(4, 8, cw - 8, ch - 16, 18) : g.rect(4, 8, cw - 8, ch - 16); g.fill();
-          g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.35)'; g.stroke();
-          g.fillStyle = col; g.fillText(txt, x0, ch / 2 + 4);
+          const bgc = bg || '#ffffff', gr = g.createLinearGradient(0, 8, 0, ch - 8);
+          gr.addColorStop(0, mix(bgc, 0.28)); gr.addColorStop(0.5, bgc); gr.addColorStop(1, mix(bgc, -0.28));
+          g.fillStyle = gr; g.beginPath(); g.roundRect ? g.roundRect(4, 8, cw - 8, ch - 16, 18) : g.rect(4, 8, cw - 8, ch - 16); g.fill();
+          g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.4)'; g.stroke();
+          g.save(); g.clip(); const gl = g.createLinearGradient(0, 8, 0, ch / 2); gl.addColorStop(0, 'rgba(255,255,255,.5)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fillRect(0, 8, cw, ch / 2 - 8); g.restore();   // lesklý pruh nahoře
+          g.shadowColor = 'rgba(0,0,0,.3)'; g.shadowBlur = 4; g.shadowOffsetY = 2; g.fillStyle = col; g.fillText(txt, x0, ch / 2 + 4); g.shadowColor = 'transparent';
         } else {
+          if (markW) {
+            const mx = pad + 6, my = ch / 2, dark = lumOf(col) > 0.5;
+            g.fillStyle = col; g.strokeStyle = dark ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.5)'; g.lineWidth = 6; g.lineJoin = 'round';
+            if (hs === 0) for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(mx + k * 20, my + 34); g.lineTo(mx + 14 + k * 20, my - 34); g.lineTo(mx + 26 + k * 20, my - 34); g.lineTo(mx + 12 + k * 20, my + 34); g.closePath(); g.stroke(); g.fill(); }
+            else if (hs === 1) { g.beginPath(); g.arc(mx + 30, my, 28, 0, 6.29); g.lineWidth = 12; g.strokeStyle = col; g.stroke(); g.beginPath(); g.arc(mx + 30, my, 9, 0, 6.29); g.fill(); }
+            else { g.beginPath(); g.moveTo(mx, my - 34); g.lineTo(mx + 50, my); g.lineTo(mx, my + 34); g.lineTo(mx + 18, my); g.closePath(); g.stroke(); g.fill(); }
+          }
           g.lineWidth = 9; g.lineJoin = 'round'; g.strokeStyle = lumOf(col) > 0.5 ? 'rgba(0,0,0,.4)' : 'rgba(255,255,255,.5)';
-          g.strokeText(txt, x0, ch / 2 + 4); g.fillStyle = col; g.fillText(txt, x0, ch / 2 + 4);
+          g.strokeText(txt, x0, ch / 2 + 4);
+          const fg = g.createLinearGradient(0, ch * 0.2, 0, ch * 0.8); fg.addColorStop(0, mix(col, 0.35)); fg.addColorStop(0.5, col); fg.addColorStop(1, mix(col, -0.22));
+          g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 5; g.shadowOffsetY = 3; g.fillStyle = fg; g.fillText(txt, x0, ch / 2 + 4); g.shadowColor = 'transparent';
+          g.globalCompositeOperation = 'source-atop'; const hl = g.createLinearGradient(0, 0, 0, ch / 2); hl.addColorStop(0, 'rgba(255,255,255,.4)'); hl.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = hl; g.fillRect(0, 0, cw, ch / 2); g.globalCompositeOperation = 'source-over';   // lesk nahoře písmen
         }
       });
       return { tex, aspect: W2 / H };
@@ -5126,6 +5193,9 @@ function softBox(w, h, d, e = 0.3, seg = 16) {
   for (let i = 0; i < rows - 1; i++) for (let j = 0; j < cols - 1; j++) { const a = i * cols + j, b2 = a + cols; idx.push(a, a + 1, b2, a + 1, b2 + 1, b2); }
   const geo = new T.BufferGeometry();
   geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  const uv = new Float32Array(rows * cols * 2);
+  for (let i = 0; i < rows * cols; i++) { const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2]; uv[i * 2] = (x + z * 0.7) * 5; uv[i * 2 + 1] = (y + z * 0.5) * 5; }
+  geo.setAttribute('uv', new T.BufferAttribute(uv, 2));
   return geo;
 }
 // tvar upraví po vrcholech (zúžení, zešikmení): f(x, y, z) vrací nové [x, y, z]
@@ -5140,8 +5210,8 @@ function shopBodyLook(sh, { hitAny, body, bb, lv, carbon, tint }) {
   const down = (z) => { const h = hitAny(new T.Vector3(0, 3, z), new T.Vector3(0, -1, 0)); return h ? h.p.y : 0.9; };
   const side = (y, z, s) => { const h = hitAny(new T.Vector3(s * 3, y, z), new T.Vector3(-s, 0, 0)); return h ? Math.abs(h.p.x) : 0.4; };
   const glow = (c, i) => new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i, roughness: 0.4 });
-  const shiny = new T.MeshPhysicalMaterial({ color: '#15171b', roughness: 0.25, metalness: 0.5, clearcoat: 1, clearcoatRoughness: 0.1 });
-  const tintS = new T.MeshPhysicalMaterial({ color: lv.a1, roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const shiny = addShine(new T.MeshPhysicalMaterial({ color: '#15171b', roughness: 0.22, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.08, map: carbonTex() }), 'part-carbon', { sweep: 0.6, env: 0.55 });
+  const tintS = addShine(new T.MeshPhysicalMaterial({ color: lv.a1, roughness: 0.25, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.1 }), 'part-tint', { sweep: 0.65, env: 0.45 });
   // motor: aerodynamický airbox za helmou (zužuje se nahoru, s oválným sáním a lemem), žebro na krytu, svítící výfuky
   if (sh.engine > 0) {
     const ty = down(-0.55), s = [0, 0.8, 1.0, 1.2][sh.engine];
@@ -7138,7 +7208,7 @@ function cockpitBuild(c3) {
   if (cockpit.group) { camera.remove(cockpit.group); disposeGroup(cockpit.group); }
   const group = new T.Group(); group.visible = false;
   const cf = carbonTex();
-  const carbon = new T.MeshPhysicalMaterial({ map: cf, roughness: 0.38, metalness: 0.45, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const carbon = addShine(new T.MeshPhysicalMaterial({ map: cf, roughness: 0.38, metalness: 0.45, clearcoat: 1, clearcoatRoughness: 0.12 }), 'wheel-carbon', { sweep: 0.35, env: 0.4 });
   const rubber = new T.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.95 });
   const leather = new T.MeshStandardMaterial({ color: '#141416', roughness: 0.7 });
   const accent = new T.MeshStandardMaterial({ color: lv.a1 || '#ff8000', roughness: 0.4, metalness: 0.15 });
@@ -9457,29 +9527,36 @@ function shopThumb(id, l) {
   }
   return cv;
 }
+let shopPop = null;
 function openShop() {
   const list = $('shopList'); list.innerHTML = '';
-  $('shopMoney').textContent = moneyStr(saved.money | 0);
+  $('shopMoney').textContent = String(Math.round(saved.money | 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+  const R = ['ZÁKLAD', 'ZLEPŠENÉ', 'VZÁCNÉ', 'LEGENDÁRNÍ'];
   for (const it of SHOP_ITEMS) {
     const l = shopLv(it.id), next = l < 3 ? shopPrice(it, l) : 0, row = document.createElement('div');
-    row.className = 'shop-it' + (l >= 3 ? ' max' : '');
-    row.innerHTML = '<i class="ic"></i><div class="tx"><b></b><small></small><em></em></div><span class="pips"></span><button class="btn buy"></button><div class="tiers"></div>';
-    row.querySelector('.ic').textContent = it.icon;
-    // náhledy: základ a tři stupně, vlastněné jsou zvýrazněné
+    row.className = `shop-it r${l}` + (l >= 3 ? ' max' : '') + (shopPop === it.id ? ' pop' : '');
+    row.innerHTML = '<div class="hd"><span class="nm"></span><span class="stars"></span></div><div class="art"><i class="badge"></i></div><div class="ds"></div><div class="fx"></div><div class="own"></div><div class="tiers"></div><button class="bs-buy"></button>';
+    row.querySelector('.nm').textContent = it.name;
+    row.querySelector('.stars').innerHTML = [1, 2, 3].map((k) => `<u class="${k <= l ? 'on' : ''}">★</u>`).join('');
+    row.querySelector('.ds').textContent = it.desc;
+    const art = row.querySelector('.art'), bd = row.querySelector('.badge');
+    art.appendChild(shopThumb(it.id, l >= 3 ? 3 : l + 1));
+    bd.textContent = l >= 3 ? 'MAX' : l === 0 ? 'NOVÉ!' : R[l + 1];
+    bd.className = 'badge' + (l >= 3 ? ' mx' : '');
+    row.querySelector('.fx').textContent = l >= 3 ? it.fx(3) : it.fx(l + 1);
+    row.querySelector('.own').textContent = l > 0 ? `Máš: ${it.tiers[l - 1]}` : `Máš: ${it.base || 'Základní výbava'}`;
     const tr = row.querySelector('.tiers');
     for (let k = 0; k <= 3; k++) { const f = document.createElement('figure'); f.className = k === l ? 'cur' : k < l ? 'own' : ''; f.appendChild(shopThumb(it.id, k)); const cap = document.createElement('figcaption'); cap.textContent = k === 0 ? (it.base || 'Základ') : it.tiers[k - 1]; f.appendChild(cap); tr.appendChild(f); }
-    row.querySelector('b').textContent = it.name; row.querySelector('small').textContent = it.desc;
-    row.querySelector('em').textContent = l > 0 ? `Máš: ${it.tiers[l - 1]} · ${it.fx(l)}` : `Máš: ${it.base || 'Základní výbava'}`;
-    row.querySelector('.pips').innerHTML = [1, 2, 3].map((k) => `<u class="${k <= l ? 'on' : ''}"></u>`).join('');
-    const b = row.querySelector('.buy');
-    if (l >= 3) { b.textContent = 'Hotovo'; b.disabled = true; }
+    const b = row.querySelector('.bs-buy');
+    if (l >= 3) { b.innerHTML = '<span class="bs-txt">HOTOVO</span>'; b.disabled = true; }
     else {
-      b.innerHTML = `${it.tiers[l]} <small>${it.fx(l + 1)} · ${next ? moneyStr(next) : 'ZDARMA'}</small>`;
+      b.innerHTML = `<span class="bs-txt">${it.tiers[l]}</span><span class="coin">$</span><span class="bs-txt">${next ? moneyStr(next).replace(/\u00a0\$$/, '') : 'ZDARMA'}</span>`;
       b.disabled = (saved.money | 0) < next;
       b.onclick = () => shopBuy(it.id);
     }
     list.appendChild(row);
   }
+  shopPop = null;
   $('shopModal').hidden = false;
 }
 function shopBuy(id) {
@@ -9488,7 +9565,8 @@ function shopBuy(id) {
   saved.money = (saved.money | 0) - shopPrice(it, l); saved.shop = { ...(saved.shop || {}), [id]: l + 1 }; persist();
   if (saved.car === 'f1' && car3d && !G.gp) setLivery(saved.livery); // nový vzhled auta (křídla, ráfky)
   toast(`Koupeno: ${it.tiers[l]}`, 1.8);
-  openShop(); renderMenu();
+  try { Sound.init(); Sound.fanfare(false); } catch (e) { /* bez zvuku */ }
+  shopPop = id; openShop(); renderMenu();
 }
 $('bShopAll').hidden = !SHOP_FREE;
 $('bShopAll').onclick = () => {
