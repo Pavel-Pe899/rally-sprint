@@ -8554,6 +8554,9 @@ function gpTick(dt) {
     // omezovač a navigace k boxu
     if (car.limiter && !gp.limiterShown && !gp.pilot) { gp.limiterShown = true; toast(`Boxová ulička · omezovač 80 km/h · zastav u boxu ${F1_TEAMS[f1Team()].name}`, 3); }
     if (!car.limiter) gp.limiterShown = false;
+    // výběr pneumatik: až auto zajíždí do boxové uličky (řídí ho počítač, nebo hráč sám jede k boxu)
+    if (!gp.tyreAsked && !gp.service && rel > p.entry && rel < myRel - 6 && (gp.pilot === 'in' || (car.limiter && (!gp.pitted || gp.pitReq || gpCanPit())))) gpTyreAsk();
+    if (gp.tyreAsked && rel < p.entry - 150) gp.tyreAsked = false;
     const atBox = Math.abs(rel - myRel) < 4.5 || (gp.pilot === 'in' && rel > myRel - 4.5 && rel < myRel + 30);
     if (!gp.service && !gp.serviceCD && (!gp.pitted || gp.pitReq || gpCanPit()) && !gpMateBusy() && lat > p.split && atBox && Math.abs(car.vf) < 5) {
       gp.service = PIT_STOP_T; gpCrew(gp.myBox, true);
@@ -8577,7 +8580,7 @@ function gpTick(dt) {
       if (gp.service <= 0) {
         gp.service = 0; gp.wear = 0; gp.pitted = true; gp.serviceCD = 8; gpCrew(gp.myBox, false);
         gp.pilot = 'out'; gp.pitReq = false; // auto samo vyjede z boxu na trať
-        gp.tyre = gp.tyreWant || (WX.cfg && WX.wet > 0.3 ? 'wet' : 'medium'); gp.tyreWant = null;
+        gp.tyre = gp.tyreWant || gpTyreAdvice(); gp.tyreWant = null; gp.tyreAsked = false;
         setTyre(car3d, gp.tyre === 'wet' ? TYRE_WET : gp.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM);
         toast(`Nové pneumatiky: ${TYRE_NAMES[gp.tyre].toLowerCase()}! Jeď!`, 1.8); Sound.beep(880, 0.2);
         gpRadio('Výborně, nové gumy. Jeď, jeď!');
@@ -8610,26 +8613,27 @@ function gpMateBusy() {
 // volba pneumatik před zajetím do boxů: ťuknutí na BOX otevře výběr (měkké, střední, na déšť), po volbě auto zajede samo
 const TYRE_NAMES = { soft: 'Měkké', medium: 'Střední', wet: 'Do deště' };
 const gpTyreAdvice = () => (WX.cfg && (WX.wet > 0.3 || WX.rain > 0.3) ? 'wet' : (gpTotal() - G.gp.lap <= 1 ? 'soft' : 'medium'));
-function gpPitMenu(force) {
-  const gp = G.gp, el = $('gpTyrePick');
-  if (!gp || G.phase !== 'run') return;
-  if (gp.pitReq || gp.pilot) { gpRequestPit(); return; } // už jede do boxů: ťuknutí zajetí zruší
-  if (!force && !el.hidden) { el.hidden = true; return; }
-  if (gp.pitted && !gpCanPit()) { toast('Pneumatiky máš v pořádku · box není potřeba', 1.4); return; }
-  const adv = gpTyreAdvice();
-  for (const k of ['soft', 'medium', 'wet']) { const b = el.querySelector(`[data-t="${k}"]`); b.classList.toggle('adv', k === adv); b.classList.toggle('cur', gp.tyre === k); }
-  $('gpTyreInfo').textContent = WX.cfg ? (WX.rain > 0.3 ? 'Prší' : WX.wet > 0.3 ? 'Trať je mokrá' : WX.wet > 0.08 ? 'Trať schne' : 'Trať je suchá') + ` · máš ${TYRE_NAMES[gp.tyre].toLowerCase()}` : `Máš ${TYRE_NAMES[gp.tyre].toLowerCase()} pneumatiky`;
+// BOX: ťuknutí hned vyšle auto do boxů (druhé ťuknutí zajetí zruší); výběr pneumatik se ukáže, až auto skutečně
+// zajíždí do boxové uličky a řídí ho počítač (hráč si vybere, dokud nezastaví u mechaniků)
+function gpPitMenu() { if (G.gp && G.phase === 'run') gpRequestPit(); }
+function gpTyreAsk() {
+  const gp = G.gp, el = $('gpTyrePick'), adv = gpTyreAdvice();
+  gp.tyreAsked = true;
+  const want = gp.tyreWant || adv;
+  for (const k of ['soft', 'medium', 'wet']) { const b = el.querySelector(`[data-t="${k}"]`); b.classList.toggle('adv', k === adv); b.classList.toggle('cur', want === k); }
+  $('gpTyreInfo').textContent = (WX.cfg ? (WX.rain > 0.3 ? 'Prší' : WX.wet > 0.3 ? 'Trať je mokrá' : WX.wet > 0.08 ? 'Trať schne' : 'Trať je suchá') + ' · ' : '') + `vybráno: ${TYRE_NAMES[want].toLowerCase()}`;
   el.hidden = false;
 }
-for (const b of document.querySelectorAll('#gpTyrePick [data-t]')) b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('gpTyrePick').hidden = true; gpRequestPit(b.dataset.t); });
+const gpTyreChoose = (t) => { const gp = G.gp; if (!gp || !TYRE_NAMES[t]) return; gp.tyreWant = t; for (const b of document.querySelectorAll('#gpTyrePick [data-t]')) b.classList.toggle('cur', b.dataset.t === t); $('gpTyreInfo').textContent = `vybráno: ${TYRE_NAMES[t].toLowerCase()}`; $('gpTyrePick').hidden = true; toast(`Pneumatiky: ${TYRE_NAMES[t].toLowerCase()}`, 1.4); };
+for (const b of document.querySelectorAll('#gpTyrePick [data-t]')) b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); gpTyreChoose(b.dataset.t); });
 $('gpTyreClose').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('gpTyrePick').hidden = true; });
 function gpRequestPit(tyre) {
   const gp = G.gp;
   if (!gp || G.phase !== 'run' || gp.pitted && !gp.pilot && !gpCanPit()) { if (gp && gp.pitted) toast('Pneumatiky máš v pořádku · box není potřeba', 1.4); return; }
   // druhé ťuknutí zajetí zruší (dokud auto nestojí u mechaniků)
-  if (gp.pitReq || gp.pilot) { if (!gp.service) { gp.pitReq = false; gp.pilot = null; gp.pilotLat = null; toast('Zajetí do boxů zrušeno', 1.4); } return; }
-  gp.pitReq = true; gp.tyreWant = TYRE_NAMES[tyre] ? tyre : WX.cfg && WX.wet > 0.3 ? 'wet' : 'medium';
-  toast(`Box! Formule zajede do boxů sama · ${TYRE_NAMES[gp.tyreWant].toLowerCase()} pneumatiky`, 2.4); Sound.beep(660, 0.15);
+  if (gp.pitReq || gp.pilot) { if (!gp.service) { gp.pitReq = false; gp.pilot = null; gp.pilotLat = null; gp.tyreAsked = false; $('gpTyrePick').hidden = true; toast('Zajetí do boxů zrušeno', 1.4); } return; }
+  gp.pitReq = true; gp.tyreWant = TYRE_NAMES[tyre] ? tyre : gpTyreAdvice(); gp.tyreAsked = false;
+  toast('Box! Formule zajede do boxů sama', 2.2); Sound.beep(660, 0.15);
 }
 function gpPitPilot() {
   const gp = G.gp, td = W.td, p = td.pit, rel = p.relOf(car.s), lat = car.lat * p.side, bRel = p.boxes[gp.myBox];
@@ -8731,7 +8735,7 @@ function gpTowerRows(rows) {
 }
 function gpHud() {
   const gp = G.gp, rows = gpStandings(), pos = rows.findIndex((r) => r.me) + 1;
-  if (!$('gpTyrePick').hidden && (gp.pitReq || gp.pilot || gp.service > 0 || G.phase !== 'run')) $('gpTyrePick').hidden = true;
+  if (!$('gpTyrePick').hidden && (gp.service > 0 || G.phase !== 'run' || !(gp.pilot || car.limiter))) $('gpTyrePick').hidden = true;
   const nowT = performance.now();
   if (nowT - tower.at > 150) { tower.at = nowT; gpTowerRows(rows); }
   setText($('gpPos'), 'gpPos', 'P' + pos); setText($('gpOf'), 'gpOf', '/' + rows.length);
@@ -9678,7 +9682,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyC' && G.mode === 'race') { G.camMode = (G.camMode + 1) % 3; camS.init = false; }
   if (e.code === 'KeyR') resetToTrack(false);
   if (e.code === 'KeyB') gpPitMenu();
-  if (G.gp && !$('gpTyrePick').hidden && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) { $('gpTyrePick').hidden = true; gpRequestPit(['soft', 'medium', 'wet'][+e.code.slice(5) - 1]); }
+  if (G.gp && !$('gpTyrePick').hidden && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) gpTyreChoose(['soft', 'medium', 'wet'][+e.code.slice(5) - 1]);
   if (e.code === 'KeyM') { saved.sound = !saved.sound; Sound.setOn(saved.sound); persist(); }
   if (e.code === 'Enter' && G.mode === 'menu' && !overlay.menu.hidden && document.activeElement === document.body) $('bStart').click();
 });
