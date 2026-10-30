@@ -665,6 +665,17 @@
   </div>
 </div>
 
+<div id="modeModal" class="modal" hidden>
+  <div class="card mode-card">
+    <h2>Rally <em>Sprint</em></h2>
+    <p class="help">Co dneska pojedeme?</p>
+    <div class="actions">
+      <button class="btn" id="bModeRally">Rally <small>šotolina, sníh, asfalt a písek · spolujezdec</small></button>
+      <button class="btn gp" id="bModeF1">Formule 1 <small>Velká cena · výběr týmu a okruhu</small></button>
+    </div>
+  </div>
+</div>
+
 <div id="teamModal" class="modal" hidden>
   <div class="card team-card">
     <h2>Formule 1 <em>tým</em></h2>
@@ -9987,6 +9998,25 @@ function perfCheck(dt, now) {
   }
 }
 
+// ---------------------------------------------------------------- po spuštění: rally, nebo formule?
+function askMode() {
+  if (navigator.webdriver || isBike()) return; // testy a režim kol se neptají
+  const m = $('modeModal');
+  m.hidden = false;
+  $('bModeRally').onclick = () => {
+    m.hidden = true;
+    if (carType().formula) { saved.car = 'bmw'; persist(); ensureCarModel(carType().model).then(() => { setLivery(saved.livery); renderMenu(); }); }
+  };
+  $('bModeF1').onclick = async () => {
+    m.hidden = true;
+    saved.car = 'f1'; persist();
+    await ensureCarModel('f1');
+    setLivery(saved.livery);
+    renderMenu();
+    openTeams();
+  };
+}
+
 // ---------------------------------------------------------------- start
 async function boot(data) {
   setupPost();
@@ -10000,6 +10030,7 @@ async function boot(data) {
   $('secret').addEventListener('click', toggleMode);
   setLivery(clamp(saved.livery | 0, 0, LIVERIES.length - 1));
   loadStage(idx, startDemo);
+  askMode();
   recConnect();
   requestAnimationFrame(tick);
   Sound.prepare();
