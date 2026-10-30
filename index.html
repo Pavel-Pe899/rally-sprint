@@ -8740,9 +8740,9 @@ function gpSetup() {
   gp.ai = rivals.map((key, k) => ({
     key, team: F1_TEAMS[key], box: teams.indexOf(key), c3d: gpBuildAI(key),
     d: gridRel(k), lat: gridLat(k), latT: gridLat(k), home: (k % 2 ? 1 : -1) * (0.4 + k * 0.25), v: 0,
-    k, tyre: 'soft', plan: total > GP_LAPS ? [Math.round(total * 0.72) + (k % 2)] : [], skill: skills[k], pitLap: total > GP_LAPS ? Math.round(total * 0.33) + (k % 3) : pitLaps[k], pit: 0, stopT: 0, wear: 0, done: false, finishT: null, lapNo: 0, lapStart: 0, best: null, spin: 0, passT: 0,
+    k, tyre: total > GP_LAPS ? 'soft' : 'medium', plan: total > GP_LAPS ? [Math.round(total * 0.72) + (k % 2)] : [], skill: skills[k], pitLap: total > GP_LAPS ? Math.round(total * 0.33) + (k % 3) : pitLaps[k], pit: 0, stopT: 0, wear: 0, done: false, finishT: null, lapNo: 0, lapStart: 0, best: null, spin: 0, passT: 0,
   }));
-  Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: 'soft' });
+  Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: total > GP_LAPS ? 'soft' : 'medium' }); // krátký závod na 3 kola se startuje na středních pneumatikách, dlouhý na měkkých
   if (gp.rainOn) { gp.seed = G.net ? G.net.id : Math.random().toString(36).slice(2, 8); wxStart(wxPlan(gp.seed, total)); } else wxEnd();
   // hráči startují za počítačem řízenými auty (po síti v pořadí podle zařízení, stejně na všech telefonech)
   const slot = G.net && G.net.devs ? rivals.length + Math.max(0, G.net.devs.indexOf(netDev())) : rivals.length;
@@ -8751,7 +8751,8 @@ function gpSetup() {
   car.x += td.NX[i] * gridLat(slot); car.z += td.NZ[i] * gridLat(slot); car.lat = gridLat(slot);
   gpMapDots();
   gpUpdateAIVisual(0);
-  for (const c of [car3d, ...gp.ai.map((a) => a.c3d)]) setTyre(c, TYRE_SOFT);
+  setTyre(car3d, gp.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM);
+  for (const a of gp.ai) setTyre(a.c3d, a.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM);
 }
 // okruhy Velké ceny (všechny s boxovou uličkou) a jejich názvy
 const GP_TRACKS = { miami: 'Velká cena Miami', monza: 'Velká cena Itálie · Monza', silverstone: 'Velká cena Británie · Silverstone', redbullring: 'Velká cena Rakouska · Red Bull Ring', spa: 'Velká cena Belgie · Spa' };
@@ -9282,8 +9283,8 @@ function gpTowerRows(rows) {
     e.r.hidden = i >= count; if (i >= count) return;
     const k = start + i, o = rows[k];
     let tm = null, v = 50, tyre = null;
-    if (o.a) { tm = o.a.team; v = o.a.v; tyre = o.a.pit >= 4 ? TYRE_MEDIUM : TYRE_SOFT; }
-    else if (o.me) { tm = F1_TEAMS[f1Team()]; v = car.vf; tyre = G.gp.pitted ? TYRE_MEDIUM : TYRE_SOFT; }
+    if (o.a) { tm = o.a.team; v = o.a.v; tyre = o.a.tyre === 'wet' ? TYRE_WET : o.a.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM; }
+    else if (o.me) { tm = F1_TEAMS[f1Team()]; v = car.vf; tyre = G.gp.tyre === 'wet' ? TYRE_WET : G.gp.tyre === 'soft' ? TYRE_SOFT : TYRE_MEDIUM; }
     else if (o.remote) { tm = F1_TEAMS[o.remote.pres && o.remote.pres.team] || F1_TEAMS[f1Team()]; }
     let gap = '';
     if (racing) {
