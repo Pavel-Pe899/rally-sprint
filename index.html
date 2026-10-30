@@ -2604,24 +2604,23 @@ function addWind(mat, strength, key, fade = 0) {
 }
 
 
-// Lesk pomocí shaderu: falešný odraz oblohy podle směru pohledu (fresnel) a světelný pruh, který se po povrchu pomalu posouvá.
-// Přidává se do emisní složky standardního materiálu, takže se hodí na lak, kovové ráfky, nálepky sponzorů i díly z dílny.
-function addShine(mat, key, { sweep = 0.5, env = 0.4 } = {}) {
+// Lesk od slunce: odlesk slunce na povrchu podle úhlu pohledu (ostrý a široký lalok), bez vlastního světla.
+// Přidává se do emisní složky standardního materiálu. Síla se řídí intenzitou slunce stránky (noc = skoro nic) a deštěm (shineK).
+const shineK = { value: 1 };
+function addShine(mat, key, { gloss = 1 } = {}) {
   const prev = mat.onBeforeCompile;
   mat.onBeforeCompile = (sh, r) => {
     if (prev) prev(sh, r);
-    sh.uniforms.uWindT = windTime;
-    sh.fragmentShader = 'uniform float uWindT;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+    sh.uniforms.uShineK = shineK;
+    sh.fragmentShader = 'uniform float uShineK;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      #if NUM_DIR_LIGHTS > 0
       {
-        vec3 shN = normalize(normal), shV = normalize(vViewPosition);
-        float shF = pow(1.0 - clamp(dot(shN, shV), 0.0, 1.0), 2.2);
-        vec3 shR = reflect(-shV, shN);
-        float shSky = smoothstep(-0.25, 0.85, shR.y);
-        vec3 shEnv = mix(vec3(0.05, 0.055, 0.07), vec3(0.78, 0.88, 1.0), shSky) + vec3(1.0, 0.92, 0.75) * pow(max(shR.x * 0.5 + shR.y * 0.6 + 0.3, 0.0), 6.0) * 0.35;
-        float shP = fract(dot(vViewPosition.xy, vec2(0.75, 0.55)) * 0.55 - uWindT * 0.3);
-        float shS = smoothstep(0.0, 0.05, shP) * smoothstep(0.16, 0.07, shP);
-        totalEmissiveRadiance += shEnv * (${env.toFixed(3)} * (0.25 + shF * 1.2)) + vec3(1.0, 0.97, 0.9) * shS * ${sweep.toFixed(3)} * (0.4 + shF);
-      }`);
+        vec3 shN = normalize(normal), shV = normalize(vViewPosition), shL = directionalLights[0].direction;
+        float shNH = max(dot(shN, normalize(shL + shV)), 0.0);
+        float shG = pow(shNH, 300.0) * 1.3 + pow(shNH, 40.0) * 0.22;
+        totalEmissiveRadiance += directionalLights[0].color * shG * uShineK * ${gloss.toFixed(3)};
+      }
+      #endif`);
   };
   mat.customProgramCacheKey = () => 'shine-' + key + (prev ? '+' : '');
   return mat;
@@ -4969,7 +4968,7 @@ function buildModelCar(lv, spec) {
   }
 
   paint = paint || new T.MeshPhysicalMaterial();
-  if (spec.formula && !paint.userData.shined) { addShine(paint, 'paint', { sweep: 0.14, env: 0.07 }); paint.userData.shined = true; paint.needsUpdate = true; }
+  if (spec.formula && !paint.userData.shined) { addShine(paint, 'paint', { gloss: 0.7 }); paint.userData.shined = true; paint.needsUpdate = true; }
   paint.color.set(lv.body); paint.map = null; paint.metalness = spec.look ? spec.look.metal : 0.08; paint.roughness = spec.look ? spec.look.rough : 0.38;
   if ('clearcoat' in paint) { paint.clearcoat = 1; paint.clearcoatRoughness = 0.08; }
   headMat = headMat || new T.MeshStandardMaterial();
@@ -4977,7 +4976,7 @@ function buildModelCar(lv, spec) {
   tailMat = tailMat || new T.MeshStandardMaterial();
   tailMat.emissive = new T.Color('#ff2010'); tailMat.emissiveIntensity = 0.4;
   for (const mt of clones.values()) {
-    if (P.rim.test(mt.name)) { mt.color.set(lv.rim); if (spec.formula && !mt.userData.shined) { addShine(mt, 'rim', { sweep: 0.5, env: 0.5 }); mt.userData.shined = true; mt.needsUpdate = true; } }
+    if (P.rim.test(mt.name)) { mt.color.set(lv.rim); if (spec.formula && !mt.userData.shined) { addShine(mt, 'rim', { gloss: 1.1 }); mt.userData.shined = true; mt.needsUpdate = true; } }
     if (P.accent && P.accent.test(mt.name)) mt.color.set(lv.a1);
     if (P.cover && P.cover.test(mt.name)) mt.color.set(lv.cov || lv.body); // kryt motoru a bočnice
     if (P.carbon && P.carbon.test(mt.name)) mt.color.set(lv.a2);
@@ -4994,7 +4993,7 @@ function buildModelCar(lv, spec) {
   const ray = new T.Raycaster();
   const hit = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
   const decal = (h, w, hgt, map, offset = 0.012) => { // nálepka na povrch
-    const d = new T.Mesh(new T.PlaneGeometry(w, hgt), addShine(new T.MeshStandardMaterial({ map, transparent: true, roughness: 0.3, metalness: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }), 'decal', { sweep: 0.55, env: 0.3 }));
+    const d = new T.Mesh(new T.PlaneGeometry(w, hgt), addShine(new T.MeshStandardMaterial({ map, transparent: true, roughness: 0.3, metalness: 0.3, polygonOffset: true, polygonOffsetFactor: -2 }), 'decal', { gloss: 0.9 }));
     d.position.copy(h.p).addScaledVector(h.n, offset);
     d.lookAt(d.position.clone().add(h.n));
     body.add(d); return d;
@@ -5085,18 +5084,8 @@ function buildModelCar(lv, spec) {
     if (sw2) { const w2 = hitAny(new T.Vector3(0, 0.6, bb.min.z - 2), new T.Vector3(0, 0, 1)); if (w2) { const { tex, aspect } = sponsorTex(sw2), w = Math.min(0.62, 0.1 * aspect); decal(w2, w, w / aspect, tex, 0.01); } }
     const nose = hitAny(new T.Vector3(0, 3, 1.55), new T.Vector3(0, -1, 0));
     if (nose) { const d = decal(nose, 0.26, 0.26, doorTexture(lv.num || '4', lv), 0.01); d.rotation.set(-Math.PI / 2, 0, Math.PI); }
-    // koupené díly z dílny: další lamely zadního a předního křídla (dolní díl vždy v barvě týmu, ostatní karbon)
-    if (spec.shop) {
-      const sh = spec.shop, carbon = new T.MeshStandardMaterial({ color: '#15171b', roughness: 0.4, metalness: 0.3 }), tint = new T.MeshStandardMaterial({ color: lv.a1, roughness: 0.35, metalness: 0.2 });
-      const plate = (w, d, x, y, z, mat, rx = 0) => { const m = new T.Mesh(softBox(w, 0.022, d, 0.35, 14), mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; body.add(m); };
-      kersMatRef = shopBodyLook(sh, { hitAny, body, bb, lv, carbon, tint });
-      const rw = hitAny(new T.Vector3(0, 3, bb.min.z + 0.3), new T.Vector3(0, -1, 0));
-      if (sh.rwing > 0) for (let k = 0; k < sh.rwing; k++) plate(0.96, 0.15, 0, (rw ? rw.p.y : 0.9) + 0.06 + k * 0.075, (rw ? rw.p.z : bb.min.z + 0.3) - 0.02 * k, k === 0 ? tint : carbon, -0.12);
-      for (const side of [-1, 1]) {
-        const fw = hitAny(new T.Vector3(side * 0.5, 3, bb.max.z - 0.3), new T.Vector3(0, -1, 0));
-        for (let k = 0; k < sh.fwing; k++) plate(0.5, 0.13, side * 0.5, (fw ? fw.p.y : 0.12) + 0.035 + k * 0.045, (fw ? fw.p.z : bb.max.z - 0.3) + 0.02 * k, k === 0 ? tint : carbon, 0.1);
-      }
-    }
+    // koupené díly z dílny (křídla, motor, podlaha, KERS): hladké tvary navazující na karoserii
+    if (spec.shop) kersMatRef = shopBodyLook(spec.shop, { hitAny, body, bb, lv });
   }
   const roof = hit(new T.Vector3(0, 3, midZ - 0.3), new T.Vector3(0, -1, 0));
   if (roof) { const d = decal(roof, 0.55, 0.55, roofTexture('7')); d.rotation.set(-Math.PI / 2, 0, 0); }
@@ -5204,72 +5193,160 @@ function warpGeo(geo, f) {
   for (let i = 0; i < p.count; i++) { const r = f(p.getX(i), p.getY(i), p.getZ(i)); p.setXYZ(i, r[0], r[1], r[2]); void o; }
   geo.computeVertexNormals(); return geo;
 }
-function shopBodyLook(sh, { hitAny, body, bb, lv, carbon, tint }) {
+// obrácené trojúhelníky (záporný objem) otočí, aby normály mířily ven
+function fixWinding(g) {
+  const p = g.attributes.position, ix = g.index; let vol = 0;
+  const n = ix ? ix.count : p.count, at = (i) => (ix ? ix.getX(i) : i);
+  for (let i = 0; i < n; i += 3) { const a = at(i), b = at(i + 1), c = at(i + 2); vol += p.getX(a) * (p.getY(b) * p.getZ(c) - p.getZ(b) * p.getY(c)) - p.getY(a) * (p.getX(b) * p.getZ(c) - p.getZ(b) * p.getX(c)) + p.getZ(a) * (p.getX(b) * p.getY(c) - p.getY(b) * p.getX(c)); }
+  if (vol >= 0) return g;
+  if (ix) { for (let i = 0; i < ix.count; i += 3) { const t = ix.getX(i + 1); ix.setX(i + 1, ix.getX(i + 2)); ix.setX(i + 2, t); } }
+  else { for (let i = 0; i < p.count; i += 3) { const x = p.getX(i + 1), y = p.getY(i + 1), z = p.getZ(i + 1); p.setXYZ(i + 1, p.getX(i + 2), p.getY(i + 2), p.getZ(i + 2)); p.setXYZ(i + 2, x, y, z); } }
+  g.computeVertexNormals(); return g;
+}
+// hladký profil křídla (letecký řez s prohnutím dolů = přítlak): hrana náběhu k +z, odtoková k -z; šířka po ose x.
+// Boky jsou plynulé (normály z profilu), konce rovné.
+function airfoilGeo(chord, width, camber = -0.07, th = 0.11) {
+  const n = 18, c = [];
+  const pt = (x, up) => { const yt = 5 * th * (0.2969 * Math.sqrt(x) - 0.126 * x - 0.3516 * x * x + 0.2843 * x ** 3 - 0.1036 * x ** 4), yc = camber * 4 * x * (1 - x); return [x * chord, (yc + (up ? yt : -yt)) * chord]; };
+  for (let i = 0; i <= n; i++) c.push(pt((1 - Math.cos((i / n) * Math.PI)) / 2, true));
+  for (let i = n - 1; i >= 1; i--) c.push(pt((1 - Math.cos((i / n) * Math.PI)) / 2, false));
+  const N = c.length, hw = width / 2, pos = [], nor = [], idx = [];
+  for (let i = 0; i < N; i++) {
+    const a = c[(i + N - 1) % N], b = c[(i + 1) % N];
+    let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+    const nx = ty, ny = -tx;                                  // ven z obrysu
+    for (const x of [-hw, hw]) { pos.push(x, c[i][1], -c[i][0]); nor.push(0, ny, -nx); }
+  }
+  for (let i = 0; i < N; i++) { const j = (i + 1) % N, a = i * 2, b = j * 2; idx.push(a, b, a + 1, a + 1, b, b + 1); }
+  for (const s of [-1, 1]) {                                   // konce
+    const base = pos.length / 3;
+    for (let i = 0; i < N; i++) { pos.push(s * hw, c[i][1], -c[i][0]); nor.push(s, 0, 0); }
+    for (let i = 1; i < N - 1; i++) idx.push(...(s > 0 ? [base, base + i, base + i + 1] : [base, base + i + 1, base + i]));
+  }
+  const g = new T.BufferGeometry();
+  g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new T.Float32BufferAttribute(nor, 3));
+  const uv = new Float32Array(pos.length / 3 * 2); for (let i = 0; i < pos.length / 3; i++) { uv[i * 2] = pos[i * 3] * 5; uv[i * 2 + 1] = pos[i * 3 + 2] * 5; }
+  g.setAttribute('uv', new T.BufferAttribute(uv, 2)); g.setIndex(idx);
+  return fixWinding(g);
+}
+// svislá deska (boční plocha křídla) s hladkým obrysem: body [z, y] v souřadnicích auta, tloušťka po ose x, zaoblená hrana
+function plateGeo(pts, thick = 0.012) {
+  const sh = new T.Shape(); pts.forEach(([z, y], i) => (i ? sh.lineTo(z, y) : sh.moveTo(z, y)));
+  const g = new T.ExtrudeGeometry(sh, { depth: thick, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 3, curveSegments: 12 });
+  g.translate(0, 0, -thick / 2); g.rotateY(-Math.PI / 2);   // shape-x → +z, hloubka → x
+  g.computeVertexNormals(); return fixWinding(g);
+}
+// zaoblený obdélník s uříznutým šikmým rohem jako obrys bočnice
+function roundedPlatePts(z0, z1, y0, y1, r = 0.04, slope = 0) {
+  const p = [], arc = (cz, cy, a0, a1) => { for (let i = 0; i <= 6; i++) { const a = a0 + (a1 - a0) * i / 6; p.push([cz + Math.cos(a) * r, cy + Math.sin(a) * r]); } };
+  const yt1 = y1 - slope;                                                   // odtoková hrana je nižší (šikmý horní okraj)
+  arc(z1 - r, y0 + r, -Math.PI / 2, 0); arc(z1 - r, yt1 - r, 0, Math.PI / 2);
+  arc(z0 + r, y1 - r, Math.PI / 2, Math.PI); arc(z0 + r, y0 + r, Math.PI, Math.PI * 1.5);
+  return p.reverse();
+}
+// trubka s plochým řezem (pylon nosníku křídla): bod křivky [x, y, z], poloměr, zploštění po x
+function pylonGeo(points, r = 0.016, flat = 0.55) {
+  const curve = new T.CatmullRomCurve3(points.map((p) => new T.Vector3(...p)));
+  const g = new T.TubeGeometry(curve, 24, r, 12, false);
+  return g.scale(flat, 1, 1);
+}
+function shopBodyLook(sh, { hitAny, body, bb, lv }) {
   const put = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; body.add(m); return m; };
   const box = (w, h, d, mat, x, y, z, rx = 0, ry = 0, e = 0.3) => put(softBox(w, h, d, e), mat, x, y, z, rx, ry);
-  const down = (z) => { const h = hitAny(new T.Vector3(0, 3, z), new T.Vector3(0, -1, 0)); return h ? h.p.y : 0.9; };
+  const down = (z, x = 0) => { const h = hitAny(new T.Vector3(x, 3, z), new T.Vector3(0, -1, 0)); return h ? h.p.y : 0.9; };
   const side = (y, z, s) => { const h = hitAny(new T.Vector3(s * 3, y, z), new T.Vector3(-s, 0, 0)); return h ? Math.abs(h.p.x) : 0.4; };
   const glow = (c, i) => new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i, roughness: 0.4 });
-  const shiny = addShine(new T.MeshPhysicalMaterial({ color: '#15171b', roughness: 0.22, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.08, map: carbonTex() }), 'part-carbon', { sweep: 0.6, env: 0.55 });
-  const tintS = addShine(new T.MeshPhysicalMaterial({ color: lv.a1, roughness: 0.25, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.1 }), 'part-tint', { sweep: 0.65, env: 0.45 });
-  // motor: aerodynamický airbox za helmou (zužuje se nahoru, s oválným sáním a lemem), žebro na krytu, svítící výfuky
+  const shiny = addShine(new T.MeshPhysicalMaterial({ color: '#15171b', roughness: 0.22, metalness: 0.6, clearcoat: 1, clearcoatRoughness: 0.08, map: carbonTex() }), 'part-carbon', { gloss: 1.2 });
+  const tintS = addShine(new T.MeshPhysicalMaterial({ color: (() => { const k = new T.Color(lv.a1); return 0.2126 * k.r + 0.7152 * k.g + 0.0722 * k.b; })() > 0.22 ? lv.a1 : lv.body, roughness: 0.25, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.1 }), 'part-tint', { gloss: 1.1 });
+  const wing = (chord, width, camber, x, y, z, pitch, mat) => put(airfoilGeo(chord, width, camber), mat, x, y, z, pitch);
+  // ---- zadní křídlo: nové profily nad původním křídlem, boční desky a zadní hrana (gurney); každý stupeň o prvek víc
+  if (sh.rwing > 0) {
+    const L = sh.rwing, rw = hitAny(new T.Vector3(0, 3, bb.min.z + 0.3), new T.Vector3(0, -1, 0));
+    const y0 = rw ? rw.p.y : 0.92, z0 = rw ? rw.p.z : bb.min.z + 0.3, hw = 0.455;
+    const chords = [0.21, 0.18, 0.15];
+    for (let k = 0; k < L; k++) wing(chords[k], hw * 2, -0.075, 0, y0 + 0.04 + 0.066 * k, z0 + 0.1 - 0.072 * k, 0.17 + 0.12 * k, k === L - 1 ? tintS : shiny);
+    const zTe = z0 + 0.1 - 0.072 * (L - 1) - chords[L - 1], yTop = y0 + 0.04 + 0.066 * (L - 1) + 0.07;
+    for (const s of [-1, 1]) {                                                    // boční desky s uříznutým rohem a žebry
+      put(plateGeo(roundedPlatePts(zTe - 0.015, z0 + 0.12, y0 - 0.02, yTop, 0.03, 0.05), 0.012), tintS, s * (hw + 0.008), 0, 0);
+    }
+    if (L >= 3) {
+      put(softBox(hw * 2, 0.016, 0.01, 0.5, 10), tintS, 0, y0 + 0.04 + 0.066 * 2 + 0.005, zTe + 0.01, 0.17 + 0.24);    // gurney na odtokové hraně
+      put(new T.CapsuleGeometry(0.018, 0.08, 6, 12).rotateX(Math.PI / 2), shiny, 0, y0 + 0.1, z0 + 0.0);           // zásuvka DRS uprostřed
+      for (const s of [-1, 1]) for (let k = 0; k < 3; k++) put(softBox(0.01, 0.01, 0.1, 0.6, 8), tintS, s * (hw + 0.032), y0 + 0.02 + k * 0.055, z0 - 0.02);   // žaluzie v desce
+    }
+  }
+  // ---- přední křídlo: profily po obou stranách, boční kaskády, nosníky z nosu
+  if (sh.fwing > 0) {
+    const L = sh.fwing, fw = hitAny(new T.Vector3(0.5, 3, bb.max.z - 0.3), new T.Vector3(0, -1, 0));
+    const y0 = fw ? fw.p.y : 0.12, z0 = fw ? fw.p.z : bb.max.z - 0.3;
+    for (const s of [-1, 1]) {
+      for (let k = 0; k < L; k++) wing(0.17 - 0.016 * k, 0.62, -0.09, s * 0.47, y0 + 0.028 + 0.045 * k, z0 + 0.04 - 0.058 * k, 0.1 + 0.1 * k, k === L - 1 ? tintS : shiny);
+      const zTe = z0 + 0.04 - 0.058 * (L - 1) - (0.17 - 0.016 * (L - 1)), yT = y0 + 0.028 + 0.045 * (L - 1) + 0.035;
+      put(plateGeo(roundedPlatePts(zTe - 0.01, z0 + 0.16, y0 - 0.015, yT + 0.02, 0.02, 0.035), 0.01), tintS, s * 0.8, 0, 0);               // koncová deska
+      if (L >= 2) put(plateGeo(roundedPlatePts(zTe + 0.02, z0 + 0.08, y0 + 0.01, yT + 0.01, 0.015, 0.015), 0.008), shiny, s * 0.68, 0, 0);   // vnitřní kaskáda
+      if (L >= 3) { put(plateGeo(roundedPlatePts(zTe + 0.04, z0 + 0.04, y0 + 0.02, yT, 0.012, 0.01), 0.007), tintS, s * 0.58, 0, 0); put(softBox(0.1, 0.012, 0.05, 0.6, 8), tintS, s * 0.74, yT + 0.03, z0 - 0.01, 0, 0, s * 0.3); }
+      put(pylonGeo([[s * 0.06, y0 + 0.24, z0 - 0.52], [s * 0.075, y0 + 0.13, z0 - 0.26], [s * 0.1, y0 + 0.05, z0 - 0.04]], 0.019, 0.5), shiny, 0, 0, 0);  // nosník z nosu k profilu
+    }
+  }
+  // ---- motor: aerodynamický airbox (zužuje se nahoru a u paty přechází do krytu), žebro, svítící výfuky
   if (sh.engine > 0) {
     const ty = down(-0.55), s = [0, 0.8, 1.0, 1.2][sh.engine];
-    const ab = softBox(0.2 * s, 0.15 * s, 0.3 * s, 0.55, 18);
-    warpGeo(ab, (x, y, z) => { const t = (y / (0.17 * s) + 0.5); return [x * (1 - 0.32 * t), y, z * (1 - 0.12 * t) + (t > 0.5 ? -0.02 * s : 0)]; });
-    put(ab, shiny, 0, ty + 0.02 * s, -0.5);
-    const mouth = put(new T.CircleGeometry(0.058 * s, 20).scale(1, 0.72, 1), new T.MeshBasicMaterial({ color: '#05060a' }), 0, ty + 0.03 * s, -0.5 + 0.168 * s * 1.02);
-    mouth.rotation.x = -0.16;
-    const lip = put(new T.TorusGeometry(0.058 * s, 0.006, 8, 28).scale(1, 0.72, 1), tintS, 0, ty + 0.03 * s, -0.5 + 0.168 * s * 1.02); lip.rotation.x = -0.16;
+    const ab = softBox(0.2 * s, 0.17 * s, 0.32 * s, 0.55, 20);
+    warpGeo(ab, (x, y, z) => { const t = y / (0.17 * s) + 0.5; return [x * (1 - 0.34 * t + 0.5 * Math.pow(1 - t, 3)), y, z * (1 - 0.12 * t + 0.35 * Math.pow(1 - t, 3)) + (t > 0.5 ? -0.02 * s : 0)]; });   // patka se rozšiřuje a vtéká do krytu
+    put(ab, shiny, 0, ty + 0.025 * s, -0.5);
+    const my = ty + 0.04 * s, mz = -0.5 + 0.165 * s;
+    put(new T.CircleGeometry(0.056 * s, 22).scale(1, 0.72, 1), new T.MeshBasicMaterial({ color: '#05060a' }), 0, my, mz, -0.16);
+    put(new T.TorusGeometry(0.056 * s, 0.006, 8, 30).scale(1, 0.72, 1), tintS, 0, my, mz, -0.16);
     if (sh.engine >= 2) {
-      const fin = softBox(0.012, 0.2, 1.05, 0.6, 14);
-      warpGeo(fin, (x, y, z) => { const t = 0.5 - z / 1.05; return [x, (y + 0.1) * (0.2 + 0.8 * t) - 0.1 + 0.0, z]; }); // vzadu výš, vpředu se ztrácí
-      put(fin, tintS, 0, down(-1.4) + 0.03, -1.45);
+      const fin = softBox(0.012, 0.2, 1.05, 0.6, 16);
+      warpGeo(fin, (x, y, z) => { const t = 0.5 - z / 1.05; return [x, (y + 0.1) * (0.12 + 0.88 * t) - 0.1, z]; });                 // zvedá se dozadu, vpředu splyne s airboxem
+      put(fin, tintS, 0, down(-1.4) + 0.04, -1.45);
     }
     if (sh.engine >= 3) {
       const rz = hitAny(new T.Vector3(0, 0.6, -6), new T.Vector3(0, 0, 1)), z = rz ? rz.p.z : bb.min.z + 0.5;
-      const flare = new T.LatheGeometry([[0.028, 0], [0.036, 0.04], [0.04, 0.1], [0.052, 0.17], [0.058, 0.2], [0.052, 0.205]].map(([r, y]) => new T.Vector2(r, y)), 20);
+      const flare = new T.LatheGeometry([[0.03, 0], [0.037, 0.05], [0.043, 0.11], [0.055, 0.18], [0.06, 0.215], [0.054, 0.22]].map(([r, y]) => new T.Vector2(r, y)), 24);
       for (const x of [-0.075, 0.075]) {
-        const p = put(flare, shiny, x, 0.62, z - 0.02, -Math.PI / 2, 0, 0); p.position.z = z + 0.03;
-        const tip = new T.Mesh(new T.CircleGeometry(0.048, 20), glow('#ff7a1a', 2.4)); tip.rotation.y = Math.PI; tip.position.set(x, 0.62, z - 0.17); body.add(tip);
+        put(flare, shiny, x, 0.62, z + 0.03, -Math.PI / 2, 0, 0).position.z = z + 0.03;
+        const tip = new T.Mesh(new T.CircleGeometry(0.05, 22), glow('#ff7a1a', 2.4)); tip.rotation.y = Math.PI; tip.position.set(x, 0.62, z - 0.19); body.add(tip);
       }
     }
   }
-  // podlaha: plynulá boční lišta s ocelovým lemem, zaoblené přepážky se sklopenou hranou a zadní difuzor s lopatkami
+  // ---- podlaha: plynulá lišta u země, zaoblené přepážky, difuzor s rampou a lopatkami
   if (sh.floor > 0) {
     const edge = [0, 0.015, 0.035, 0.045][sh.floor];
     for (const sd of [-1, 1]) {
       const fx = Math.max(0.5, side(0.14, -0.4, sd)) + edge;
-      put(softBox(0.04, 0.02, 2.7, 0.4, 14), sh.floor >= 3 ? tintS : shiny, sd * fx, 0.1, -0.3);
+      put(softBox(0.045, 0.022, 2.8, 0.4, 16), sh.floor >= 3 ? tintS : shiny, sd * fx, 0.098, -0.3);
       if (sh.floor >= 2) for (const z of [0.7, 0.2, -0.3, -0.8]) {
         const fence = softBox(0.01, 0.12 + 0.02 * sh.floor, 0.42, 0.5, 14);
-        warpGeo(fence, (x, y, zz) => [x, y, zz + y * 0.35]); // přepážka se sklání dozadu
+        warpGeo(fence, (x, y, zz) => [x, y, zz + y * 0.35]);
         put(fence, shiny, sd * (fx - 0.02), 0.17, z, 0, sd * 0.12);
       }
     }
+    if (sh.floor >= 2) put(airfoilGeo(0.5, 0.76, 0.0, 0.05), shiny, 0, 0.17, bb.min.z + 0.78, -0.18);             // rampa difuzoru
     if (sh.floor >= 3) for (const x of [-0.36, -0.12, 0.12, 0.36]) {
       const st = softBox(0.012, 0.22, 0.55, 0.55, 14);
-      warpGeo(st, (xx, y, z) => [xx, y, z + (y + 0.11) * 0.45]); // lopatka se sklání k zemi dozadu
+      warpGeo(st, (xx, y, z) => [xx, y, z + (y + 0.11) * 0.45]);
       put(st, tintS, x, 0.24, bb.min.z + 0.7);
     }
   }
-  // KERS: zářivé pásky jako kapsle, baterie s žebrovaným chladičem, zadní světelná lišta a anténa se svítící špičkou
+  // ---- KERS: zářivé pásky zapuštěné do boků, baterie s chladičem, zadní lišta a anténa
   let kmat = null;
   if (sh.kers > 0) {
     kmat = glow(sh.kers >= 3 ? '#b06bff' : '#35d0ff', 0.9);
     for (const sd of [-1, 1]) {
       const len = 0.5 + 0.2 * sh.kers;
-      put(new T.CapsuleGeometry(0.014 + 0.003 * sh.kers, len, 6, 12).rotateX(Math.PI / 2), kmat, sd * (side(0.8, -1.4, sd) + 0.006), 0.8, -1.4);
+      put(new T.CapsuleGeometry(0.014 + 0.003 * sh.kers, len, 6, 12).rotateX(Math.PI / 2), kmat, sd * (side(0.8, -1.4, sd) - 0.004), 0.8, -1.4);
     }
     if (sh.kers >= 2) {
       const ty = down(-1.9);
-      put(softBox(0.3, 0.09, 0.52, 0.45, 16), shiny, 0, ty + 0.04, -1.9);
-      for (let k = 0; k < 5; k++) put(softBox(0.27, 0.05, 0.014, 0.5, 10), tintS, 0, ty + 0.1, -1.7 - k * 0.1);
+      put(softBox(0.3, 0.09, 0.52, 0.45, 18), shiny, 0, ty + 0.03, -1.9);
+      for (let k = 0; k < 5; k++) put(softBox(0.27, 0.05, 0.014, 0.5, 10), tintS, 0, ty + 0.09, -1.7 - k * 0.1);
     }
     if (sh.kers >= 3) {
       put(new T.CapsuleGeometry(0.014, 0.6, 6, 12).rotateZ(Math.PI / 2), kmat, 0, 0.74, bb.min.z + 0.35);
-      put(new T.CylinderGeometry(0.003, 0.006, 0.34, 8), shiny, 0.12, down(-0.6) + 0.18, -0.6);
-      put(new T.SphereGeometry(0.014, 12, 10), kmat, 0.12, down(-0.6) + 0.35, -0.6);
+      put(new T.CylinderGeometry(0.003, 0.006, 0.34, 8), shiny, 0.12, down(-0.6) + 0.17, -0.6);
+      put(new T.SphereGeometry(0.014, 12, 10), kmat, 0.12, down(-0.6) + 0.34, -0.6);
     }
   }
   return kmat;
@@ -7208,7 +7285,7 @@ function cockpitBuild(c3) {
   if (cockpit.group) { camera.remove(cockpit.group); disposeGroup(cockpit.group); }
   const group = new T.Group(); group.visible = false;
   const cf = carbonTex();
-  const carbon = addShine(new T.MeshPhysicalMaterial({ map: cf, roughness: 0.38, metalness: 0.45, clearcoat: 1, clearcoatRoughness: 0.12 }), 'wheel-carbon', { sweep: 0.35, env: 0.4 });
+  const carbon = addShine(new T.MeshPhysicalMaterial({ map: cf, roughness: 0.38, metalness: 0.45, clearcoat: 1, clearcoatRoughness: 0.12 }), 'wheel-carbon', { gloss: 0.8 });
   const rubber = new T.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.95 });
   const leather = new T.MeshStandardMaterial({ color: '#141416', roughness: 0.7 });
   const accent = new T.MeshStandardMaterial({ color: lv.a1 || '#ff8000', roughness: 0.4, metalness: 0.15 });
@@ -7891,6 +7968,7 @@ function updateCarVisual(dt, inp) {
   }
   splash.update(dt);
   spray.update(dt);
+  shineK.value = WX.cfg ? clamp(1 - WX.wet * 1.5 - WX.rain * 0.7, 0, 1) : 1; // za deště se vůz nelesk
   stones.update(dt);
   dust.update(dt);
   sparks.update(dt);
@@ -9466,7 +9544,7 @@ function gpResults() {
 // dílna: seznam dílů, stupně 1–3, tlačítko koupit
 
 // náhled dílu ve stupni l (0 = základní výbava) pro obchod: nakreslený obrázek, aby se stupně dalo rozlišit pohledem
-function shopThumb(id, l) {
+function shopThumb2D(id, l) {
   const cv = document.createElement('canvas'); cv.width = 128; cv.height = 80; cv.className = 'thumb';
   const c = cv.getContext('2d');
   const bg = c.createLinearGradient(0, 0, 0, 80); bg.addColorStop(0, '#1b2230'); bg.addColorStop(1, '#0f131b'); c.fillStyle = bg; c.fillRect(0, 0, 128, 80);
@@ -9525,6 +9603,99 @@ function shopThumb(id, l) {
     if (l >= 2) for (let k = 0; k < 4; k++) rr(40 + k * 12, 22, 8, 10, 2, acc);
     if (l >= 3) { c.fillStyle = col; c.shadowColor = col; c.shadowBlur = 8; c.fillRect(44, 56, 40, 3); c.shadowBlur = 0; }
   }
+  return cv;
+}
+// ---------------------------------------------------------------- 3D náhledy dílů v dílně
+// Každý díl (a každý jeho stupeň) se vykreslí skutečně ve 3D na zjednodušeném voze v barvách týmu stejným kódem, kterým se staví díly na
+// hráčově formuli (`shopBodyLook`, `shopWheelLook`), takže náhled odpovídá tomu, co se objeví na autě. Kreslí se po jednom snímku do textury
+// a z ní do plátna; hotové náhledy se pamatují. Do doby, než jsou hotové, plátno zůstane tmavé.
+const shopPrev = { rt: null, cache: new Map(), queue: [], timer: 0 };
+const SHOP_VIEWS = {
+  engine: { p: [1.1, 1.5, -2.8], t: [0, 0.85, -1.0], fov: 30 }, rwing: { p: [1.9, 1.35, -4.9], t: [0, 0.97, -2.5], fov: 14 },
+  fwing: { p: [1.9, 0.75, 3.7], t: [0, 0.15, 1.8], fov: 17 }, floor: { p: [2.6, 0.45, -0.2], t: [0.3, 0.12, -1.0], fov: 40 },
+  brakes: { p: [3.0, 0.4, 1.56], t: [0.82, 0.33, 1.56], fov: 17 }, wheels: { p: [3.0, 0.4, 1.56], t: [0.82, 0.33, 1.56], fov: 17 },
+  tyres: { p: [2.6, 0.9, 2.9], t: [0.82, 0.3, 1.56], fov: 22 }, rain: { p: [2.6, 0.9, 2.9], t: [0.82, 0.3, 1.56], fov: 22 },
+  kers: { p: [1.5, 1.3, -0.4], t: [0.3, 0.75, -1.5], fov: 30 },
+};
+function shopProxy(lv, sh) {
+  const root = new T.Group(), body = new T.Group(); root.add(body);
+  const paint = addShine(new T.MeshPhysicalMaterial({ color: lv.body, roughness: 0.4, metalness: 0.08, clearcoat: 1, clearcoatRoughness: 0.08 }), 'paint', { gloss: 0.7 });
+  const dark = new T.MeshStandardMaterial({ color: '#15171b', roughness: 0.45, metalness: 0.3 });
+  const tyreM = new T.MeshStandardMaterial({ color: '#0c0d0f', roughness: 0.9 });
+  const add = (geo, mat, x, y, z, parent = body) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+  add(warpGeo(softBox(0.62, 0.44, 2.3, 0.45, 22), (x, y, z) => { const t = Math.max(0, (z - 0.2) / 0.95); return [x * (1 - 0.5 * t), y * (1 - 0.3 * t) - 0.12 * t, z]; }), paint, 0, 0.62, -0.15);
+  add(warpGeo(softBox(0.3, 0.2, 1.1, 0.5, 18), (x, y, z) => { const t = (z + 0.55) / 1.1; return [x * (1 - 0.7 * t), y * (1 - 0.5 * t), z]; }), paint, 0, 0.36, 1.45);
+  add(warpGeo(softBox(0.5, 0.52, 1.6, 0.55, 20), (x, y, z) => { const t = clamp((-z + 0.0) / 0.8, 0, 1); return [x * (1 - 0.6 * t), y * (1 - 0.15 * t), z]; }), paint, 0, 0.62, -1.55);
+  for (const s of [-1, 1]) add(softBox(0.4, 0.36, 1.5, 0.5, 18), paint, s * 0.52, 0.4, -0.5);
+  add(softBox(1.5, 0.03, 3.5, 0.2, 16), dark, 0, 0.1, -0.3);
+  add(new T.SphereGeometry(0.13, 20, 14), new T.MeshStandardMaterial({ color: lv.a2 || '#ffffff', roughness: 0.3 }), 0, 0.86, -0.1);
+  add(softBox(0.92, 0.03, 0.34, 0.4, 14), dark, 0, 0.76, -2.54);                                          // původní hlavní profil křídla
+  add(softBox(0.9, 0.02, 0.2, 0.4, 14), dark, 0, 0.9, -2.64);
+  for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(-2.74, -2.38, 0.74, 0.98, 0.03, 0.05), 0.012), paint, s * 0.468, 0, 0);
+  add(softBox(0.06, 0.34, 0.1, 0.5, 8), dark, 0, 0.58, -2.4);
+  add(softBox(1.7, 0.025, 0.4, 0.4, 14), dark, 0, 0.1, 1.78);                                              // původní přední profil
+  for (const s of [-1, 1]) add(plateGeo(roundedPlatePts(1.6, 1.98, 0.05, 0.22, 0.02, 0.04), 0.012), paint, s * 0.86, 0, 0);
+  const wetGroups = [], brakeMats = [];
+  for (const [sx, z, R, wd] of [[-1, 1.56, 0.33, 0.4], [1, 1.56, 0.33, 0.4], [-1, -2.07, 0.36, 0.5], [1, -2.07, 0.36, 0.5]]) {
+    const pivot = new T.Group(); pivot.position.set(sx * 0.82, 0.34, z); body.add(pivot);
+    const spin = new T.Group(); pivot.add(spin);
+    const tire = add(new T.CylinderGeometry(R, R, wd, 40).rotateZ(Math.PI / 2), tyreM, 0, 0, 0, spin);
+    const ring = add(new T.TorusGeometry(R * 0.8, R * 0.045, 6, 40), new T.MeshStandardMaterial({ color: '#e8102a', roughness: 0.5, emissive: '#e8102a', emissiveIntensity: 0.15 }), sx * (wd / 2 + 0.004), 0, 0, spin); ring.rotation.y = Math.PI / 2;
+    const hub = add(new T.CylinderGeometry(R * 0.5, R * 0.5, 0.012, 28).rotateZ(Math.PI / 2), new T.MeshStandardMaterial({ color: '#2a2d33', roughness: 0.5, metalness: 0.6 }), sx * (wd / 2 + 0.002), 0, 0, spin); void hub;
+    shopWheelLook({ pivot, spin, tire }, sh, { sg: sx, R, outer: pivot.position.x + sx * wd / 2, cy: 0, cx: 0, tw: wd, lv, wetGroups, brakeMats });
+  }
+  const meshes = []; body.traverse((o) => { if (o.isMesh) meshes.push(o); });
+  root.updateMatrixWorld(true);
+  const ray = new T.Raycaster();
+  const hitAny = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(meshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone() } : null; };
+  const bb = { min: { z: -2.71 }, max: { z: 1.93 } };
+  shopBodyLook(sh, { hitAny, body, bb, lv });
+  return { root, wetGroups };
+}
+function renderShopThumb(id, l) {
+  const W2 = 256, H2 = 160;
+  if (!shopPrev.rt) { shopPrev.rt = new T.WebGLRenderTarget(W2, H2, { samples: 4 }); shopPrev.rt.texture.colorSpace = T.SRGBColorSpace; shopPrev.buf = new Uint8Array(W2 * H2 * 4); }
+  const sh = {}; for (const it of SHOP_ITEMS) sh[it.id] = it.id === id ? l : 0;
+  const lv = { ...(F1_TEAMS[f1Team()] || F1_TEAMS.mclaren) };
+  const { root, wetGroups } = shopProxy(lv, sh);
+  if (id === 'rain') for (const gr of wetGroups) gr.visible = l > 0;
+  else for (const gr of wetGroups) gr.visible = false;
+  const sc = new T.Scene();
+  sc.background = new T.Color('#241b86'); sc.environment = envRT ? envRT.texture : null;
+  sc.add(new T.HemisphereLight('#cfe0ff', '#3a2c55', 1.0));
+  const key = new T.DirectionalLight('#fff1dc', 2.8); key.position.set(4, 6, 3); sc.add(key);
+  const rim = new T.DirectionalLight('#9bb8ff', 0.9); rim.position.set(-4, 3, -5); sc.add(rim);
+  const ground = new T.Mesh(new T.CircleGeometry(7, 48).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#1a1260', roughness: 0.55, metalness: 0.2 })); ground.position.y = -0.002; sc.add(ground);
+  sc.add(root);
+  const v = SHOP_VIEWS[id] || SHOP_VIEWS.engine, cam = new T.PerspectiveCamera(v.fov, W2 / H2, 0.05, 60);
+  cam.position.set(...v.p); cam.lookAt(...v.t); sc.updateMatrixWorld(true);
+  const prevRT = renderer.getRenderTarget(), prevK = shineK.value; shineK.value = 1;
+  renderer.setRenderTarget(shopPrev.rt); renderer.render(sc, cam); renderer.readRenderTargetPixels(shopPrev.rt, 0, 0, W2, H2, shopPrev.buf);
+  renderer.setRenderTarget(prevRT); shineK.value = prevK;
+  disposeGroup(root);
+  const cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
+  const img = new ImageData(W2, H2), row = W2 * 4;
+  for (let y = 0; y < H2; y++) img.data.set(shopPrev.buf.subarray((H2 - 1 - y) * row, (H2 - y) * row), y * row);
+  cv.getContext('2d').putImageData(img, 0, 0);
+  return cv;
+}
+function shopPrevPump() {
+  shopPrev.timer = 0;
+  let job = shopPrev.queue.shift(); while (job && !job.cv.isConnected) job = shopPrev.queue.shift();   // plátna zavřené dílny se přeskočí
+  if (!job) return;
+  const key = job.id + job.l + f1Team();
+  if (!shopPrev.cache.has(key)) {
+    try { shopPrev.cache.set(key, renderShopThumb(job.id, job.l)); } catch (e) { console.error('shopThumb', e); shopPrev.cache.set(key, shopThumb2D(job.id, job.l)); }
+  }
+  job.cv.getContext('2d').drawImage(shopPrev.cache.get(key), 0, 0, job.cv.width, job.cv.height);
+  if (shopPrev.queue.length) shopPrev.timer = setTimeout(shopPrevPump, 16);
+}
+function shopThumb(id, l) {
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160; cv.className = 'thumb';
+  const c = cv.getContext('2d'), bg = c.createLinearGradient(0, 0, 0, 160); bg.addColorStop(0, '#2a2090'); bg.addColorStop(1, '#161060'); c.fillStyle = bg; c.fillRect(0, 0, 256, 160);
+  const key = id + l + f1Team();
+  if (shopPrev.cache.has(key)) c.drawImage(shopPrev.cache.get(key), 0, 0);
+  else { shopPrev.queue.push({ id, l, cv }); if (!shopPrev.timer) shopPrev.timer = setTimeout(shopPrevPump, 30); }
   return cv;
 }
 let shopPop = null;
@@ -10840,7 +11011,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { cockpit, shopPrice, SHOP_FREE, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
