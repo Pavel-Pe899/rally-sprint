@@ -8111,7 +8111,9 @@ function suitTex(col, stripe) {
 }
 function cockpitBuild(c3) {
   const lv = c3.lv || LIVERIES[0], f1 = !!c3.formula;
-  if (cockpit.group) { camera.remove(cockpit.group); disposeGroup(cockpit.group); }
+  if (cockpit.group) { if (cockpit.group.parent) cockpit.group.parent.remove(cockpit.group); disposeGroup(cockpit.group); cockpit.group = null; }
+  cockpit.eye = null; cockpit.ds = false; cockpit.wrist = null;
+  if (!f1 && c3.body && c3.wheels && c3.wheels.length >= 4) { interiorBuild(c3); return; }
   const group = new T.Group(); group.visible = false;
   const cf = carbonTex();
   const carbon = addShine(new T.MeshPhysicalMaterial({ map: cf, roughness: 0.38, metalness: 0.45, clearcoat: 1, clearcoatRoughness: 0.12 }), 'wheel-carbon', { gloss: 0.8 });
@@ -8235,21 +8237,165 @@ function cockpitBuild(c3) {
   camera.add(group);
   Object.assign(cockpit, { group, wheel, forCar: c3, kind: f1 ? 'f1' : 'car' });
 }
+// ---- interiér silničních aut (modely ho nemají): postaví se do karoserie podle jejích skutečných rozměrů.
+// Řidič sedí vlevo (+x je při pohledu dopředu levá strana): palubní deska s budíky, středový panel s displejem
+// a výdechy, tunel s řadicí pákou, výplně dveří, sedadla, strop, sloupky, zpětné zrcátko, kožený volant a lidské ruce.
+function interiorBuild(c3) {
+  const body = c3.body, lv = c3.lv || LIVERIES[0];
+  c3.root.updateMatrixWorld(true);
+  const isGlass = (n) => /glass|_WINDOWS|Window_Material|IntWindows/i.test(n) && !/plastic/i.test(n);
+  const meshes = []; body.traverse((o) => { const n = (o.material && o.material.name) || ''; if (o.isMesh && o.visible && !o.userData.decal && !/lens|light|lamp|refract/i.test(n)) meshes.push(o); });
+  const solid = meshes.filter((o) => !isGlass(o.material.name || ''));
+  const ray = new T.Raycaster(), inv = new T.Matrix4().copy(body.matrixWorld).invert();
+  const hitL = (o, d, set = solid) => { ray.set(body.localToWorld(o.clone()), d.clone().transformDirection(body.matrixWorld)); const h = ray.intersectObjects(set, false)[0]; return h ? { p: h.point.clone().applyMatrix4(inv), glass: isGlass(h.object.material.name || '') } : null; };
+  const topAt = (x, z) => { const h = hitL(new T.Vector3(x, 4, z), new T.Vector3(0, -1, 0)); return h ? h.p.y : null; };
+  const topAny = (x, z) => hitL(new T.Vector3(x, 4, z), new T.Vector3(0, -1, 0), meshes);
+  const sideAt = (y, z) => { const h = hitL(new T.Vector3(3, y, z), new T.Vector3(-1, 0, 0)); return h ? h.p.x : null; };
+  const wz = c3.wheels.map((w) => body.worldToLocal(w.pivot.getWorldPosition(new T.Vector3())).z);
+  const fz = Math.max(...wz), rz = Math.min(...wz), zMid = (fz + rz) / 2 - 0.15;
+  // střecha: nejvyšší bod nad kabinou, pak dopředu až na horní hranu čelního skla
+  let roofY = 0; for (let z = zMid - 0.3; z <= zMid + 0.3; z += 0.1) { const y = topAt(0.25, z); if (y != null) roofY = Math.max(roofY, y); }
+  if (roofY < 0.8) roofY = 1.35;
+  let zTop = zMid + 0.6; for (let z = zMid; z < fz; z += 0.02) { const y = topAt(0.25, z); if (y == null || y < roofY - 0.07) { zTop = z; break; } }
+  // oči řidiče kousek za horní hranou čelního skla, pod střechou
+  const eyeZ = Math.max(zTop - 0.44, fz - 0.6 * (fz - rz));
+  // bok: nejširší místo karoserie; okenní linie = kde bok končí a začíná sklo (zdola nahoru)
+  let maxS = 0; for (let y = 0.4; y < roofY; y += 0.03) { const x = sideAt(y, eyeZ); if (x != null) maxS = Math.max(maxS, x); }
+  let beltY = roofY - 0.45; for (let y = 0.5; y < roofY; y += 0.02) { const x = sideAt(y, eyeZ); if (x == null || x < maxS - 0.13) { beltY = y - 0.02; break; } }
+  const sideX = maxS || 0.85, hw = Math.max(0.55, sideX - 0.12), dX = hw * 0.47;
+  const eyeY = clamp(roofY - 0.21, beltY + 0.22, roofY - 0.12);
+  // spodní hrana čelního skla: od horní hrany dopředu, dokud paprsek shora padá na sklo
+  let zCowl = zTop + 0.6, yCowl = beltY + 0.06, seen = false;
+  for (let z = zTop; z < zTop + 1.8; z += 0.02) { const h = topAny(dX, z); if (!h) continue; if (h.glass) { seen = true; continue; } if (seen || z > zTop + 0.25) { zCowl = z; yCowl = h.p.y; break; } }
+  yCowl = Math.min(yCowl, eyeY - 0.14);   // deska nikdy nezakryje výhled (nízká auta s velkým sklem)
+  const group = new T.Group(); group.visible = false; body.add(group);
+  const add = (geo, mat, x, y, z, parent = group) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.userData.interior = true; parent.add(m); return m; };
+  const soft = new T.MeshStandardMaterial({ color: '#1b1c20', roughness: 0.86 });                   // měkčený plast palubní desky
+  const trim = new T.MeshStandardMaterial({ color: '#111215', roughness: 0.7 });
+  const leather = new T.MeshStandardMaterial({ color: '#202124', roughness: 0.62 });
+  const alu = addShine(new T.MeshStandardMaterial({ color: '#9aa0a8', roughness: 0.32, metalness: 0.9 }), 'int-alu', { gloss: 0.8 });
+  const head = new T.MeshStandardMaterial({ color: '#34363c', roughness: 0.95 });
+  const stitch = new T.MeshStandardMaterial({ color: new T.Color(lv.a1 || '#c8102e').getHSL({}).l > 0.25 ? lv.a1 : '#c8302c', roughness: 0.6 });
+  // palubní deska: od čelního skla k řidiči, horní plocha klesá k řidiči
+  const dRear = Math.min(eyeZ + 0.66, zCowl - 0.32), dDepth = zCowl + 0.04 - dRear, dTopR = Math.min(yCowl - 0.01, eyeY - 0.27), dTopF = yCowl - 0.005;
+  const dash = warpGeo(softBox(hw * 2, 0.34, dDepth, 0.25, 20), (x, y, z) => { const t = z / dDepth + 0.5; return [x, y > 0 ? y + (dTopF - dTopR) * t : y - 0.04 * (1 - t), z]; });
+  add(dash, soft, 0, dTopR - 0.17, dRear + dDepth / 2);
+  add(softBox(hw * 2 - 0.04, 0.012, 0.012, 0.5, 6), stitch, 0, dTopR - 0.035, dRear - 0.004);     // lišta přes celou desku
+  // přístroje před řidičem pod stříškou
+  add(softBox(0.4, 0.09, 0.2, 0.5, 14), trim, dX, dTopR + 0.025, dRear + 0.08);
+  const cv = document.createElement('canvas'); cv.width = 320; cv.height = 128;
+  const ctex = new T.CanvasTexture(cv); ctex.colorSpace = T.SRGBColorSpace; ctex.anisotropy = 4;
+  cockpit.clu = { ctx: cv.getContext('2d'), tex: ctex, t: 0 };
+  const clu = add(new T.PlaneGeometry(0.34, 0.136), new T.MeshBasicMaterial({ map: ctex }), dX, dTopR - 0.045, dRear - 0.006); clu.rotation.set(-0.15, Math.PI, 0);
+  // středový panel: displej a dva výdechy
+  const scr = canvasTex(256, 144, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0d1a2a'); gr.addColorStop(1, '#050a12'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(120,190,255,.55)'; g.lineWidth = 3; g.beginPath(); g.moveTo(30, 110); g.bezierCurveTo(90, 40, 150, 120, 226, 50); g.stroke(); g.fillStyle = '#e6eef8'; g.font = '700 20px Arial'; g.fillText('12:00', 18, 32); g.fillStyle = 'rgba(255,255,255,.5)'; g.font = '14px Arial'; g.fillText('NAVIGACE', 150, 30); });
+  const sc = add(new T.PlaneGeometry(0.22, 0.124), new T.MeshBasicMaterial({ map: scr }), 0, dTopR - 0.12, dRear - 0.006); sc.rotation.y = Math.PI;
+  for (const s of [-1, 1]) { const v = add(new T.CylinderGeometry(0.035, 0.035, 0.02, 24).rotateX(Math.PI / 2), trim, s * 0.17, dTopR - 0.09, dRear - 0.004); for (let k = -1; k <= 1; k++) add(softBox(0.06, 0.006, 0.01, 0.5, 4), alu, s * 0.17, dTopR - 0.09 + k * 0.016, dRear - 0.016); void v; }
+  // tunel s řadicí pákou a loketní opěrkou
+  const cH = Math.max(0.18, beltY - 0.25 - (eyeY - 0.95));
+  add(softBox(0.26, cH, Math.max(0.5, dRear - (eyeZ - 0.35)), 0.3, 14), trim, 0, eyeY - 0.95 + cH / 2, (dRear + eyeZ - 0.35) / 2);
+  add(new T.CylinderGeometry(0.008, 0.012, 0.14, 10), alu, 0.02, eyeY - 0.95 + cH + 0.07, eyeZ + 0.28);
+  add(new T.SphereGeometry(0.03, 16, 12), leather, 0.02, eyeY - 0.95 + cH + 0.15, eyeZ + 0.28);
+  add(new T.CylinderGeometry(0.05, 0.06, 0.04, 16), leather, 0.02, eyeY - 0.95 + cH + 0.02, eyeZ + 0.28);
+  // výplně dveří s loketní opěrkou a klikou, lišta pod okny
+  const dz0 = eyeZ - 0.75, dz1 = zCowl - 0.08, dLen = Math.max(0.6, dz1 - dz0);
+  for (const s of [-1, 1]) {
+    add(softBox(0.05, 0.5, dLen, 0.3, 10), soft, s * (hw + 0.04), beltY - 0.24, dz0 + dLen / 2);
+    add(softBox(0.09, 0.035, dLen, 0.4, 8), trim, s * (hw + 0.02), beltY + 0.005, dz0 + dLen / 2);
+    add(softBox(0.09, 0.05, 0.5, 0.5, 10), leather, s * (hw - 0.02), beltY - 0.2, eyeZ + 0.05);
+    add(softBox(0.02, 0.025, 0.11, 0.5, 6), alu, s * (hw + 0.005), beltY - 0.1, eyeZ + 0.38);
+  }
+  // sedadla (spolujezdec je vidět vpravo)
+  for (const s of [-1, 1]) {
+    const x = s * dX;
+    const back = add(softBox(0.5, 0.64, 0.14, 0.45, 16), leather, x, eyeY - 0.36, eyeZ - 0.3); back.rotation.x = 0.2;
+    for (const b of [-1, 1]) add(softBox(0.07, 0.5, 0.17, 0.5, 10), trim, x + b * 0.22, eyeY - 0.4, eyeZ - 0.28).rotation.x = 0.2;
+    add(softBox(0.28, 0.17, 0.11, 0.55, 12), leather, x, eyeY + 0.02, eyeZ - 0.4);
+    add(softBox(0.5, 0.13, 0.52, 0.45, 12), leather, x, eyeY - 0.74, eyeZ + 0.02);
+    add(softBox(0.04, 0.5, 0.012, 0.5, 6), stitch, x, eyeY - 0.36, eyeZ - 0.235).rotation.x = 0.2;
+  }
+  // strop, sloupky čelního skla, zpětné zrcátko
+  const hLen = Math.max(0.6, zTop - (eyeZ - 1.1));
+  add(softBox(hw * 2, 0.025, hLen, 0.3, 8), head, 0, roofY - 0.07, eyeZ - 1.1 + hLen / 2);
+  for (const s of [-1, 1]) {
+    const A = new T.Vector3(s * (hw + 0.02), yCowl + 0.02, zCowl - 0.02), B = new T.Vector3(s * (hw - 0.05), roofY - 0.07, zTop + 0.03), d = B.clone().sub(A), L = d.length();
+    const pil = add(softBox(0.1, L, 0.07, 0.5, 10), trim, (A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2);
+    pil.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize());
+  }
+  add(softBox(0.02, 0.07, 0.02, 0.5, 4), trim, 0, roofY - 0.11, zTop - 0.02);
+  add(softBox(0.26, 0.075, 0.035, 0.6, 12), trim, 0, roofY - 0.16, zTop - 0.04);
+  add(new T.PlaneGeometry(0.24, 0.058), addShine(new T.MeshStandardMaterial({ color: '#9fb2c6', roughness: 0.08, metalness: 1 }), 'int-mirror', { gloss: 1.5 }), 0, roofY - 0.16, zTop - 0.06).rotation.y = Math.PI;
+  // volant: kožený věnec se zesílenými úchopy a prošitím, tři hliníkové paprsky, hlavice airbagu; sloupek do desky
+  const sw = new T.Group(); sw.position.set(dX, eyeY - 0.33, eyeZ + 0.5); sw.rotation.order = 'YXZ'; sw.rotation.set(-0.42, Math.PI, 0); group.add(sw);
+  add(new T.CylinderGeometry(0.035, 0.05, 0.36, 16).rotateX(Math.PI / 2), trim, 0, 0, -0.2, sw);
+  const wheel = new T.Group(); sw.add(wheel);
+  const rimM = addShine(new T.MeshStandardMaterial({ color: '#17171a', roughness: 0.55 }), 'int-rim', { gloss: 0.4 });
+  add(new T.TorusGeometry(0.18, 0.0185, 18, 80), rimM, 0, 0, 0, wheel);
+  for (const a of [0, Math.PI]) { const g = add(new T.TorusGeometry(0.18, 0.0225, 16, 24, 0.95), rimM, 0, 0, 0, wheel); g.rotation.z = a - 0.475; }
+  add(new T.TorusGeometry(0.18 - 0.017, 0.0013, 6, 80), stitch, 0, 0, 0.004, wheel);
+  add(softBox(0.022, 0.03, 0.04, 0.6, 8), stitch, 0, 0.18, 0, wheel);
+  for (const [x, y, w, h, r] of [[-0.11, -0.012, 0.12, 0.036, 0.08], [0.11, -0.012, 0.12, 0.036, -0.08], [0, -0.115, 0.04, 0.12, 0]]) { const sp = add(softBox(w, h, 0.014, 0.5, 10), alu, x, y, -0.004, wheel); sp.rotation.z = r; }
+  add(softBox(0.15, 0.115, 0.05, 0.62, 16), leather, 0, -0.01, 0.006, wheel);
+  add(new T.CircleGeometry(0.02, 24), alu, 0, -0.005, 0.033, wheel);
+  for (const s of [-1, 1]) add(softBox(0.05, 0.08, 0.008, 0.5, 8), alu, s * 0.14, 0.03, -0.045, wheel);   // pádla řazení za volantem
+  cockpit.holdY = 0.0; cockpit.holdX = 0.18;
+  // lidské ruce: kůže, hřbet s klouby, čtyři prsty se třemi články kolem věnce, palec; rukáv bundy
+  const skin = new T.MeshPhysicalMaterial({ color: '#d29a7c', roughness: 0.58, sheen: 0.6, sheenColor: new T.Color('#ffc2a8'), sheenRoughness: 0.5 });
+  const sleeve = new T.MeshStandardMaterial({ color: '#273041', roughness: 0.85 });
+  const cuffM = new T.MeshStandardMaterial({ color: '#1a2130', roughness: 0.8 });
+  const tube = (pts, r) => new T.TubeGeometry(new T.CatmullRomCurve3(pts.map((p) => new T.Vector3(...p))), 20, r, 12, false);
+  cockpit.hands = [];
+  // ruka svírá věnec: hřbet ruky před věncem (k řidiči) trochu vně, prsty těsně kolem věnce dovnitř a dozadu, palec po přední straně
+  for (const s of [-1, 1]) {
+    const h = new T.Group(), ha = 0.55; h.position.set(s * 0.18 * Math.cos(ha), 0.18 * Math.sin(ha), 0.03); h.rotation.z = s * ha; wheel.add(h);   // úchop „za deset dvě“
+    const cz = -0.03, R = 0.031;                     // střed věnce a poloměr, po kterém vedou prsty
+    const at = (phi, y, r = R) => [-s * r * Math.sin(phi), y, cz + r * Math.cos(phi)];
+    const back = warpGeo(softBox(0.058, 0.096, 0.026, 0.65, 20), (x, y, z) => [x, y, z + 0.006 * (1 - (2 * x / 0.058) ** 2)]);   // klenutý hřbet
+    const bk = add(back, skin, s * 0.016, -0.004, cz + 0.04, h); bk.rotation.y = s * 0.35;
+    for (let k = 0; k < 4; k++) {
+      const y = 0.031 - k * 0.0205, r = [0.0084, 0.0088, 0.0084, 0.0072][k], len = [2.35, 2.5, 2.4, 2.15][k];
+      const pts = []; for (let i = 0; i <= 6; i++) { const phi = -0.35 + (i / 6) * len; pts.push(at(phi, y + (i / 6) * 0.004 * (k - 1.5), R + (i < 2 ? 0.004 : 0))); }
+      add(tube(pts, r), skin, 0, 0, 0, h);
+      add(new T.SphereGeometry(r * 1.18, 12, 10), skin, ...at(-0.35, y, R + 0.004), h);                          // kloub
+      add(new T.SphereGeometry(r * 0.98, 10, 8), skin, ...at(-0.35 + len, y + 0.006 * (k - 1.5), R), h);        // špička prstu
+    }
+    // palec: z kořene ruky po přední straně věnce šikmo nahoru a dovnitř
+    const th = [[s * 0.014, -0.03, cz + 0.045], [s * 0.004, 0.012, cz + 0.042], at(0.35, 0.046, R + 0.002), at(0.85, 0.058, R)];
+    add(tube(th, 0.0105), skin, 0, 0, 0, h);
+    add(new T.SphereGeometry(0.0102, 10, 8), skin, ...th[3], h);
+    add(new T.CylinderGeometry(0.026, 0.03, 0.06, 18), skin, s * 0.02, -0.07, cz + 0.035, h);                      // zápěstí
+    add(new T.CylinderGeometry(0.036, 0.038, 0.03, 20), cuffM, s * 0.022, -0.1, cz + 0.035, h);                     // manžeta rukávu
+    cockpit.hands.push(h);
+  }
+  cockpit.wrist = new T.Vector3(0, -0.1, -0.0);
+  cockpit.arms = [0, 1].map(() => { const a = new T.Mesh(new T.CylinderGeometry(0.038, 0.05, 1, 16, 1), sleeve); a.userData.interior = true; group.add(a); return a; });
+  cockpit.cuffs = [0, 1].map(() => { const c = new T.Mesh(new T.CylinderGeometry(0.04, 0.04, 0.02, 16), cuffM); c.userData.interior = true; group.add(c); return c; });
+  cockpit.elbows = [new T.Vector3(dX - 0.27, eyeY - 0.56, eyeZ + 0.06), new T.Vector3(dX + 0.27, eyeY - 0.56, eyeZ + 0.06)];
+  group.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; o.userData.interior = true; } });
+  cockpit.dbg = { fz, rz, eyeZ, roofY, beltY, sideX, hw, dX, eyeY, zTop, zCowl, yCowl };
+  Object.assign(cockpit, { group, wheel, forCar: c3, kind: 'car', eye: new T.Vector3(dX, eyeY, eyeZ), wheelSign: 1 });
+}
 const _cv = new T.Vector3(), _cs = new T.Vector3(), _cy = new T.Vector3(0, 1, 0);
 function cockpitUpdate(dt, on) {
   if (!cockpit.group || cockpit.forCar !== car3d) { if (!on) return; cockpitBuild(car3d); }
   cockpit.group.visible = on;
   if (car3d.driver) for (const o of car3d.driver) o.visible = !on;
+  // zevnitř je vidět i vnitřní strana karoserie (střecha, sloupky, dveře) – jinak by byly z kabiny průhledné
+  if (cockpit.kind === 'car' && cockpit.ds !== on) {
+    cockpit.ds = on;
+    car3d.body.traverse((o) => { if (!o.isMesh || o.userData.interior) return; for (const m of [].concat(o.material || [])) { if (on) { if (m.userData.side0 === undefined) m.userData.side0 = m.side; m.side = T.DoubleSide; } else if (m.userData.side0 !== undefined) m.side = m.userData.side0; } });
+  }
   if (!on) return;
   // plný rejd = asi 70° u formule (jako u skutečného volantu), u ostatních aut skoro půl otáčky; za jízdy míň
   const low = clamp(1 - Math.abs(car.vf) / (cockpit.kind === 'f1' ? 70 : 45), 0, 1);
   const target = -clamp(car.steer, -1, 1) * (cockpit.kind === 'f1' ? 0.35 + 0.95 * low : 1.0 + 1.5 * low);
   cockpit.ang += (target - cockpit.ang) * Math.min(1, dt * 18);
-  cockpit.wheel.rotation.z = cockpit.ang;
+  cockpit.wheel.rotation.z = cockpit.ang * (cockpit.wheelSign || 1);
   cockpit.group.updateMatrixWorld(true);
   // předloktí spojí zápěstí (manžeta v rukavici) s loktem u okraje obrazu
   cockpit.hands.forEach((h, i) => {
-    _cv.set(0, -0.09, 0.06); h.localToWorld(_cv); camera.worldToLocal(_cv);
+    if (cockpit.wrist) _cv.set(cockpit.wrist.x + (i ? 0.022 : -0.022), cockpit.wrist.y, cockpit.wrist.z); else _cv.set(0, -0.09, 0.06);
+    h.localToWorld(_cv); cockpit.group.worldToLocal(_cv);
     _cs.copy(cockpit.elbows[i]).sub(_cv);
     const len = _cs.length(), arm = cockpit.arms[i], cuff = cockpit.cuffs[i];
     _cs.normalize();
@@ -8321,10 +8467,13 @@ function updateCamera(dt) {
     let p;
     if (bk) p = car3d.rig.head.clone().add(new T.Vector3(0, 0.06, -0.2)).applyEuler(car3d.root.rotation).add(car3d.root.position);
     else if (car3d.formula && car3d.helm) { car3d.root.updateMatrixWorld(true); p = car3d.helm.getWorldPosition(new T.Vector3()); p.add(new T.Vector3(0, 0.1, 0.07).applyEuler(car3d.root.rotation)); } // oči jezdce v helmě
+    else if (cockpit.kind === 'car' && cockpit.forCar === car3d && cockpit.eye) { car3d.root.updateMatrixWorld(true); p = car3d.body.localToWorld(cockpit.eye.clone()); }   // řidič vlevo v interiéru
     else p = new T.Vector3(0, 1.2, 1.05).applyEuler(car3d.root.rotation).add(car3d.root.position);
     camera.position.set(p.x + sx * 0.3, p.y + sy * 0.3, p.z);
     // pohled se za jízdy lehce stáčí do zatáčky
-    const t = new T.Vector3(bk ? 0 : -clamp(car.steer, -1, 1) * 3.5, bk ? 0.1 : 1.0, bk ? 9 : 30).applyEuler(car3d.root.rotation).add(car3d.root.position);
+    const inCar = !bk && cockpit.kind === 'car' && cockpit.forCar === car3d && cockpit.eye;
+    const t = inCar ? car3d.body.localToWorld(new T.Vector3(cockpit.eye.x - clamp(car.steer, -1, 1) * 1.6, cockpit.eye.y - 2.2, cockpit.eye.z + 30))
+      : new T.Vector3(bk ? 0 : -clamp(car.steer, -1, 1) * 3.5, bk ? 0.1 : 1.0, bk ? 9 : 30).applyEuler(car3d.root.rotation).add(car3d.root.position);
     camera.up.set(0, 1, 0);
     camera.lookAt(t);
     camera.rotateZ(bk ? car.roll * 0.7 : car.roll + car.bRoll * 0.6);
@@ -10059,7 +10208,7 @@ function wxRainMesh() {
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('aSeed', new T.BufferAttribute(seed, 4)); g.setAttribute('aCorner', new T.BufferAttribute(cor, 2)); g.setIndex(new T.BufferAttribute(idx, 1));
   const mat = new T.ShaderMaterial({
     uniforms: { uCam: { value: new T.Vector3() }, uT: { value: 0 }, uA: { value: 0 }, uV: { value: new T.Vector2() }, uAsp: { value: new T.Vector2(1.6, 1) } }, transparent: true, depthWrite: false, fog: false, side: T.DoubleSide,
-    vertexShader: `uniform vec3 uCam; uniform float uT; uniform vec2 uV; uniform vec2 uAsp; attribute vec4 aSeed; attribute vec2 aCorner; varying float vA;
+    vertexShader: `uniform vec3 uCam; uniform float uT; uniform vec2 uV; uniform vec2 uAsp; attribute vec4 aSeed; attribute vec2 aCorner; varying float vA; varying vec2 vC;
       void main() {
         float W = 54.0, H = 30.0, spd = 24.0 + aSeed.w * 18.0, len = 0.8 + aSeed.w * 1.3;
         vec3 p = vec3(uCam.x + mod(aSeed.x * W - uCam.x + W * 0.5, W) - W * 0.5, uCam.y - 9.0 + mod(aSeed.y * H - uT * spd, H), uCam.z + mod(aSeed.z * W - uCam.z + W * 0.5, W) - W * 0.5);
@@ -10068,12 +10217,14 @@ function wxRainMesh() {
         if (c0.w < 0.1 || c1.w < 0.1) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); vA = 0.0; return; }
         vec2 d = (c1.xy / c1.w - c0.xy / c0.w) * uAsp; float dl = length(d); d = dl > 1e-5 ? d / dl : vec2(0.0, -1.0);
         vec2 perp = vec2(-d.y, d.x) / uAsp;
-        vec4 c = mix(c0, c1, aCorner.x); c.xy += perp * (0.0015 + aSeed.w * 0.0016) * aCorner.y * c.w;
+        vec4 c = mix(c0, c1, aCorner.x); c.xy += perp * (0.0022 + aSeed.w * 0.002) * aCorner.y * c.w;
+        vC = aCorner;
         gl_Position = c;
         float dist = length(p - uCam);
-        vA = (1.0 - aCorner.x * 0.75) * (0.42 + 0.5 * aSeed.w) * smoothstep(42.0, 10.0, dist) * smoothstep(0.8, 3.5, dist);
+        vA = (0.17 + 0.23 * aSeed.w) * smoothstep(42.0, 10.0, dist) * smoothstep(0.8, 3.5, dist);   // lehce průsvitné kapky
       }`,
-    fragmentShader: 'uniform float uA; varying float vA; void main() { gl_FragColor = vec4(vec3(0.84, 0.9, 0.98), vA * uA); }',
+    // měkké okraje napříč a slábnoucí konec stopy (kapka je nahoře nejjasnější, ocas se ztrácí)
+    fragmentShader: 'uniform float uA; varying float vA; varying vec2 vC; void main() { float e = 1.0 - vC.y * vC.y; float l = smoothstep(0.0, 0.3, vC.x) * smoothstep(1.0, 0.65, vC.x); gl_FragColor = vec4(vec3(0.86, 0.92, 1.0), vA * uA * e * l); }',
   });
   const m = new T.Mesh(g, mat); m.frustumCulled = false; m.renderOrder = 8; m.visible = false;
   return m;
@@ -12085,7 +12236,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { T, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { T, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
