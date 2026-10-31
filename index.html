@@ -456,21 +456,21 @@
   /* déšť: ztmavení a studený nádech okrajů obrazu */
   .rain-fx { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(40, 58, 82, 0) 40%, rgba(24, 34, 52, .55) 100%); mix-blend-mode: multiply; }
   /* výběr pneumatik před zajetím do boxů */
-  .gp-tyrepick { position: absolute; left: 50%; top: calc(86px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(520px, calc(100% - 24px)); padding: 10px 12px 12px; border-radius: 20px; background: radial-gradient(120% 120% at 50% 0%, #3b2a9a 0%, #20156b 60%, #130c45 100%); border: 4px solid #07041f; box-shadow: 0 0 0 3px rgba(120, 100, 255, .45), 0 18px 40px rgba(0, 0, 0, .6); pointer-events: auto; font-family: var(--display); z-index: 6; }
+  .gp-tyrepick { position: absolute; left: 50%; top: calc(86px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(520px, calc(100% - 24px)); padding: 10px 12px 12px; border-radius: 20px; background: radial-gradient(120% 120% at 50% 0%, #2a2e36 0%, #1a1d23 60%, #0e1014 100%); border: 4px solid #050608; box-shadow: 0 0 0 3px rgba(225, 6, 0, .35), 0 18px 40px rgba(0, 0, 0, .6); pointer-events: auto; font-family: var(--display); z-index: 6; }
   .gp-tyrepick[hidden] { display: none; }
   .tp-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .tp-head b { font-size: 22px; letter-spacing: .03em; color: #fff; -webkit-text-stroke: 5px #07041f; paint-order: stroke fill; text-shadow: 0 3px 0 #07041f; } .tp-head span { flex: 1; color: #c9c4ff; font-size: 12px; font-family: var(--body, inherit); }
-  .tp-head button { width: 34px; height: 34px; border-radius: 10px; border: 3px solid #07041f; background: #ff3b4e; color: #fff; font-size: 15px; font-weight: 900; cursor: pointer; touch-action: manipulation; box-shadow: 0 3px 0 #07041f; }
+  .tp-head b { font-size: 22px; letter-spacing: .03em; color: #fff; -webkit-text-stroke: 5px #050608; paint-order: stroke fill; text-shadow: 0 3px 0 #050608; } .tp-head span { flex: 1; color: #b8bec8; font-size: 12px; font-family: var(--body, inherit); }
+  .tp-head button { width: 34px; height: 34px; border-radius: 10px; border: 3px solid #050608; background: #ff3b4e; color: #fff; font-size: 15px; font-weight: 900; cursor: pointer; touch-action: manipulation; box-shadow: 0 3px 0 #050608; }
   .tp-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .tp-row button { position: relative; display: grid; gap: 3px; justify-items: center; padding: 8px 6px 9px; border-radius: 14px; border: 3px solid #07041f; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 55%, #1a1262) 0%, #1a1262 62%); color: #fff; font-family: var(--display); font-weight: 900; font-size: 18px; cursor: pointer; touch-action: manipulation; box-shadow: 0 5px 0 #07041f; text-shadow: 0 2px 0 #07041f; transition: transform .12s; overflow: hidden; }
-  .tp-row button:active { transform: translateY(3px); box-shadow: 0 2px 0 #07041f; }
+  .tp-row button { position: relative; display: grid; gap: 3px; justify-items: center; padding: 8px 6px 9px; border-radius: 14px; border: 3px solid #050608; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 55%, #1b1e24) 0%, #1b1e24 62%); color: #fff; font-family: var(--display); font-weight: 900; font-size: 18px; cursor: pointer; touch-action: manipulation; box-shadow: 0 5px 0 #050608; text-shadow: 0 2px 0 #050608; transition: transform .12s; overflow: hidden; }
+  .tp-row button:active { transform: translateY(3px); box-shadow: 0 2px 0 #050608; }
   .tp-row button i { position: relative; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 2px; font-style: normal;
-    background: radial-gradient(circle, #1c1e24 0 33%, var(--c) 34% 41%, #0d0e11 42% 70%, #2a2c32 71% 74%, #0b0c0e 75% 100%); box-shadow: 0 4px 0 rgba(0, 0, 0, .45), inset 0 0 0 2px #07041f; animation: tpSpin 8s linear infinite; }
+    background: radial-gradient(circle, #1c1e24 0 33%, var(--c) 34% 41%, #0d0e11 42% 70%, #2a2c32 71% 74%, #0b0c0e 75% 100%); box-shadow: 0 4px 0 rgba(0, 0, 0, .45), inset 0 0 0 2px #050608; animation: tpSpin 8s linear infinite; }
   .tp-row button i::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .10) 0 6deg, transparent 6deg 15deg); mask: radial-gradient(circle, transparent 0 60%, #000 62%); -webkit-mask: radial-gradient(circle, transparent 0 60%, #000 62%); }
-  .tp-row button i b { font-size: 19px; color: #fff; -webkit-text-stroke: 3px #07041f; paint-order: stroke fill; animation: tpSpin 8s linear infinite reverse; }
+  .tp-row button i b { font-size: 19px; color: #fff; -webkit-text-stroke: 3px #050608; paint-order: stroke fill; animation: tpSpin 8s linear infinite reverse; }
   @keyframes tpSpin { to { transform: rotate(360deg); } }
-  .tp-row button small { font-family: var(--body, inherit); font-weight: 600; font-size: 10.5px; color: #cfd0ff; line-height: 1.2; text-align: center; text-shadow: none; }
-  .tp-row button.adv { border-color: #ffd23f; box-shadow: 0 5px 0 #07041f, 0 0 14px rgba(255, 210, 63, .7); }
+  .tp-row button small { font-family: var(--body, inherit); font-weight: 600; font-size: 10.5px; color: #c8ccd4; line-height: 1.2; text-align: center; text-shadow: none; }
+  .tp-row button.adv { border-color: #ffd23f; box-shadow: 0 5px 0 #050608, 0 0 14px rgba(255, 210, 63, .7); }
   .tp-row button.adv::after { content: 'DOPORUČENO'; position: absolute; top: 0; left: 0; right: 0; font-size: 9px; letter-spacing: .08em; padding: 1px 6px; background: #ffd23f; color: #4a2c00; text-shadow: none; }
   .tp-row button.adv i { margin-top: 10px; }
   .tp-row button.cur { outline: 3px solid #fff; outline-offset: -6px; }
@@ -491,25 +491,25 @@
   @media (max-height: 450px) { body.touch .gp-tower { --row: 16px; width: 120px; top: calc(100px + env(safe-area-inset-top, 0px)); } body.touch .gt-row { grid-template-columns: 17px 4px 1fr auto 8px; gap: 4px; font-size: 11px; } body.touch .gt-row .pos { font-size: 10px; } body.touch .gt-row .gap { font-size: 9px; } body.touch .gt-row .ty { width: 8px; height: 8px; border-width: 2px; } }
   @media (max-width: 600px) { .gp-tower { top: calc(236px + env(safe-area-inset-top, 0px)); } }
   /* dílna týmu */
-  .shop-top { width: 100%; margin: 4px 0 10px; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; border: 3px solid #07041f; box-shadow: 0 5px 0 #07041f, inset 0 3px 0 rgba(255, 255, 255, .45); text-shadow: 0 2px 0 #0b4d0a; }
-  canvas.hero { display: none; width: 100%; height: auto; border-radius: 14px; border: 3px solid #07041f; box-shadow: 0 6px 0 rgba(0,0,0,.35); margin-bottom: 10px; aspect-ratio: 960 / 420; }
+  .shop-top { width: 100%; margin: 4px 0 10px; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; border: 3px solid #050608; box-shadow: 0 5px 0 #050608, inset 0 3px 0 rgba(255, 255, 255, .45); text-shadow: 0 2px 0 #0b4d0a; }
+  canvas.hero { display: none; width: 100%; height: auto; border-radius: 14px; border: 3px solid #050608; box-shadow: 0 6px 0 rgba(0,0,0,.35); margin-bottom: 10px; aspect-ratio: 960 / 420; }
   canvas.hero.on { display: block; }
   .shop-card canvas.hero { max-height: 280px; object-fit: cover; }
   .team-card canvas.hero { max-height: 190px; object-fit: cover; }
   .shop-cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
-  .shop-car { position: relative; display: grid; gap: 1px; text-align: left; padding: 8px 10px 12px; border-radius: 12px; border: 3px solid #07041f; background: linear-gradient(180deg, #2c2399, #1a1262); color: #fff; font-family: var(--display); cursor: pointer; box-shadow: 0 4px 0 #07041f; touch-action: manipulation; }
-  .shop-car b { font-size: 15px; font-weight: 900; line-height: 1.05; text-shadow: 0 2px 0 #07041f; } .shop-car small { font-size: 11px; color: #ffd23f; font-weight: 800; }
+  .shop-car { position: relative; display: grid; gap: 1px; text-align: left; padding: 8px 10px 12px; border-radius: 12px; border: 3px solid #050608; background: linear-gradient(180deg, #2a2e36, #1b1e24); color: #fff; font-family: var(--display); cursor: pointer; box-shadow: 0 4px 0 #050608; touch-action: manipulation; }
+  .shop-car b { font-size: 15px; font-weight: 900; line-height: 1.05; text-shadow: 0 2px 0 #050608; } .shop-car small { font-size: 11px; color: #ffd23f; font-weight: 800; }
   .shop-car i { position: absolute; left: 8px; right: 8px; bottom: 5px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .15); overflow: hidden; } .shop-car i u { display: block; height: 100%; background: #ffd23f; }
-  .shop-car.on { background: linear-gradient(180deg, #8dff55, #36c91f); color: #fff; box-shadow: 0 4px 0 #07041f, 0 0 14px rgba(141, 255, 85, .55); } .shop-car.on b { text-shadow: 0 2px 0 #0b4d0a; } .shop-car.on small { color: #0b3d08; }
-  .shop-card { width: min(1000px, 100%); background: radial-gradient(120% 90% at 50% 0%, #3b2a9a 0%, #20156b 55%, #130c45 100%); border: 4px solid #07041f; box-shadow: 0 0 0 3px rgba(120, 100, 255, .45), 0 24px 60px rgba(0, 0, 0, .7); }
+  .shop-car.on { background: linear-gradient(180deg, #8dff55, #36c91f); color: #fff; box-shadow: 0 4px 0 #050608, 0 0 14px rgba(141, 255, 85, .55); } .shop-car.on b { text-shadow: 0 2px 0 #0b4d0a; } .shop-car.on small { color: #0b3d08; }
+  .shop-card { width: min(1000px, 100%); background: radial-gradient(120% 90% at 50% 0%, #2a2e36 0%, #1a1d23 55%, #0e1014 100%); border: 4px solid #050608; box-shadow: 0 0 0 3px rgba(225, 6, 0, .35), 0 24px 60px rgba(0, 0, 0, .7); }
   .shop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .shop-card h2 { margin: 0; font-size: 40px; color: #fff; transform: rotate(-1.5deg); -webkit-text-stroke: 7px #07041f; paint-order: stroke fill; text-shadow: 0 5px 0 #07041f; letter-spacing: .5px; }
+  .shop-card h2 { margin: 0; font-size: 40px; color: #fff; transform: rotate(-1.5deg); -webkit-text-stroke: 7px #050608; paint-order: stroke fill; text-shadow: 0 5px 0 #050608; letter-spacing: .5px; }
   .shop-card h2 em { color: #ffd23f; font-style: italic; }
-  .shop-money { display: inline-flex; align-items: center; gap: 8px; background: #07041f; border: 3px solid #4a3cc4; border-radius: 999px; padding: 4px 16px 4px 5px; font: 900 22px var(--display); color: #fff; box-shadow: 0 4px 0 rgba(0, 0, 0, .4); }
+  .shop-money { display: inline-flex; align-items: center; gap: 8px; background: #050608; border: 3px solid #e10600; border-radius: 999px; padding: 4px 16px 4px 5px; font: 900 22px var(--display); color: #fff; box-shadow: 0 4px 0 rgba(0, 0, 0, .4); }
   .coin { width: 30px; height: 30px; border-radius: 50%; display: inline-grid; place-items: center; font: 900 16px var(--display); color: #7a4a00; border: 2px solid #7a4a00; background: radial-gradient(circle at 35% 28%, #fff7b0 0%, #ffd23f 45%, #e09a00 100%); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .18); }
-  .shop-help { color: #c9c4ff; font-size: 13px; margin: 8px 0 12px; }
+  .shop-help { color: #b8bec8; font-size: 13px; margin: 8px 0 12px; }
   .shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
-  .shop-it { --rc: #4fd35a; --rc2: #1f9a2f; position: relative; display: flex; flex-direction: column; border-radius: 18px; border: 4px solid #07041f; background: #1a1262; overflow: hidden; box-shadow: 0 7px 0 #07041f; transition: transform .15s; }
+  .shop-it { --rc: #4fd35a; --rc2: #1f9a2f; position: relative; display: flex; flex-direction: column; border-radius: 18px; border: 4px solid #050608; background: #1b1e24; overflow: hidden; box-shadow: 0 7px 0 #050608; transition: transform .15s; }
   .shop-it:hover { transform: translateY(-3px); }
   .shop-it.r1 { --rc: #36b4ff; --rc2: #1561d8; }
   .shop-it.r2 { --rc: #c85bff; --rc2: #7a22d8; }
@@ -518,30 +518,30 @@
   @keyframes shopPop { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
   .shop-it::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .28), transparent); transform: skewX(-18deg); animation: shopShine 5s ease-in-out infinite; pointer-events: none; }
   @keyframes shopShine { 0%, 62% { left: -60%; } 100% { left: 140%; } }
-  .shop-it .hd { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 10px 6px; background: linear-gradient(180deg, var(--rc), var(--rc2)); border-bottom: 4px solid #07041f; }
-  .shop-it .nm { font: 900 21px/1.05 var(--display); color: #fff; -webkit-text-stroke: 5px #07041f; paint-order: stroke fill; text-shadow: 0 3px 0 #07041f; }
+  .shop-it .hd { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 8px 10px 6px; background: linear-gradient(180deg, var(--rc), var(--rc2)); border-bottom: 4px solid #050608; }
+  .shop-it .nm { font: 900 21px/1.05 var(--display); color: #fff; -webkit-text-stroke: 5px #050608; paint-order: stroke fill; text-shadow: 0 3px 0 #050608; }
   .shop-it .stars { display: flex; gap: 1px; font-size: 20px; line-height: 1; flex: none; }
-  .shop-it .stars u { text-decoration: none; color: #2a1f80; -webkit-text-stroke: 2px #07041f; paint-order: stroke fill; }
+  .shop-it .stars u { text-decoration: none; color: #3a3e46; -webkit-text-stroke: 2px #050608; paint-order: stroke fill; }
   .shop-it .stars u.on { color: #ffd23f; text-shadow: 0 0 8px rgba(255, 210, 63, .8); }
-  .shop-it .art { position: relative; display: grid; place-items: center; padding: 12px 0 10px; overflow: hidden; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 45%, #1a1262) 0%, #1a1262 72%); }
+  .shop-it .art { position: relative; display: grid; place-items: center; padding: 12px 0 10px; overflow: hidden; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 45%, #1b1e24) 0%, #1b1e24 72%); }
   .shop-it .art::before { content: ''; position: absolute; inset: -80%; background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .13) 0 7deg, transparent 7deg 18deg); animation: shopSpin 28s linear infinite; }
   @keyframes shopSpin { to { transform: rotate(360deg); } }
-  .shop-it .art canvas.thumb { position: relative; width: 74%; height: auto; border-radius: 14px; border: 3px solid #07041f; box-shadow: 0 6px 0 rgba(0, 0, 0, .35); animation: shopBob 3.2s ease-in-out infinite; }
+  .shop-it .art canvas.thumb { position: relative; width: 74%; height: auto; border-radius: 14px; border: 3px solid #050608; box-shadow: 0 6px 0 rgba(0, 0, 0, .35); animation: shopBob 3.2s ease-in-out infinite; }
   @keyframes shopBob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-5px) rotate(1deg); } }
-  .shop-it .badge { position: absolute; top: 12px; left: -34px; z-index: 2; padding: 3px 38px; background: #ff3b4e; color: #fff; font: 900 13px var(--display); letter-spacing: .5px; transform: rotate(-35deg); border: 2px solid #07041f; text-shadow: 0 2px 0 #07041f; }
+  .shop-it .badge { position: absolute; top: 12px; left: -34px; z-index: 2; padding: 3px 38px; background: #ff3b4e; color: #fff; font: 900 13px var(--display); letter-spacing: .5px; transform: rotate(-35deg); border: 2px solid #050608; text-shadow: 0 2px 0 #050608; }
   .shop-it .badge.mx { background: #ffb400; color: #4a2c00; text-shadow: none; }
-  .shop-it .ds { padding: 8px 12px 0; color: #cfd0ff; font-size: 12.5px; line-height: 1.3; min-height: 3.2em; }
-  .shop-it .fx { padding: 4px 12px 0; color: #7dff9a; font: 800 13.5px var(--display); text-shadow: 0 2px 0 #07041f; }
+  .shop-it .ds { padding: 8px 12px 0; color: #c8ccd4; font-size: 12.5px; line-height: 1.3; min-height: 3.2em; }
+  .shop-it .fx { padding: 4px 12px 0; color: #7dff9a; font: 800 13.5px var(--display); text-shadow: 0 2px 0 #050608; }
   .shop-it .own { padding: 2px 12px 0; color: #ffd23f; font-size: 12px; font-weight: 700; }
   .shop-it .tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 8px 10px 0; }
-  .shop-it .tiers figure { margin: 0; border: 2px solid #07041f; border-radius: 8px; overflow: hidden; background: #0f0a45; opacity: .75; }
-  .shop-it .tiers figure.own { opacity: 1; border-color: #4a3cc4; }
+  .shop-it .tiers figure { margin: 0; border: 2px solid #050608; border-radius: 8px; overflow: hidden; background: #121418; opacity: .75; }
+  .shop-it .tiers figure.own { opacity: 1; border-color: #e10600; }
   .shop-it .tiers figure.cur { opacity: 1; border-color: var(--rc); box-shadow: 0 0 10px var(--rc); }
   .shop-it .tiers canvas { display: block; width: 100%; height: auto; }
-  .shop-it .tiers figcaption { font-size: 9.5px; line-height: 1.12; padding: 2px 3px 3px; color: #b9b6ff; text-align: center; min-height: 2.3em; }
-  .bs-buy { margin: 10px 12px 12px; padding: 10px 12px 9px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 13px; border: 3px solid #07041f; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; font: 900 21px var(--display); -webkit-text-stroke: 4px #0b4d0a; paint-order: stroke fill; text-shadow: 0 2px 0 #0b4d0a; box-shadow: 0 5px 0 #07041f, inset 0 3px 0 rgba(255, 255, 255, .45); cursor: pointer; animation: shopBuyPulse 2.2s ease-in-out infinite; }
+  .shop-it .tiers figcaption { font-size: 9.5px; line-height: 1.12; padding: 2px 3px 3px; color: #a9afb9; text-align: center; min-height: 2.3em; }
+  .bs-buy { margin: 10px 12px 12px; padding: 10px 12px 9px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 13px; border: 3px solid #050608; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; font: 900 21px var(--display); -webkit-text-stroke: 4px #0b4d0a; paint-order: stroke fill; text-shadow: 0 2px 0 #0b4d0a; box-shadow: 0 5px 0 #050608, inset 0 3px 0 rgba(255, 255, 255, .45); cursor: pointer; animation: shopBuyPulse 2.2s ease-in-out infinite; }
   .bs-buy small { display: block; -webkit-text-stroke: 0; text-shadow: none; font: 700 11px var(--display); opacity: .95; color: #eaffd9; }
-  .bs-buy:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #07041f, inset 0 3px 0 rgba(255, 255, 255, .45); }
+  .bs-buy:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 #050608, inset 0 3px 0 rgba(255, 255, 255, .45); }
   .bs-buy:disabled { animation: none; filter: grayscale(.7) brightness(.75); cursor: default; }
   .shop-it.max .bs-buy { background: linear-gradient(180deg, #ffe680 0%, #ffb400 100%); -webkit-text-stroke: 4px #6a3d00; text-shadow: 0 2px 0 #6a3d00; filter: none; }
   @keyframes shopBuyPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
@@ -775,7 +775,7 @@
     <canvas id="shopHero" class="hero"></canvas>
     <div class="shop-cars" id="shopCars"></div>
     <div class="shop-head"><h2>Dílna <em id="shopTitleCar">týmu</em></h2><div class="shop-money"><span class="coin">$</span><b id="shopMoney">0</b></div></div>
-    <p class="shop-help">Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Díly platí jen pro tvou formuli.</p>
+    <p class="shop-help">Nahoře vyber auto, pod ním jsou jeho díly. Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Každé auto má vlastní vylepšení.</p>
     <div class="shop-list" id="shopList"></div>
     <div class="shop-all"><button class="btn" id="bShopAll" hidden>Všechny díly na maximum (zdarma)</button><button class="btn ghost" id="bShopClose">Zavřít</button></div>
   </div>
@@ -5135,14 +5135,14 @@ function buildModelCar(lv, spec) {
       const sg = Math.sign(w.pivot.position.x) || 1, R = (bbT.max.y - bbT.min.y) / 2;
       const outer = sg > 0 ? bbT.max.x : bbT.min.x;
       for (const [rr, tt] of [[0.8, 0.045], [0.62, 0.02]]) {
-        const ring = new T.Mesh(new T.TorusGeometry(R * rr, R * tt, 6, 36), tyreMat);
+        const ring = new T.Mesh(new T.TorusGeometry(R * rr, R * tt, 6, 36), tyreMat); ring.userData.added = rr > 0.75;   // proužek směsi zůstane i s novým ráfkem
         ring.rotation.y = Math.PI / 2; ring.position.set(outer - w.pivot.position.x + sg * 0.004, (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, 0);
         w.spin.add(ring);
       }
       // nápis dodavatele pneumatik po obvodu boku (točí se s kolem)
       const pr = new T.Mesh(new T.RingGeometry(R * 0.66, R * 0.78, 64), new T.MeshBasicMaterial({ map: pirelliTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, side: T.DoubleSide }));
       pr.rotation.y = sg * Math.PI / 2; pr.position.set(outer - w.pivot.position.x + sg * 0.007, (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, 0);
-      w.spin.add(pr);
+      pr.userData.added = true; w.spin.add(pr);
       shopWheelLook(w, spec.shop || {}, { sg, R, outer, cy: (bbT.max.y + bbT.min.y) / 2 - w.pivot.position.y, cx: (bbT.max.x + bbT.min.x) / 2 - w.pivot.position.x, tw: bbT.max.x - bbT.min.x, lv, tyreLooks, wetGroups, dryGroups, brakeMats });
     }
   }
@@ -5598,6 +5598,52 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
   }
   return kmat;
 }
+// Nové kolo místo původního ráfku: původní ráfek (a vše uvnitř pneumatiky) se skryje / vyřízne a uvnitř pneumatiky se postaví
+// celé kolo: vnitřní válec (barrel), leštěný okraj, paprsky mírně prohnuté dovnitř (konkávní), střed s maticemi a tmavé dno.
+// style: 'spoke7' | 'mesh' | 'forged' | 'f1-1' | 'f1-2' | 'f1-3'; col = barva paprsků
+function replaceRim(w, { R, cy, sg, outer, tw, style, col, keep = /^$/ }) {
+  const rr = R * 0.73, spin = w.spin, P0 = w.pivot.position.x;
+  // 1) původní díly kola: pneumatika se ořízne na prstenec, ostatní (ráfek, disk, šrouby) se skryje
+  const orig = []; spin.traverse((o) => { if (o.isMesh && !o.userData.added) orig.push(o); });
+  const v = new T.Vector3();
+  for (const o of orig) {
+    if (keep.test((o.material && o.material.name) || '')) continue;
+    if (o !== w.tire) { o.visible = false; continue; }
+    const geo = o.geometry.clone(), p = geo.attributes.position, ix = geo.index, n = ix ? ix.count : p.count, kept = [];
+    o.updateMatrix();
+    for (let i = 0; i < n; i += 3) {
+      let rmin = 1e9;
+      for (let k = 0; k < 3; k++) { const a = ix ? ix.getX(i + k) : i + k; v.fromBufferAttribute(p, a).applyMatrix4(o.matrix); rmin = Math.min(rmin, Math.hypot(v.y - cy, v.z)); }
+      if (rmin > rr * 0.97) for (let k = 0; k < 3; k++) kept.push(ix ? ix.getX(i + k) : i + k);
+    }
+    geo.setIndex(kept); o.geometry = geo;
+  }
+  // 2) nové kolo
+  const add = (geo, mat, x, y, z) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.userData.added = true; m.castShadow = false; spin.add(m); return m; };
+  const metal = addShine(new T.MeshPhysicalMaterial({ color: col, metalness: 0.9, roughness: style === 'forged' ? 0.38 : 0.22, clearcoat: 0.6, clearcoatRoughness: 0.2 }), 'rim-' + style, { gloss: 1.2 });
+  const lipM = addShine(new T.MeshStandardMaterial({ color: '#dfe3e8', metalness: 1, roughness: 0.12 }), 'rim-lip', { gloss: 1.5 });
+  const darkM = new T.MeshStandardMaterial({ color: '#0b0c0e', roughness: 0.75, metalness: 0.3 });
+  const face = outer - P0 - sg * 0.02, depth = tw * 0.82, back = face - sg * depth;
+  const barrel = add(new T.CylinderGeometry(rr, rr, depth, 48, 1, true).rotateZ(Math.PI / 2), new T.MeshStandardMaterial({ color: '#3a3d43', metalness: 0.8, roughness: 0.4, side: T.DoubleSide }), (face + back) / 2, cy, 0); void barrel;
+  add(new T.CircleGeometry(rr, 40).rotateY(sg > 0 ? Math.PI / 2 : -Math.PI / 2), darkM, back + sg * 0.01, cy, 0);              // dno
+  add(new T.TorusGeometry(rr, R * 0.025, 10, 56).rotateY(Math.PI / 2), style === 'forged' || style.startsWith('f1') ? metal : lipM, face, cy, 0);   // okraj
+  const N = { spoke7: 7, mesh: 10, forged: 5, 'f1-1': 8, 'f1-2': 5, 'f1-3': 10 }[style] || 7;
+  const hubR = rr * 0.2, len = rr - hubR, cave = sg * 0.035;   // konkávní: střed hlouběji
+  const spoke = (a, wd, twist = 0, th = 0.022) => {
+    const g = warpGeo(softBox(th, len, wd, 0.45, 10), (x, y, z) => { const t = y / len + 0.5; return [x - cave * (1 - t), y, z * (1.25 - 0.55 * t) + twist * (t - 0.5) * len]; });
+    const s = add(g, metal, face - sg * 0.006, cy + Math.cos(a) * (hubR + len / 2), Math.sin(a) * (hubR + len / 2)); s.rotation.x = a;   // paprsek míří od středu ven
+  };
+  for (let k = 0; k < N; k++) {
+    const a = (k / N) * Math.PI * 2;
+    if (style === 'mesh' || style === 'f1-3') { spoke(a, rr * 0.09, 0.32); spoke(a, rr * 0.09, -0.32); }   // mřížka (křížené paprsky)
+    else if (style === 'forged') { spoke(a - 0.14, rr * 0.15); spoke(a + 0.14, rr * 0.15); }               // dvojité paprsky
+    else spoke(a, rr * (style === 'f1-2' ? 0.34 : style === 'f1-1' ? 0.2 : 0.24));
+  }
+  add(new T.CylinderGeometry(hubR, hubR * 1.08, 0.04, 28).rotateZ(Math.PI / 2), metal, face - sg * 0.03, cy, 0);              // střed
+  const cap = add(new T.CylinderGeometry(hubR * 0.55, hubR * 0.6, 0.02, 24).rotateZ(Math.PI / 2), style.startsWith('f1') ? new T.MeshStandardMaterial({ color: '#c9a24a', metalness: 1, roughness: 0.2 }) : darkM, face - sg * 0.005, cy, 0); void cap;
+  if (!style.startsWith('f1')) for (let k = 0; k < 5; k++) { const a = (k / 5) * Math.PI * 2; add(new T.CylinderGeometry(hubR * 0.13, hubR * 0.13, 0.03, 8).rotateZ(Math.PI / 2), lipM, face - sg * 0.012, cy + Math.cos(a) * hubR * 0.72, Math.sin(a) * hubR * 0.72); }
+  return { rr, face, back };
+}
 // kola (ráfky), brzdový kotouč a vzorek běhounu pro jedno kolo formule. Barvy jsou jako ve skutečné F1: kovové a černé ráfky,
 // žhnoucí brzdový kotouč, černá guma; pneumatiky se liší jen vzorkem (drážky a nepravidelné bloky), žádné barevné pruhy.
 function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, dryGroups, brakeMats }) {
@@ -5607,22 +5653,8 @@ function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, dryGrou
   const cut = new T.MeshStandardMaterial({ color: '#030304', roughness: 1 });
   if (w.tire) w.tire.material = rubber;                                            // světlejší guma, aby byl vidět vzorek
   const rimCol = SHOP_RIMS[sh.wheels || 0] || '#222';
-  // kola: 1 = stříbrný disk s větracími otvory, 2 = zlatá hvězda o pěti ramenech, 3 = černá kovaná s deseti paprsky a matkou
-  if (sh.wheels >= 1) {
-    const m = addShine(new T.MeshStandardMaterial({ color: rimCol, roughness: sh.wheels === 3 ? 0.35 : 0.22, metalness: 0.9 }), 'rimshop', { gloss: 1 });
-    const dark = new T.MeshStandardMaterial({ color: '#0d0e10', roughness: 0.6 });
-    const n = [0, 8, 5, 10][sh.wheels];
-    if (sh.wheels === 1) {
-      const disc = add(new T.CylinderGeometry(R * 0.55, R * 0.55, 0.012, 40), m, face, cy, 0); disc.rotation.z = Math.PI / 2;
-      for (let k = 0; k < n; k++) { const a = (k / n) * Math.PI * 2; const sl = add(softBox(0.014, R * 0.2, R * 0.07, 0.6, 8), dark, face + sg * 0.006, cy + Math.cos(a) * R * 0.34, Math.sin(a) * R * 0.34); sl.rotation.x = -a; }
-    } else {
-      for (let k = 0; k < n; k++) {
-        const a = (k / n) * Math.PI * 2, len = R * (sh.wheels === 2 ? 0.55 : 0.56);
-        const sp = add(warpGeo(softBox(0.018, len, R * (sh.wheels === 2 ? 0.14 : 0.06), 0.5, 10), (x, y, z) => [x, y, z * (1.3 - 0.55 * (y / len + 0.5))]), m, face, cy + Math.cos(a) * len / 2, Math.sin(a) * len / 2); sp.rotation.x = -a;
-      }
-      add(new T.CylinderGeometry(R * 0.14, R * 0.14, 0.022, sh.wheels === 3 ? 6 : 24), new T.MeshStandardMaterial({ color: sh.wheels === 3 ? '#c9a24a' : rimCol, roughness: 0.2, metalness: 0.95 }), face, cy, 0).rotation.z = Math.PI / 2;
-    }
-  }
+  // kola: celý nový ráfek místo původního (1 = stříbrný 8 paprsků, 2 = zlatý 5 širokých paprsků, 3 = černá kovaná mřížka)
+  if (sh.wheels >= 1) replaceRim(w, { R, cy, sg, outer: outer, tw, style: 'f1-' + sh.wheels, col: rimCol });
   if (!(sh.wheels >= 1)) {                                                                    // základní kola: plynulý aerodynamický kryt s kroužkem v barvě týmu
     const prof = [[0.001, 0.016], [R * 0.2, 0.014], [R * 0.4, 0.024], [R * 0.54, 0.014], [R * 0.58, 0.0]].map(([r, y]) => new T.Vector2(r, y));
     const dome = add(new T.LatheGeometry(prof, 36).rotateZ(sg > 0 ? -Math.PI / 2 : Math.PI / 2), addShine(new T.MeshStandardMaterial({ color: '#1a1c20', roughness: 0.3, metalness: 0.6 }), 'dome', { gloss: 1 }), face - sg * 0.004, cy, 0);
@@ -5633,7 +5665,7 @@ function shopWheelLook(w, sh, { sg, R, outer, cy, cx, tw, lv, wetGroups, dryGrou
   // brzdy: kotouč za paprsky (L1 plný ocelový, L2 vrtaný, L3 karbonový se zářezy), třmen; při brzdění žhne dooranžova
   if (sh.brakes >= 1) {
     const bm = new T.MeshStandardMaterial({ color: ['', '#4a4d54', '#3a3d43', '#16171a'][sh.brakes], roughness: 0.4, metalness: 0.8, emissive: '#ff4a00', emissiveIntensity: 0 });
-    const fx = face - sg * 0.03;
+    const fx = face - sg * tw * 0.45;   // kotouč hluboko v kole za paprsky ráfku
     const disc = add(new T.CylinderGeometry(R * 0.5, R * 0.5, 0.014, 48), bm, fx, cy, 0); disc.rotation.z = Math.PI / 2;
     const holes = sh.brakes === 2 ? 30 : sh.brakes === 3 ? 20 : 0;
     for (let k = 0; k < holes; k++) {
@@ -6052,7 +6084,7 @@ function roadShopCar(ct, carId) {
   return car;
 }
 // původní spoiler modelu (oblast nad víkem kufru), který koupený spoiler nahradí
-const SPOILER_CUT = { bmw: { z: -1.82, y: 0.95 }, audi: { z: -2.05, y: 0.98 }, senna: { z: -1.98, y: 1.035 } };
+const SPOILER_CUT = { bmw: { z: -1.82, y: 0.95 }, audi: { z: -2.05, y: 0.98 }, senna: { z: -1.98, y: 1.035 }, p911: { z: -1.9, y: 0.905 } };
 function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
   const cut = sh.aero > 0 && SPOILER_CUT[carId];
   if (cut) {
@@ -6089,7 +6121,7 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
   if (sh.susp > 0) body.position.y = -[0, 0.02, 0.035, 0.05][sh.susp];
   // ---- zadní spoiler (vysoká auta: na zadní hraně střechy)
   if (sh.aero > 0) {
-    const Hh = bb.max.y, tall = Hh > 1.55;
+    const roofY = Math.max(topAt((z0 + z1) / 2), topAt((z0 + z1) / 2 - 0.4)), Hh = roofY, tall = roofY > 1.55;   // výška střechy (ne antény)
     let zLid = z0 + 0.35, yLid = topAt(zLid);
     for (let z = z0 + 0.05; z < z0 + 1.2; z += 0.03) { const y = topAt(z); if (y > (tall ? Hh * 0.85 : 0.55)) { zLid = z; yLid = y; break; } }
     const w = Math.min(Wd * (tall ? 0.85 : 0.82), 1.5);
@@ -6104,12 +6136,19 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
       const dt = warpGeo(softBox(w, 0.16, 0.34, 0.5, 18), (x, y, z) => { const t = clamp(0.5 - z / 0.34, 0, 1); return [x * (1 - 0.05 * t), y * (0.2 + 0.8 * t) + 0.05 * t, z]; });
       put(dt, paintM, 0, yLid + 0.035, zLid + 0.13);
       put(softBox(w * 0.96, 0.012, 0.03, 0.5, 8), gloss, 0, yLid + 0.155, zLid - 0.03);   // tmavá hrana ducktailu
-    } else {                      // GT křídlo na dvou stojkách s bočnicemi (karbon)
-      const ww = Math.min(Wd * 0.92, 1.7), yW = yLid + 0.3, zW = zLid + 0.16;
-      put(airfoilGeo(0.3, ww, -0.08, 0.1), carbon, 0, yW, zW + 0.15, 0.12);
+    } else {
+      // GT křídlo jako u závodních aut GT3: dvouprvkové (hlavní profil a klapka), drží ho dva „labutí krky“ ze zadní hrany
+      // víka, které ho chytají shora; velké tvarované bočnice s výřezem a zadní lištou (gurney). Karbon s leskem.
+      const ww = Math.min(Wd * 0.94, 1.72), yW = yLid + 0.34, zW = zLid + 0.22, ch = 0.32;
+      put(airfoilGeo(ch, ww, -0.085, 0.11), carbon, 0, yW, zW + ch * 0.5, 0.1);                 // hlavní profil
+      put(airfoilGeo(ch * 0.45, ww, -0.09, 0.1), carbon, 0, yW + 0.055, zW - ch * 0.48, 0.42);   // klapka nad odtokovou hranou
+      put(softBox(ww, 0.02, 0.008, 0.5, 8), gloss, 0, yW + 0.105, zW - ch * 0.66, 0.42);          // gurney
       for (const s of [-1, 1]) {
-        put(softBox(0.016, 0.3, 0.12, 0.5, 10), carbon, s * ww * 0.3, yLid + 0.15, zW, -0.12);
-        put(plateGeo(roundedPlatePts(zW - 0.2, zW + 0.18, yW - 0.07, yW + 0.09, 0.025, 0.04), 0.01), carbon, s * (ww / 2 + 0.006), 0, 0);
+        const x = s * ww * 0.28;
+        put(pylonGeo([[x, yLid + 0.01, zLid + 0.05], [x, yLid + 0.2, zLid - 0.02], [x, yW + 0.09, zW - 0.02], [x, yW + 0.03, zW + 0.12]], 0.022, 0.32), carbon, 0, 0, 0);   // labutí krk
+        put(new T.CylinderGeometry(0.035, 0.04, 0.012, 16), gloss, x, yLid + 0.006, zLid + 0.05);    // patka na víku
+        const pts = [[zW + ch * 0.62, yW - 0.04], [zW + ch * 0.62, yW + 0.07], [zW + 0.02, yW + 0.15], [zW - ch * 0.72, yW + 0.16], [zW - ch * 0.78, yW + 0.03], [zW - ch * 0.5, yW - 0.1], [zW + ch * 0.2, yW - 0.12]];
+        put(plateGeo(pts, 0.009), carbon, s * (ww / 2 + 0.006), 0, 0);                               // tvarovaná bočnice
       }
     }
   }
@@ -6139,27 +6178,22 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
       if (sh.exhaust === 2) hole.scale.set(1.5, 0.8, 1);
     }
   }
-  // ---- kola (disk s paprsky přes původní ráfek) a třmeny brzd (neotáčejí se)
+  // ---- kola: původní ráfek se nahradí celým novým kolem; třmeny brzd (neotáčejí se) za paprsky
   for (const w of wheels) {
-    const box = new T.Box3().setFromObject(w.spin), sg = Math.sign(w.pivot.position.x) || 1;
-    const R = (box.max.y - box.min.y) / 2, cy = (box.max.y + box.min.y) / 2 - w.pivot.position.y, outer = (sg > 0 ? box.max.x : box.min.x) - w.pivot.position.x;
-    const face = outer - sg * 0.035, rr = R * 0.66;
-    const add = (geo, mat, x, y, z, parent = w.spin) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); return m; };
+    const tb = new T.Box3().setFromObject(w.tire || w.spin), sg = Math.sign(w.pivot.position.x) || 1;
+    const R = (tb.max.y - tb.min.y) / 2, cy = (tb.max.y + tb.min.y) / 2 - w.pivot.position.y, outer = (sg > 0 ? tb.max.x : tb.min.x), tw = tb.max.x - tb.min.x;
+    let rr = R * 0.73, face = outer - w.pivot.position.x - sg * 0.02;
+    if (sh.wheels > 0) ({ rr, face } = replaceRim(w, { R, cy, sg, outer, tw, style: ['', 'spoke7', 'mesh', 'forged'][sh.wheels], col: ['', '#c3c8cf', '#c9a24a', '#1d1f23'][sh.wheels] }));
     if (sh.brakes > 0) {
-      const col = ['', '#c8102e', '#f2c200', '#c9a24a'][sh.brakes];
-      add(softBox(0.06, rr * 0.38, rr * 0.62, 0.45, 8), addShine(new T.MeshStandardMaterial({ color: col, roughness: 0.35, metalness: 0.3 }), 'cal', { gloss: 1 }), face - sg * 0.04, cy + rr * 0.62, -rr * 0.25, w.pivot);
-      add(new T.CylinderGeometry(rr * (0.85 + 0.04 * sh.brakes), rr * (0.85 + 0.04 * sh.brakes), 0.02, 36).rotateZ(Math.PI / 2), new T.MeshStandardMaterial({ color: '#5a5e66', metalness: 0.85, roughness: 0.35 }), face - sg * 0.06, cy, 0, w.pivot);
-    }
-    if (sh.wheels > 0) {
-      const col = ['', '#c3c8cf', '#c9a24a', '#1d1f23'][sh.wheels];
-      const m = addShine(new T.MeshStandardMaterial({ color: col, metalness: 0.9, roughness: sh.wheels === 3 ? 0.35 : 0.2 }), 'trim-rim' + sh.wheels, { gloss: 1.2 });
-      add(new T.TorusGeometry(rr * 0.97, rr * 0.05, 8, 48).rotateY(Math.PI / 2), m, face, cy, 0);         // vnější obruč
-      add(new T.CylinderGeometry(rr * 0.16, rr * 0.16, 0.03, sh.wheels === 3 ? 6 : 20).rotateZ(Math.PI / 2), m, face + sg * 0.004, cy, 0);  // střed
-      const spoke = (a, len, wdt, tw = 0) => { const s2 = add(warpGeo(softBox(0.02, len, wdt, 0.5, 8), (x, y, z) => [x, y, z * (1.25 - 0.5 * (y / len + 0.5))]), m, face, cy + Math.cos(a) * (rr * 0.16 + len / 2), Math.sin(a) * (rr * 0.16 + len / 2)); s2.rotation.x = -a + tw; };
-      const len = rr * 0.8;
-      if (sh.wheels === 1) for (let k = 0; k < 7; k++) spoke((k / 7) * Math.PI * 2, len, rr * 0.16);                     // 7 paprsků
-      else if (sh.wheels === 2) for (let k = 0; k < 10; k++) { spoke((k / 10) * Math.PI * 2, len, rr * 0.06, 0.32); spoke((k / 10) * Math.PI * 2, len, rr * 0.06, -0.32); }   // mřížka (styl BBS)
-      else for (let k = 0; k < 5; k++) { spoke((k / 5) * Math.PI * 2 - 0.12, len, rr * 0.09); spoke((k / 5) * Math.PI * 2 + 0.12, len, rr * 0.09); }   // 5 dvojitých paprsků
+      const add = (geo, mat, x, y, z) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); w.pivot.add(m); return m; };
+      const col = ['', '#c8102e', '#f2c200', '#c9a24a'][sh.brakes], dR = rr * (0.8 + 0.04 * sh.brakes);
+      const disc = add(new T.CylinderGeometry(dR, dR, 0.022, 48).rotateZ(Math.PI / 2), addShine(new T.MeshStandardMaterial({ color: '#7a7e86', metalness: 0.9, roughness: 0.3 }), 'bdisc', { gloss: 1 }), face - sg * 0.075, cy, 0); void disc;
+      add(new T.CylinderGeometry(dR * 0.45, dR * 0.45, 0.03, 28).rotateZ(Math.PI / 2), new T.MeshStandardMaterial({ color: '#2a2c31', metalness: 0.6, roughness: 0.5 }), face - sg * 0.07, cy, 0);
+      // třmen: zaoblený blok kolem okraje kotouče se jménem (pruh) a dvěma šrouby
+      const cal = warpGeo(softBox(0.07, dR * 0.42, dR * 0.85, 0.5, 12), (x, y, z) => { const a = z / (dR * 0.9); return [x, y + dR * 0.78 * Math.cos(a) - dR * 0.78, z]; });
+      const cm = add(cal, addShine(new T.MeshPhysicalMaterial({ color: col, roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.1 }), 'cal' + sh.brakes, { gloss: 1.2 }), face - sg * 0.055, cy + dR * 0.78, -dR * 0.1);
+      cm.rotation.x = -0.5;
+      add(softBox(0.004, dR * 0.08, dR * 0.4, 0.5, 6), new T.MeshStandardMaterial({ color: '#ffffff', roughness: 0.5 }), face - sg * 0.02, cy + dR * 0.72, -dR * 0.45).rotation.x = -0.5;
     }
   }
 }
@@ -10107,6 +10141,21 @@ function gpResults() {
 }
 // dílna: seznam dílů, stupně 1–3, tlačítko koupit
 
+// neutrální „studiové“ okolí pro náhledy v dílně: tmavá podlaha, světlý strop a pruhy světel (softboxy), aby se lak a karbon
+// leskly čistě (okolí trati by do odrazů přineslo zelenou trávu)
+let studioEnvT = null;
+function studioEnv() {
+  if (studioEnvT) return studioEnvT;
+  const sc = new T.Scene();
+  const sky = new T.Mesh(new T.SphereGeometry(20, 32, 16), new T.ShaderMaterial({ side: T.BackSide, vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'varying vec3 vP; void main(){ float h = normalize(vP).y; vec3 c = mix(vec3(0.05,0.055,0.065), vec3(0.32,0.34,0.38), smoothstep(-0.2, 0.05, h)); c = mix(c, vec3(0.75,0.78,0.82), smoothstep(0.3, 0.95, h)); gl_FragColor = vec4(c, 1.0); }' }));
+  sc.add(sky);
+  for (const [x, y, z, w, h] of [[0, 9, 0, 14, 3], [9, 4, 0, 1.2, 8], [-9, 4, 3, 1.2, 8], [0, 4, -9, 10, 1.4]]) {
+    const p = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: new T.Color(3.2, 3.2, 3.3), side: T.DoubleSide })); p.position.set(x, y, z); p.lookAt(0, 0, 0); sc.add(p);
+  }
+  studioEnvT = pmrem.fromScene(sc, 0.02).texture;
+  return studioEnvT;
+}
 // náhled dílu ve stupni l (0 = základní výbava) pro obchod: nakreslený obrázek, aby se stupně dalo rozlišit pohledem
 function shopThumb2D(id, l) {
   const cv = document.createElement('canvas'); cv.width = 128; cv.height = 80; cv.className = 'thumb';
@@ -10220,11 +10269,11 @@ function renderShopThumb(id, l) {
   for (const gr of wetGroups) gr.visible = id === 'rain';
   for (const gr of dryGroups) gr.visible = id !== 'rain' && sh.tyres > 0;
   const sc = new T.Scene();
-  sc.background = new T.Color('#241b86'); sc.environment = envRT ? envRT.texture : null;
-  sc.add(new T.HemisphereLight('#cfe0ff', '#3a2c55', 1.0));
+  sc.background = new T.Color('#15171c'); sc.environment = studioEnv();
+  sc.add(new T.HemisphereLight('#e6ebf2', '#202228', 0.7));
   const key = new T.DirectionalLight('#fff1dc', 2.8); key.position.set(4, 6, 3); sc.add(key);
   const rim = new T.DirectionalLight('#9bb8ff', 0.9); rim.position.set(-4, 3, -5); sc.add(rim);
-  const ground = new T.Mesh(new T.CircleGeometry(7, 48).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#1a1260', roughness: 0.55, metalness: 0.2 })); ground.position.y = -0.002; sc.add(ground);
+  const ground = new T.Mesh(new T.CircleGeometry(7, 48).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#25282f', roughness: 0.6, metalness: 0.1 })); ground.position.y = -0.002; sc.add(ground);
   sc.add(root);
   const v = SHOP_VIEWS[id] || SHOP_VIEWS.engine, cam = new T.PerspectiveCamera(v.fov, W2 / H2, 0.05, 60);
   cam.position.set(...v.p); cam.lookAt(...v.t); sc.updateMatrixWorld(true);
@@ -10252,7 +10301,7 @@ function shopPrevPump() {
 }
 function shopThumb(id, l) {
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160; cv.className = 'thumb';
-  const c = cv.getContext('2d'), bg = c.createLinearGradient(0, 0, 0, 160); bg.addColorStop(0, '#2a2090'); bg.addColorStop(1, '#161060'); c.fillStyle = bg; c.fillRect(0, 0, 256, 160);
+  const c = cv.getContext('2d'), bg = c.createLinearGradient(0, 0, 0, 160); bg.addColorStop(0, '#24272e'); bg.addColorStop(1, '#121418'); c.fillStyle = bg; c.fillRect(0, 0, 256, 160);
   const key = id + l + f1Team();
   if (shopPrev.cache.has(key)) c.drawImage(shopPrev.cache.get(key), 0, 0);
   else { shopPrev.queue.push({ id, l, cv }); if (!shopPrev.timer) shopPrev.timer = setTimeout(shopPrevPump, 30); }
@@ -10269,11 +10318,11 @@ function renderHero(teamKey) {
   c.beams.visible = false; c.pod.visible = false; c.flame.visible = false;
   for (const gr of c.dryGroups || []) gr.visible = true;
   const sc = new T.Scene();
-  sc.background = new T.Color('#1b1470'); sc.environment = envRT ? envRT.texture : null;
-  sc.add(new T.HemisphereLight('#d6e4ff', '#3a2c55', 1.1));
+  sc.background = new T.Color('#15171c'); sc.environment = studioEnv();
+  sc.add(new T.HemisphereLight('#e6ebf2', '#202228', 0.7));
   const key1 = new T.DirectionalLight('#fff1dc', 3.2); key1.position.set(5, 7, 5); sc.add(key1);
   const rim = new T.DirectionalLight('#8fb0ff', 1.4); rim.position.set(-6, 3, -4); sc.add(rim);
-  const ground = new T.Mesh(new T.CircleGeometry(12, 64).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#201673', roughness: 0.95, metalness: 0 })); ground.position.y = -0.002; sc.add(ground);
+  const ground = new T.Mesh(new T.CircleGeometry(12, 64).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#25282f', roughness: 0.6, metalness: 0.1 })); ground.position.y = -0.002; sc.add(ground);
   c.root.rotation.y = -0.55; sc.add(c.root);
   const rt = new T.WebGLRenderTarget(W2, H2, { samples: 4 }); rt.texture.colorSpace = T.SRGBColorSpace;
   const cam = new T.PerspectiveCamera(22, W2 / H2, 0.1, 80); cam.position.set(5.6, 1.6, 6.4); cam.lookAt(0, 0.42, -0.1);
@@ -10306,11 +10355,11 @@ function renderCarShot(carId, shop, view, W2, H2) {
   c.beams.visible = false; c.pod.visible = false; c.flame.visible = false;
   for (const gr of c.dryGroups || []) gr.visible = true;
   const sc = new T.Scene();
-  sc.background = new T.Color('#241b86'); sc.environment = envRT ? envRT.texture : null;
-  sc.add(new T.HemisphereLight('#d6e4ff', '#3a2c55', 1.1));
+  sc.background = new T.Color('#15171c'); sc.environment = studioEnv();
+  sc.add(new T.HemisphereLight('#e6ebf2', '#202228', 0.7));
   const k1 = new T.DirectionalLight('#fff1dc', 3.0); k1.position.set(5, 7, 5); sc.add(k1);
   const k2 = new T.DirectionalLight('#8fb0ff', 1.3); k2.position.set(-6, 3, -4); sc.add(k2);
-  const ground = new T.Mesh(new T.CircleGeometry(14, 64).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#201673', roughness: 0.95 })); ground.position.y = -0.002; sc.add(ground);
+  const ground = new T.Mesh(new T.CircleGeometry(14, 64).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#25282f', roughness: 0.6, metalness: 0.1 })); ground.position.y = -0.002; sc.add(ground);
   for (const o of [c.beams, c.pod, c.flame]) if (o && o.parent) o.parent.remove(o);   // neviditelné kužele světel by zvětšily rozměry auta
   sc.add(c.root); c.root.updateMatrixWorld(true);
   const bb = new T.Box3().setFromObject(c.body), L = bb.max.z - bb.min.z, Wd = bb.max.x - bb.min.x, Hh = bb.max.y;
@@ -10342,7 +10391,7 @@ function renderCarShot(carId, shop, view, W2, H2) {
 function shopThumbFor(carId, id, l) {
   if (CAR_TYPES[carId].formula) return shopThumb(id, l);
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160; cv.className = 'thumb';
-  const c = cv.getContext('2d'), bg = c.createLinearGradient(0, 0, 0, 160); bg.addColorStop(0, '#2a2090'); bg.addColorStop(1, '#161060'); c.fillStyle = bg; c.fillRect(0, 0, 256, 160);
+  const c = cv.getContext('2d'), bg = c.createLinearGradient(0, 0, 0, 160); bg.addColorStop(0, '#24272e'); bg.addColorStop(1, '#121418'); c.fillStyle = bg; c.fillRect(0, 0, 256, 160);
   shopPrev.queue.push({ cv, run: () => renderCarShot(carId, { [id]: l }, id, 256, 160) });
   if (!shopPrev.timer) shopPrev.timer = setTimeout(shopPrevPump, 30);
   return cv;
