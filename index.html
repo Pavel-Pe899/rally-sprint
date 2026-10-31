@@ -164,6 +164,39 @@
   .card { background: linear-gradient(180deg, rgba(14, 22, 38, .97), rgba(7, 12, 22, .97)); box-shadow: 0 30px 80px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .06); }
   .team { border-left: 4px solid var(--tc, var(--line)); }
   @media (prefers-reduced-motion: reduce) { .btn::after { animation: none; display: none; } .stage, .car-pick, .livery { transition: none; } }
+  /* ---------- lobby 2: tlačítka a karty ve stylu dílny – tlustý tmavý obrys, „3D“ spodní hrana, ikony ---------- */
+  .btn { border: 3px solid #050608; border-radius: 14px; font-style: italic; font-weight: 900; box-shadow: 0 5px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .5); transition: transform .08s, box-shadow .08s, filter .15s; touch-action: manipulation; }
+  .btn:hover { filter: brightness(1.07); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .4); }
+  .btn .t { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+  .btn .ic { width: 1.05em; height: 1.05em; flex: none; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .25)); }
+  .btn small { font-style: normal; }
+  .btn:not(.ghost):not(.gp):not(.shop-top) { background: linear-gradient(180deg, #ffe46b 0%, #ffc419 48%, #ff9d00 100%); color: #1d1500; }
+  .btn.ghost { background: linear-gradient(180deg, #353a46 0%, #1f2229 100%); color: #fff; border: 3px solid #050608; text-shadow: 0 2px 0 #050608; box-shadow: 0 5px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .12); }
+  .btn.ghost small { color: #ffd23f; opacity: 1; font-weight: 700; }
+  .btn.ghost .ic { color: #ffd23f; }
+  .btn.gp { background: linear-gradient(180deg, #ff5a36 0%, #e10600 55%, #a80400 100%); color: #fff; text-shadow: 0 2px 0 #5a0000; box-shadow: 0 5px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .35); }
+  #menu #bStart { font-size: 30px; padding: 14px 18px; }
+  #menu .sheet { box-sizing: border-box; width: min(490px, 100%); padding-bottom: 0; }
+  #menu .actions { gap: 10px; position: sticky; bottom: 0; z-index: 3; margin: 0 -6px; padding: 14px 6px calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, rgba(6, 11, 21, 0) 0%, rgba(6, 11, 21, .94) 22%); order: 10; }
+  #menu .settings { order: 11; } #menu .help { order: 12; }
+  #menu .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  #menu .row2 .btn { flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; font-size: 21px; padding: 11px 14px; }
+  #menu .row2 .btn small { font-size: 12px; line-height: 1.2; }
+  #menu .shop-top { margin: 2px 0 4px; font-size: 24px; background: linear-gradient(180deg, #353a46 0%, #1f2229 100%); color: #fff; text-shadow: 0 2px 0 #050608; box-shadow: 0 5px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .12); }
+  #menu .shop-top .ic { color: #8dff55; }
+  #menu .shop-top small { color: #ffd23f; opacity: 1; font-weight: 700; }
+  #menu .stage { border: 2px solid #050608; border-radius: 14px; background: linear-gradient(180deg, #2b2f38 0%, #1b1e24 100%); box-shadow: 0 3px 0 #050608, inset 0 1px 0 rgba(255, 255, 255, .07); }
+  #menu .stage:hover { transform: translateX(3px); }
+  #menu .stage[aria-pressed="true"] { border-color: #ffc419; background: linear-gradient(90deg, rgba(255, 196, 25, .22) 0%, rgba(43, 47, 56, .95) 55%); box-shadow: 0 3px 0 #050608, 0 0 16px rgba(255, 196, 25, .25); }
+  #menu .stage .bt .go { font-style: normal; font-size: 26px; color: rgba(255, 255, 255, .35); }
+  #menu .stage[aria-pressed="true"] .bt .go { color: #ffc419; }
+  #menu .settings { border: 2px solid #050608; background: linear-gradient(180deg, #23262d, #16181d); box-shadow: 0 4px 0 #050608; }
+  #menu .car-pick { border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #2f333c, #1d2027); box-shadow: 0 3px 0 #050608; }
+  #menu .car-pick[aria-pressed="true"] { border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .25), #23262d 70%); box-shadow: 0 3px 0 #050608, 0 0 14px rgba(255, 196, 25, .3); }
+  #menu .stat { border: 2px solid #050608; background: linear-gradient(180deg, #2b2f38, #1b1e24); box-shadow: 0 3px 0 #050608; }
+  #menu .label { color: #e6ebf3; }
+  @media (max-width: 600px), (max-height: 520px) { #menu .row2 { display: contents; } #menu #bStart { font-size: 20px; padding: 11px 14px; } #menu .row2 .btn { flex-direction: row; font-size: 19px; } }
   @media (max-height: 520px) and (min-width: 761px) {
     #menu .sheet { gap: 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: 0; width: min(430px, 100%); }
     #menu .logo { font-size: 34px; }
@@ -506,7 +539,13 @@
   .decal-it b { grid-area: b; font-size: 14px; font-weight: 900; } .decal-it small { grid-area: s; font-size: 11px; font-weight: 800; color: #ffd23f; }
   .decal-it.on { border-color: #36c91f; box-shadow: 0 4px 0 #050608, 0 0 12px rgba(141, 255, 85, .5); } .decal-it.on small { color: #7dff9a; }
   .decal-it.locked .pv { filter: grayscale(.6) brightness(.8); }
-  @media (max-width: 700px) { .shop-body { grid-template-columns: minmax(0, 1fr); } .shop-decals { position: static; } #shopDecals { grid-auto-flow: column; grid-auto-columns: 150px; overflow-x: auto; } }
+  .shop-colors { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 14px; }
+  .color-it { display: grid; justify-items: center; gap: 3px; padding: 4px 0 3px; border: 0; background: none; color: #c9d0dc; font: 800 10px var(--display); cursor: pointer; touch-action: manipulation; }
+  .color-it i { width: 100%; max-width: 38px; aspect-ratio: 1; border-radius: 10px; border: 3px solid #050608; box-shadow: 0 3px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .35); transition: transform .12s; }
+  .color-it span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .color-it:hover i { transform: translateY(-2px); }
+  .color-it.on i { border-color: #8dff55; box-shadow: 0 3px 0 #050608, 0 0 12px rgba(141, 255, 85, .7); } .color-it.on span { color: #8dff55; }
+  @media (max-width: 700px) { .shop-colors { grid-template-columns: repeat(10, minmax(0, 1fr)); } .shop-body { grid-template-columns: minmax(0, 1fr); } .shop-decals { position: static; } #shopDecals { grid-auto-flow: column; grid-auto-columns: 150px; overflow-x: auto; } }
   .shop-cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
   .shop-car { position: relative; display: grid; gap: 1px; text-align: left; padding: 8px 10px 12px; border-radius: 12px; border: 3px solid #050608; background: linear-gradient(180deg, #2a2e36, #1b1e24); color: #fff; font-family: var(--display); cursor: pointer; box-shadow: 0 4px 0 #050608; touch-action: manipulation; }
   .shop-car b { font-size: 15px; font-weight: 900; line-height: 1.05; text-shadow: 0 2px 0 #050608; } .shop-car small { font-size: 11px; color: #ffd23f; font-weight: 800; }
@@ -698,15 +737,17 @@
       <h1 class="logo"><span id="logoA">RALLY</span><br><em id="secret">SPRINT</em></h1>
       <p class="tagline" id="tagline">Pět rychlostních zkoušek, přes 27 km šotoliny, sněhu, asfaltu a písku. Spolujezdec hlásí každou zatáčku.</p>
     </div>
-    <button class="btn shop-top" id="bShopTop">Dílna týmu <small>díly formule</small></button>
+    <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Dílna</span> <small>díly formule</small></button>
     <p class="label" id="lblStages">Rychlostní zkoušky</p>
     <div class="stages" id="stageList"></div>
     <div class="detail" id="stageDetail"></div>
     <div class="actions">
-      <button class="btn" id="bStart">Odstartovat <small id="bStartSub"></small></button>
-      <button class="btn gp" id="bGpMenu" hidden>Velká cena F1 <small>3 okruhy · 3 kola · výběr týmu</small></button>
-      <button class="btn ghost" id="bChamp">Mistrovství <small>všech 5 etap za sebou</small></button>
-      <button class="btn ghost" id="bNet">Proti sobě <small>2 hráči · každý na svém telefonu</small></button>
+      <button class="btn" id="bStart"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Odstartovat</span> <small id="bStartSub"></small></button>
+      <button class="btn gp" id="bGpMenu" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>Velká cena F1</span> <small>3 okruhy · 3 kola · výběr týmu</small></button>
+      <div class="row2">
+        <button class="btn ghost" id="bChamp"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg>Mistrovství</span> <small>všech 5 etap za sebou</small></button>
+        <button class="btn ghost" id="bNet"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11l-3-3 1.4-1.4L19 8l-5.6 5.4L12 12l3-3H4zm16 10H9l3 3-1.4 1.4L5 16l5.6-5.4L12 12l-3 3h11z" fill="currentColor"/></svg>Proti sobě</span> <small>2 hráči, každý na svém telefonu</small></button>
+      </div>
     </div>
     <div class="settings">
       <p class="label" id="lblCars">Auto a nastavení</p>
@@ -787,7 +828,7 @@
     <div class="shop-cars" id="shopCars"></div>
     <div class="shop-head"><h2>Dílna <em id="shopTitleCar">týmu</em></h2><div class="shop-money"><span class="coin">$</span><b id="shopMoney">0</b></div></div>
     <p class="shop-help">Nahoře vyber auto, pod ním jsou jeho díly. Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Každé auto má vlastní vylepšení.</p>
-    <div class="shop-body" id="shopBody"><aside class="shop-decals"><h3>Polepy</h3><div id="shopDecals"></div></aside><div class="shop-list" id="shopList"></div></div>
+    <div class="shop-body" id="shopBody"><aside class="shop-decals"><h3>Barvy</h3><div id="shopColors" class="shop-colors"></div><h3>Polepy</h3><div id="shopDecals"></div></aside><div class="shop-list" id="shopList"></div></div>
     <div class="shop-all"><button class="btn" id="bShopAll" hidden>Všechny díly na maximum (zdarma)</button><button class="btn ghost" id="bShopClose">Zavřít</button></div>
   </div>
 </div>
@@ -1104,7 +1145,7 @@ const LIVERIES = [
   { name: 'Papájová', body: '#ff7a00', a1: '#2f7fe0', a2: '#16181b', rim: '#1f2226' },
   { name: 'Zelená', body: '#0f5a3a', a1: '#e9c46a', a2: '#ffffff', rim: '#d8d8d8' },
   { name: 'Žlutá', body: '#ffc419', a1: '#111418', a2: '#e3262f', rim: '#111418' },
-  { name: 'Fialová', body: '#5b2a86', a1: '#ff8fd1', a2: '#ffffff', rim: '#e0e0e0' },
+  { name: 'Půlnoční', body: '#1d2a4a', a1: '#36c3ff', a2: '#ffffff', rim: '#c9ced6' },
   { name: 'Stříbrná', body: '#b9bec6', a1: '#00a19b', a2: '#111418', rim: '#2a2d33' },
   { name: 'Tyrkysová', body: '#18b5c8', a1: '#ff6a1a', a2: '#ffffff', rim: '#ffffff' },
 ];
@@ -5154,7 +5195,7 @@ function buildModelCar(lv, spec) {
     const bbT = new T.Box3();
     for (const w of wheels) {
       if (!w.tire) continue;
-      bbT.setFromObject(w.tire);
+      bbT.setFromObject(w.tire, true);
       const sg = Math.sign(w.pivot.position.x) || 1, R = (bbT.max.y - bbT.min.y) / 2;
       const outer = sg > 0 ? bbT.max.x : bbT.min.x;
       for (const [rr, tt] of [[0.8, 0.045], [0.62, 0.02]]) {
@@ -5194,6 +5235,15 @@ function buildModelCar(lv, spec) {
   const bb = new T.Box3().setFromObject(body);
   const paintMeshes = [];
   body.traverse((o) => { if (o.isMesh && o.material === paint) paintMeshes.push(o); });
+  // díry v modelu (G 63: chybí přední stěna blatníku kolem světla) → záplata v barvě laku s kulatým otvorem pro světlo, zrcadlově na obou stranách
+  for (const pt of spec.patches || []) for (const sx of [-1, 1]) {
+    const shp = new T.Shape(); shp.moveTo(pt.x0, pt.y0); shp.lineTo(pt.x1, pt.y0); shp.lineTo(pt.x1, pt.y1); shp.lineTo(pt.x0, pt.y1); shp.lineTo(pt.x0, pt.y0);
+    if (pt.hole) { const hp = new T.Path(); hp.absarc(pt.hole[0], pt.hole[1], pt.hole[2], 0, Math.PI * 2, true); shp.holes.push(hp); }
+    const g = new T.ExtrudeGeometry(shp, { depth: pt.d, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2, curveSegments: 40 });
+    g.translate(0, 0, pt.z - pt.d); if (sx < 0) { g.scale(-1, 1, 1); fixWinding(g); }
+    g.computeVertexNormals();
+    const m = new T.Mesh(g, paint); m.castShadow = true; m.userData.added = true; body.add(m); m.updateMatrixWorld(true); paintMeshes.push(m);
+  }
   // otvor střešního okna (G 63): v modelu je díra do kabiny s tmavým sklem → zalepí se plechem v barvě laku
   const sunroofs = [];
   body.traverse((o) => { if (o.isMesh && /sunroof/i.test(o.name + ' ' + (o.material && o.material.name))) sunroofs.push(o); });
@@ -5999,6 +6049,7 @@ CAR_TYPES.senna = {
 CAR_TYPES.g63 = {
   name: 'Mercedes G 63 AMG', desc: 'legendární „géčko“, 4×4, těžké a silné', model: 'g63', power: 1.08, vmax: 0.95, rearBias: -0.06, grip: 0.97,
   look: { metal: 0.3, rough: 0.3 },
+  patches: [{ x0: 0.44, x1: 0.785, y0: 0.69, y1: 1.035, z: 2.075, d: 0.05, hole: [0.615, 0.89, 0.108] }],
   parts: { wheel: /Scene_-_Root|AMG_wheels|_wheel_/, caliper: /smallspecmap/, tire: /Scene_-_Root/, paint: /^bodypaint$/, head: /light/i, tail: /light/i, rim: /AMG_wheels_color/, noShadow: /light|glass|silver|chrome|_wheel_|radiator|grill/i },
 };
 CAR_TYPES.audi = {
@@ -6323,7 +6374,9 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
     if (sh.front >= 2) {
       const fw = wheels.filter((w2) => w2.front), rw = wheels.filter((w2) => !w2.front);
       const zA = fw.length ? fw[0].pivot.position.z - 0.45 : z1 - 1, zB = rw.length ? rw[0].pivot.position.z + 0.45 : z0 + 1, zm = (zA + zB) / 2;
-      const ys = under(zm), xs = sideAt(ys + 0.08, zm);
+      // spodní hrana boku (práh): první zásah z boku odspodu – paprsek zespodu by u vysokých aut prošel až na střechu
+      let ys = 0.25, xs = Wd / 2;
+      for (let y = 0.06; y < 0.9; y += 0.02) { const q = hitP(new T.Vector3(3, y, zm), new T.Vector3(-1, 0, 0)); if (q && q.x > Wd / 2 - 0.3) { ys = y - 0.04; xs = q.x; break; } }
       for (const s of [-1, 1]) put(softBox(0.05, 0.05, Math.max(0.4, zA - zB), 0.5, 12), sh.front >= 3 ? carbon : gloss, s * (xs - 0.005), ys + 0.015, zm);
     }
   }
@@ -6342,7 +6395,7 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
   }
   // ---- kola: původní ráfek se nahradí celým novým kolem; třmeny brzd (neotáčejí se) za paprsky
   for (const w of wheels) {
-    const tb = new T.Box3().setFromObject(w.tire || w.spin), sg = Math.sign(w.pivot.position.x) || 1;
+    const tb = new T.Box3().setFromObject(w.tire || w.spin, true), sg = Math.sign(w.pivot.position.x) || 1;
     const R = (tb.max.y - tb.min.y) / 2, cy = (tb.max.y + tb.min.y) / 2 - w.pivot.position.y, outer = (sg > 0 ? tb.max.x : tb.min.x), tw = tb.max.x - tb.min.x;
     let rr = R * 0.73, face = outer - w.pivot.position.x - sg * 0.02;
     if (sh.wheels > 0) ({ rr, face } = replaceRim(w, { R, cy, sg, outer, tw, style: ['', 'spoke7', 'mesh', 'forged'][sh.wheels], col: ['', '#c3c8cf', '#c9a24a', '#1d1f23'][sh.wheels] }));
@@ -10451,7 +10504,9 @@ function renderShopThumb(id, l) {
 }
 function shopPrevPump() {
   shopPrev.timer = 0;
-  let job = shopPrev.queue.shift(); while (job && !job.cv.isConnected) job = shopPrev.queue.shift();   // plátna zavřené dílny se přeskočí
+  // plátna zavřené dílny se přeskočí; za jízdy se nic nekreslí (každý náhled staví celé auto a na tabletu by sekal hru)
+  if (G.mode === 'race') { shopPrev.queue.length = 0; return; }
+  let job = shopPrev.queue.shift(); while (job && (!job.cv.isConnected || job.cv.closest('[hidden]'))) job = shopPrev.queue.shift();
   if (!job) return;
   if (job.run) { try { const im = job.run(); job.cv.getContext('2d').drawImage(im, 0, 0, job.cv.width, job.cv.height); } catch (e) { console.error('carShot', e); } if (shopPrev.queue.length) shopPrev.timer = setTimeout(shopPrevPump, 16); return; }
   const key = job.id + job.l + f1Team();
@@ -10534,7 +10589,7 @@ function renderCarShot(carId, shop, view, W2, H2) {
     side: [[Wd / 2 + 4.4, 1.35, bb.max.z * 0.35], [0, 0.55, 0], 38],
     top: [[0.01, Hh + 5, 0.2], [0, 0, 0], 40],
     aero: [[Wd * 0.9, Hh + 0.9, bb.min.z - 2.6], [0, Hh * 0.62, bb.min.z + 0.45], 30], exhaust: [[Wd * 0.55, 0.45, bb.min.z - 2.2], [0, 0.3, bb.min.z + 0.2], 30],
-    front: [[Wd * 0.9, 0.7, bb.max.z + 2.4], [0, 0.25, bb.max.z - 0.3], 32], engine: [[Wd * 0.8, Hh + 1.1, bb.max.z + 2.0], [0, Hh * 0.55, bb.max.z * 0.4], 32],
+    front: [[Wd * 0.9, 0.7, bb.max.z + 2.4], [0, 0.25, bb.max.z - 0.3], 32], nose: [[0, 0.5, bb.max.z + 4.2], [0, 0.42, 0], 30], engine: [[Wd * 0.8, Hh + 1.1, bb.max.z + 2.0], [0, Hh * 0.55, bb.max.z * 0.4], 32],
   }[view] || null;
   let cam;
   if (V) { cam = new T.PerspectiveCamera(V[2], W2 / H2, 0.05, 80); cam.position.set(...V[0]); cam.lookAt(...V[1]); }
@@ -10543,12 +10598,15 @@ function renderCarShot(carId, shop, view, W2, H2) {
   renderer.setRenderTarget(rt); renderer.render(sc, cam);
   const buf = new Uint8Array(W2 * H2 * 4); renderer.readRenderTargetPixels(rt, 0, 0, W2, H2, buf);
   renderer.setRenderTarget(prevRT); shineK.value = prevK;
-  rt.dispose(); c.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+  rt.dispose();
+  // uvolní geometrii, materiály a vlastní plátnové textury (polepy, nápisy); textury modelu zůstávají sdílené
+  c.root.traverse((o) => { if (o.geometry) o.geometry.dispose(); for (const m of [].concat(o.material || [])) { for (const k of ['map', 'emissiveMap', 'roughnessMap', 'alphaMap']) { const t = m[k]; if (t && t.image && t.image.nodeName === 'CANVAS' && !t.userData.keep) t.dispose(); } m.dispose(); } });
   const cv = document.createElement('canvas'); cv.width = W2; cv.height = H2;
   const img = new ImageData(W2, H2), row = W2 * 4;
   for (let y = 0; y < H2; y++) img.data.set(buf.subarray((H2 - 1 - y) * row, (H2 - y) * row), y * row);
   cv.getContext('2d').putImageData(img, 0, 0);
   carShotCache.set(key, cv);
+  if (carShotCache.size > 90) carShotCache.delete(carShotCache.keys().next().value);   // ať náhledy nezaberou paměť tabletu
   return cv;
 }
 // náhled dílu: u formule zjednodušený vůz (rychlé), u silničních aut skutečný model auta s tím jediným dílem
@@ -10610,6 +10668,16 @@ function openShop() {
   }
   // polepy (levý sloupec, jen silniční auta)
   $('shopBody').classList.toggle('f1', !!ct.formula);
+  // barvy laku (dřív v menu): platí pro silniční auta, formule má barvy týmu
+  const cl2 = $('shopColors'); cl2.innerHTML = '';
+  if (!ct.formula) LIVERIES.forEach((l, i) => {
+    const b = document.createElement('button'), cur = (saved.livery | 0) === i;
+    b.className = 'color-it' + (cur ? ' on' : ''); b.setAttribute('aria-label', 'Barva: ' + l.name); b.title = l.name;
+    b.innerHTML = '<i></i><span></span>'; b.querySelector('span').textContent = l.name;
+    b.querySelector('i').style.background = `linear-gradient(135deg, ${l.body} 0 58%, ${l.a1} 58% 74%, ${l.a2} 74% 84%, ${l.body} 84%)`;
+    b.onclick = () => { if (cur) return; if (car3d && !G.gp) setLivery(i); else { saved.livery = i; persist(); } openShop(); renderMenu(); };
+    cl2.appendChild(b);
+  });
   const dl = $('shopDecals'); dl.innerHTML = '';
   if (!ct.formula) for (const dc of DECALS) {
     const own = decalOwned(sel, dc.id), cur = decalOf(sel) === dc.id, b = document.createElement('button');
@@ -10652,7 +10720,7 @@ $('bShopAll').onclick = () => {
   if (saved.car === sel && car3d && !G.gp) setLivery(saved.livery);
   toast('Všechny díly na maximum', 1.8); openShop(); renderMenu();
 };
-$('bShopClose').onclick = () => { $('shopModal').hidden = true; };
+$('bShopClose').onclick = () => { $('shopModal').hidden = true; shopPrev.queue.length = 0; };   // nedokreslené náhledy se zahodí (za jízdy by brzdily hru)
 $('bShop').onclick = () => openShop();
 $('bShopTop').onclick = () => { saved.shopSel = saved.car; openShop(); };
 // výběr týmu (druhé klepnutí na formuli v menu)
@@ -11441,7 +11509,7 @@ function renderMenu() {
     b.className = 'stage'; b.setAttribute('aria-pressed', String(i === G.sel));
     const medal = best != null ? medalFor(td, best) : null;
     b.innerHTML = `${thumbSvg(td)}<span><span class="nm">${st.badge ? `<i class="tbadge" style="background:${st.badge}"></i>` : ''}${st.name}</span><span class="meta">${st.surface} · ${(td.length / 1000).toFixed(1)} km · ${st.tod}</span></span>` +
-      `<span class="bt ${best != null ? 'has' : ''}">${medal && medal !== 'none' ? `<i class="medal m-${medal}"></i>` : ''}${best != null ? fmt(best) : '–'}</span>`;
+      `<span class="bt ${best != null ? 'has' : ''}">${medal && medal !== 'none' ? `<i class="medal m-${medal}"></i>` : ''}${best != null ? fmt(best) : '<i class="go">›</i>'}</span>`;
     b.onclick = () => { if (i !== G.sel) loadStage(i, startDemo); };
     list.appendChild(b);
   });
@@ -11472,7 +11540,7 @@ function renderMenu() {
     cl.appendChild(b);
   }
   const lv = $('liveries');
-  lv.innerHTML = '';
+  lv.innerHTML = ''; lv.hidden = !bikeM;   // barvy aut se vybírají v dílně, v menu zůstaly jen pro kola
   LIVERIES.forEach((l, i) => {
     const b = document.createElement('button');
     b.className = 'livery'; b.setAttribute('aria-pressed', String(i === saved.livery)); b.setAttribute('aria-label', `Barva auta: ${l.name}`);
@@ -11595,8 +11663,9 @@ document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.s
 document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
-  const now = performance.now(), tag = e.target && e.target.tagName;
-  if (now - lastTouchEnd < 350 && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') e.preventDefault();
+  // ťuknutí na tlačítko (i na jeho nápis nebo ikonu uvnitř) se nikdy neruší
+  const now = performance.now(), ctl = e.target && e.target.closest && e.target.closest('button, input, textarea, select, a, label');
+  if (now - lastTouchEnd < 350 && !ctl) e.preventDefault();
   lastTouchEnd = now;
 }, { passive: false });
 const vpMeta = document.querySelector('meta[name="viewport"]');
@@ -11954,7 +12023,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { T, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
