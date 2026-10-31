@@ -2715,6 +2715,11 @@ function leafLight(mat) {
     sh.fragmentShader = 'uniform vec3 uSunView; uniform vec3 uSunCol;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', `
   float back = pow(max(dot(normalize(-vViewPosition), uSunView), 0.0), 4.0);
   outgoingLight += diffuseColor.rgb * uSunCol * back * 0.55;
+  // listí rozptyluje světlo: odvrácené strany koruny nejsou černé, ale dostanou část barvy oblohy a slunce (jako skutečná koruna)
+  outgoingLight += diffuseColor.rgb * (vec3(0.16, 0.2, 0.17) + uSunCol * 0.06);
+  // jemná barevná proměna podle polohy (okraje koruny teplejší, uvnitř sytější zelená)
+  float tint = fract(sin(dot(floor(vViewPosition.xz * 0.35), vec2(12.9898, 78.233))) * 43758.5453);
+  outgoingLight *= mix(vec3(0.95, 1.0, 0.92), vec3(1.06, 1.04, 0.95), tint);
   #include <opaque_fragment>`);
   };
   mat.customProgramCacheKey = () => (prevKey ? prevKey() : '') + '-leaf';
@@ -3196,7 +3201,7 @@ function buildWorld(td) {
     im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false;
     group.add(im);
   }
-  const treeMat = addWind(new T.MeshLambertMaterial({ vertexColors: true, flatShading: true, map: treeAtlasTexture() }), 0.018, 'tree');
+  const treeMat = leafLight(addWind(new T.MeshLambertMaterial({ vertexColors: true, flatShading: true, map: treeAtlasTexture() }), 0.018, 'tree'));   // i vzdálené stromy rozptylují světlo (nejsou černé)
   // alphaToCoverage: okraje listí se s vyhlazováním (MSAA) kreslí měkce, v pohybu nejiskří
   const treeMatHi = leafLight(addWind(new T.MeshLambertMaterial({ vertexColors: true, map: treeAtlasTexture(), alphaTest: 0.42, alphaToCoverage: true, side: T.DoubleSide }), 0.02, 'tree-hi'));
   const hiKinds = {};
@@ -3585,18 +3590,25 @@ function buildWorld(td) {
       g.fillStyle = 'rgba(0,0,0,.08)'; for (let x = 0; x < w; x += 64) g.fillRect(x, 0, 2, h); // spáry mezi dílci
     });
     // ochranný plot: kosočtverečné pletivo s napínacími dráty nahoře a dole
+    // plot: svařovaná síť z oblých drátů (stejná jako 3D síť na zdi boxů). Každý drát má stínování jako válec
+    // (tmavé okraje, světlý hřbet), v křížení je svar; průhlednost s vyhlazením okrajů (alpha to coverage)
     const fenceTex = canvasTex(256, 256, (g, w, h) => {
       g.clearRect(0, 0, w, h);
-      // pletivo: každý drát má tmavý okraj, světlé jádro a lesklý pruh (vypadá jako oblý kovový drát, ne čára)
-      for (const [lw, col] of [[7, 'rgba(40,44,50,1)'], [4.5, 'rgba(150,158,168,1)'], [2, 'rgba(236,241,247,1)']]) {
-        g.strokeStyle = col; g.lineWidth = lw;
-        for (let k = -256; k < 512; k += 32) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k + 256, 256); g.stroke(); g.beginPath(); g.moveTo(k + 256, 0); g.lineTo(k, 256); g.stroke(); }
-      }
+      const N = 8, cs = w / N, wt = 5;
+      const wire = (x, y, len, vert) => {
+        const gr = vert ? g.createLinearGradient(x - wt / 2, 0, x + wt / 2, 0) : g.createLinearGradient(0, y - wt / 2, 0, y + wt / 2);
+        gr.addColorStop(0, 'rgba(70,76,84,1)'); gr.addColorStop(0.35, 'rgba(214,220,227,1)'); gr.addColorStop(0.55, 'rgba(250,252,255,1)'); gr.addColorStop(1, 'rgba(80,86,95,1)');
+        g.fillStyle = gr; if (vert) g.fillRect(x - wt / 2, 0, wt, len); else g.fillRect(0, y - wt / 2, len, wt);
+      };
+      for (let k = 0; k < N; k++) wire(0, k * cs + cs / 2, w, false);
+      for (let k = 0; k < N; k++) wire(k * cs + cs / 2, 0, h, true);
+      g.fillStyle = 'rgba(235,239,244,1)';
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { g.beginPath(); g.arc(i * cs + cs / 2, j * cs + cs / 2, wt * 0.62, 0, 6.29); g.fill(); }
     }, false);
     fenceTex.wrapS = fenceTex.wrapT = T.RepeatWrapping;
-    fenceTex.repeat.set(2.6, 2.6); fenceTex.anisotropy = 8;
+    fenceTex.repeat.set(1.6, 1.6); fenceTex.anisotropy = 8;
     const wallMat = addShine(new T.MeshStandardMaterial({ map: adTex, roughness: 0.38, metalness: 0.1 }), 'wall', { gloss: 0.9 }), capMat = new T.MeshLambertMaterial({ map: concreteTex, side: T.DoubleSide });
-    const fenceMat = addShine(new T.MeshStandardMaterial({ map: fenceTex, transparent: true, alphaTest: 0.3, side: T.DoubleSide, depthWrite: false, metalness: 0.7, roughness: 0.35 }), 'fence', { gloss: 1.1 });
+    const fenceMat = addShine(new T.MeshStandardMaterial({ map: fenceTex, alphaTest: 0.45, alphaToCoverage: true, side: T.DoubleSide, metalness: 0.75, roughness: 0.32 }), 'fence', { gloss: 1.2 });
     const railMat = addShine(new T.MeshStandardMaterial({ color: '#9aa2ab', side: T.DoubleSide, metalness: 0.8, roughness: 0.3 }), 'rail', { gloss: 1.2 });
     const postsPos = [];
     const addRail = (pts, rad) => { const tube = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), Math.min(1500, pts.length * 2), rad, 6, false), railMat); tube.castShadow = false; group.add(tube); };
@@ -3910,18 +3922,39 @@ function buildWorld(td) {
       strip(p.wallFrom, p.wallTo, p.split - 0.08, p.split + 0.08, white, 0.05, 0.05);
       // zeď boxů: betonové svodidlo s bílo-červenou hranou, nad ním plot
       // k trati reklamy (stejné jako na zdech okruhu), k uličce beton
+      // indexy trati podél zdi boxů (zeď může začínat před cílovou čarou a končit za ní: pak se úsek skládá ze dvou kusů)
+      const wallIdx = (step = 1) => { const out = []; const seg = (a, b) => { for (let i = a; i <= b; i += step) out.push(i); };
+        if (p.wallFrom < 0 && p.wallTo > 0) { seg(relIdx(p.wallFrom), td.finishIdx); seg(td.startIdx + step, relIdx(p.wallTo)); } else seg(relIdx(p.wallFrom), relIdx(p.wallTo)); return out; };
       const concTexPit = () => (typeof concreteTex !== 'undefined' ? concreteTex : null);
       const pwAd = adTex.clone(); pwAd.repeat.set(-8 / 32 * sd, 8 / 1.05); pwAd.needsUpdate = true;
       strip(p.wallFrom, p.wallTo, p.inner, p.inner, new T.MeshLambertMaterial({ map: pwAd, side: T.DoubleSide }), 0, 1.05);
       strip(p.wallFrom, p.wallTo, p.outer, p.outer, capMat, 0, 1.05);
       strip(p.wallFrom, p.wallTo, p.inner, p.outer, new T.MeshLambertMaterial({ color: '#d81f26', side: T.DoubleSide }), 1.05, 1.05);
-      strip(p.wallFrom, p.wallTo, (p.inner + p.outer) / 2, (p.inner + p.outer) / 2, fenceMat, 1.05, 4.2);
       // zeď boxů ve 3D: šikmé betonové patky po obou stranách (svodidlo se rozšiřuje k zemi), zaoblené čelo na začátku a konci,
       // trubková vodítka plotu, dvojité pletivo a sloupky se vzpěrami
       const pwConc = addShine(new T.MeshStandardMaterial({ map: concTexPit(), roughness: 0.85, metalness: 0, side: T.DoubleSide }), 'pitwall', { gloss: 0.5 });
       strip(p.wallFrom, p.wallTo, p.inner - 0.32, p.inner, pwConc, 0, 0.5);
       strip(p.wallFrom, p.wallTo, p.outer, p.outer + 0.32, pwConc, 0.5, 0);
-      strip(p.wallFrom, p.wallTo, (p.inner + p.outer) / 2 - 0.07, (p.inner + p.outer) / 2 - 0.07, fenceMat, 1.05, 4.2);
+      // plot na zdi boxů ze skutečných drátů (svislé a vodorovné dráty jako svařovaná síť, ne obrázek na ploše)
+      {
+        const mid = (p.inner + p.outer) / 2, wireM = addShine(new T.MeshStandardMaterial({ color: '#b9c0c8', metalness: 0.85, roughness: 0.32 }), 'wire', { gloss: 1.3 });
+        const STEP = 0.16, WI = wallIdx(1);
+        const vert = [];
+        for (let w = 0; w < WI.length - 1; w++) {
+          const i = WI[w], j = WI[w + 1];
+          const [ax0, ay0, az0] = at(i, mid, 0), [ax1, , az1] = at(j, mid, 0), L = Math.hypot(ax1 - ax0, az1 - az0), ang = Math.atan2(ax1 - ax0, az1 - az0);
+          if (L > 5) continue;
+          for (let s = 0; s < L; s += STEP) vert.push([ax0 + (ax1 - ax0) * s / L, ay0, az0 + (az1 - az0) * s / L, ang]);
+        }
+        const vg = new T.CylinderGeometry(0.011, 0.011, 3.15, 4).translate(0, 1.05 + 1.575, 0);
+        const vm = new T.InstancedMesh(vg, wireM, vert.length);
+        vert.forEach(([x, y, z, a], k) => vm.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, a, 0)), vS.set(1, 1, 1))));
+        vm.computeBoundingSphere(); group.add(vm);
+        for (let h = 1.1; h < 4.2; h += STEP) {
+          const pts = wallIdx(2).map((i) => new T.Vector3(...at(i, mid, h)));
+          if (pts.length > 2) group.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), pts.length * 2, 0.011, 4, false), wireM));
+        }
+      }
       for (const [r, dir] of [[p.wallFrom, -1], [p.wallTo, 1]]) {          // čela zdi: betonový klín
         const i = relIdx(r), [x, y, z] = at(i, (p.inner + p.outer) / 2, 0);
         const cap = new T.Mesh(new T.CylinderGeometry((p.outer - p.inner) / 2 + 0.2, (p.outer - p.inner) / 2 + 0.5, 1.05, 14), pwConc);
@@ -3931,11 +3964,10 @@ function buildWorld(td) {
         const railM = addShine(new T.MeshStandardMaterial({ color: '#9aa2ab', metalness: 0.8, roughness: 0.3 }), 'pitrail', { gloss: 1.2 });
         const postPts = [];
         for (const dy of [4.2, 2.7, 1.1]) {
-          const pts = [];
-          for (let i = relIdx(p.wallFrom); i <= relIdx(p.wallTo); i += 2) pts.push(new T.Vector3(...at(i, (p.inner + p.outer) / 2, dy)));
+          const pts = wallIdx(2).map((i) => new T.Vector3(...at(i, (p.inner + p.outer) / 2, dy)));
           if (pts.length > 3) { const tube = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), Math.min(1500, pts.length * 2), 0.045, 6, false), railM); group.add(tube); }
         }
-        for (let i = relIdx(p.wallFrom); i <= relIdx(p.wallTo); i += 3) postPts.push(at(i, (p.inner + p.outer) / 2, 1.05));
+        for (const i of wallIdx(3)) postPts.push(at(i, (p.inner + p.outer) / 2, 1.05));
         const pg = mergeColored([{ geo: new T.CylinderGeometry(0.06, 0.06, 3.3, 8).translate(0, 1.65, 0) }, { geo: new T.CylinderGeometry(0.15, 0.19, 0.1, 10).translate(0, 0.05, 0) }]);
         const posts = new T.InstancedMesh(pg, railM, postPts.length);
         postPts.forEach(([x, y, z], k) => posts.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.identity(), vS.set(1, 1, 1))));
@@ -4068,15 +4100,24 @@ function buildWorld(td) {
         const mark = new T.Mesh(new T.PlaneGeometry(7.2, 3.4), new T.MeshLambertMaterial({ map: boxTex(tm), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
         mark.position.set(mx, my, mz); mark.rotation.set(-Math.PI / 2, HD[i] - Math.PI / 2, 0, 'YXZ'); // délka podél trati
         group.add(mark);
-        // stanoviště týmu na zdi boxů: pult s monitory a stříška v barvě týmu
-        const [sx0, sy0, sz0] = at(i, (p.inner + p.outer) / 2, 0);
-        const st2 = [], sb = (w, h, d, x, y, z, color) => st2.push({ geo: new T.BoxGeometry(w, h, d).translate(x, y, z), color });
-        sb(5, 0.5, 1.6, 0, 1.3, 0.4, '#2b2f36'); sb(4.6, 0.6, 0.1, 0, 1.85, 0.0, '#101317');
-        for (const x of [-2.4, 2.4]) sb(0.12, 2.3, 0.12, x, 2.2, 0.9, '#7d858d');
-        sb(5.6, 0.12, 2.6, 0, 3.4, 0.5, tm.body);
+        // stanoviště týmu na zdi boxů (pit wall): stojí celé na straně uličky za plotem, k trati nic nepřečnívá.
+        // Pult s monitory na zdi, dvě vysoké stoličky pod ním, stříška v barvě týmu na konzolách ze zdi (nad rychlým pruhem
+        // vysoko nad auty), zadní deska s jménem týmu a anténa.
+        const [sx0, sy0, sz0] = at(i, p.outer + 0.02, 0);
+        const st2 = [], sb = (w, h, d, x, y, z, color, rx = 0) => st2.push({ geo: softBox(w, h, d, 0.35, 10).rotateX(rx).translate(x, y, z), color });
+        sb(5.2, 0.12, 0.62, 0, 1.36, 0.31, '#24282e');                          // deska pultu
+        sb(5.2, 0.3, 0.1, 0, 1.2, 0.6, '#1b1e23');                             // čelo pultu
+        sb(4.9, 0.62, 0.08, 0, 1.78, 0.14, '#101317', -0.32);                  // řada monitorů (skloněná k uličce)
+        for (const x of [-2.45, 2.45]) sb(0.1, 3.0, 0.1, x, 2.55, 0.06, '#8a929b');   // konzoly stříšky na zdi
+        for (const x of [-2.45, 2.45]) sb(0.08, 0.08, 1.7, x, 3.95, 0.82, '#8a929b', 0.12); // ramena stříšky
+        sb(5.7, 0.14, 1.9, 0, 4.05, 0.95, tm.body, 0.12);                       // stříška v barvě týmu
+        sb(5.7, 0.05, 1.9, 0, 3.97, 0.95, tm.a1, 0.12);                         // spodní hrana v druhé barvě
+        sb(5.2, 0.5, 0.06, 0, 4.45, 0.04, '#e9ecef');                          // zadní deska se jménem (nad plotem, směrem k uličce)
+        sb(0.04, 1.4, 0.04, 2.2, 4.9, 0.9, '#c9ced4');                         // anténa
         const sm = new T.Mesh(mergeColored(st2), standMat); sm.castShadow = true;
         sm.position.set(sx0, sy0, sz0); sm.rotation.y = rot; group.add(sm);
-        const mon = new T.Mesh(new T.PlaneGeometry(4.4, 0.52), monitorMat); mon.position.set(0, 1.85, 0.06); sm.add(mon); // obrazovky s časy k uličce
+        const mon = new T.Mesh(new T.PlaneGeometry(4.6, 0.5), monitorMat); mon.position.set(0, 1.79, 0.19); mon.rotation.x = -0.32; sm.add(mon); // obrazovky s časy
+        const nm = new T.Mesh(new T.PlaneGeometry(5.0, 0.42), new T.MeshBasicMaterial({ map: signTex(tm) })); nm.position.set(0, 4.45, 0.08); sm.add(nm);
         // poloha stání (auto stojí čelem po směru jízdy) a domov mechaniků před garáží
         const [bx, , bz] = at(i, p.box);
         pitW.boxes.push({ i, x: bx, z: bz, y: Y[i] + 0.04, h: HD[i], rel: b, team: teams[k % teams.length] });
@@ -4174,13 +4215,13 @@ function buildWorld(td) {
     };
     const hand = (sx, up) => { const a = sx * (up ? 2.6 : 0.18), t = -0.3; return new T.SphereGeometry(0.052, 5, 3).translate(sx * (up ? 0.33 : 0.27) - Math.sin(a) * t, (up ? 1.58 : 1.05) + Math.cos(a) * t, 0); };
     const torsoGeo = (up) => mergeColored([
-      { geo: new T.CapsuleGeometry(0.19, 0.4, 2, 8).scale(1, 1, 0.75).translate(0, 1.12, 0), smoothNormals: true },
+      { geo: new T.CapsuleGeometry(0.19, 0.4, 4, 12).scale(1, 1, 0.72).translate(0, 1.12, 0), smoothNormals: true },
       ...[-1, 1].map((sx) => ({ geo: armSeg(sx, up, 0.02, 0.3, 0.068), smoothNormals: true })),
       { geo: new T.CylinderGeometry(0.075, 0.09, 0.08, 6, 1, true).translate(0, 1.47, 0), smoothNormals: true }, // krk trička
     ]);
     const gTorso = [torsoGeo(false), torsoGeo(true)];
     const gLegs = [
-      mergeColored([0.1, -0.1].map((x) => ({ geo: new T.CylinderGeometry(0.085, 0.07, 0.8, 6, 1, true).translate(x, 0.42, 0), smoothNormals: true })).concat([{ geo: new T.CapsuleGeometry(0.15, 0.06, 1, 6).scale(1.15, 1, 0.8).translate(0, 0.8, 0), smoothNormals: true }])),
+      mergeColored([0.1, -0.1].map((x) => ({ geo: new T.CylinderGeometry(0.085, 0.068, 0.8, 9, 1, true).translate(x, 0.44, 0), smoothNormals: true })).concat([0.1, -0.1].map((x) => ({ geo: new T.CapsuleGeometry(0.06, 0.12, 2, 8).rotateX(Math.PI / 2).scale(1.1, 0.75, 1).translate(x, 0.05, 0.05), color: '#1b1c20', smoothNormals: true }))).concat([{ geo: new T.CapsuleGeometry(0.15, 0.06, 1, 6).scale(1.15, 1, 0.8).translate(0, 0.8, 0), smoothNormals: true }])),
       // vsedě: stehna dopředu, lýtka dolů
       mergeColored([0.1, -0.1].flatMap((x) => [
         { geo: new T.CylinderGeometry(0.088, 0.08, 0.46, 6, 1, true).rotateX(Math.PI / 2).translate(x, 0.72, 0.2), smoothNormals: true },
@@ -4188,13 +4229,14 @@ function buildWorld(td) {
       ]).concat([{ geo: new T.CapsuleGeometry(0.15, 0.06, 1, 6).scale(1.15, 1, 0.8).translate(0, 0.8, 0), smoothNormals: true }])),
     ];
     const headGeo = (up) => mergeColored([
-      { geo: new T.SphereGeometry(0.13, 9, 7).scale(0.95, 1.05, 1).translate(0, 1.6, 0), smoothNormals: true },
+      { geo: new T.SphereGeometry(0.13, 14, 10).scale(0.94, 1.06, 1).translate(0, 1.6, 0), smoothNormals: true },
+      ...[-1, 1].map((sx) => ({ geo: new T.SphereGeometry(0.03, 6, 4).scale(0.6, 1, 0.6).translate(sx * 0.125, 1.6, 0), smoothNormals: true })),   // uši
       { geo: new T.SphereGeometry(0.03, 4, 3).translate(0, 1.58, 0.13), smoothNormals: true },             // nos
       { geo: new T.CylinderGeometry(0.055, 0.06, 0.1, 6, 1, true).translate(0, 1.47, 0), smoothNormals: true },     // krk
       ...[-1, 1].flatMap((sx) => [{ geo: armSeg(sx, up, -0.27, 0.04, 0.05), smoothNormals: true }, { geo: hand(sx, up), smoothNormals: true }]),
     ]);
     const gHead = [headGeo(false), headGeo(true)];
-    const gHair = mergeColored([{ geo: new T.SphereGeometry(0.142, 9, 4, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 1.66, -0.01), smoothNormals: true }, { geo: new T.BoxGeometry(0.2, 0.025, 0.12).translate(0, 1.67, 0.15) }]);
+    const gHair = mergeColored([{ geo: new T.SphereGeometry(0.142, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 1.66, -0.01), smoothNormals: true }, { geo: new T.BoxGeometry(0.2, 0.025, 0.12).translate(0, 1.67, 0.15) }]);
     const specMat = new T.MeshLambertMaterial({ color: '#ffffff' });
     // trička s potiskem: podle čísla instance obyčejné, pruhované, s bílým potiskem na prsou, dvoubarevné
     // nebo s bílými rameny (vzor se kreslí podle polohy v postavě, žádná textura)
@@ -4210,11 +4252,11 @@ function buildWorld(td) {
     };
     shirtMat.customProgramCacheKey = () => 'shirt';
     // daleko: trup (barva trička z instance) a zbytek postavy s barvami ve vrcholech (kalhoty, ruce, hlava)
-    const loBodyGeo = new T.BoxGeometry(0.4, 0.58, 0.28).translate(0, 1.12, 0);
+    const loBodyGeo = new T.CapsuleGeometry(0.18, 0.3, 1, 6).scale(1.05, 1, 0.75).translate(0, 1.12, 0);
     const loRestGeo = mergeColored([
-      { geo: new T.BoxGeometry(0.3, 0.8, 0.18).translate(0, 0.42, 0), color: '#33384a' },
-      { geo: new T.BoxGeometry(0.22, 0.24, 0.22).translate(0, 1.6, 0), color: '#d9a882' },
-      { geo: new T.BoxGeometry(0.24, 0.08, 0.24).translate(0, 1.74, 0), color: '#3a2a1e' },
+      { geo: new T.CylinderGeometry(0.15, 0.11, 0.8, 6).translate(0, 0.42, 0), color: '#33384a' },
+      { geo: new T.SphereGeometry(0.12, 6, 4).translate(0, 1.6, 0), color: '#d9a882' },
+      { geo: new T.SphereGeometry(0.13, 6, 3, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 1.65, 0), color: '#3a2a1e' },
     ]);
     const N = spectators.length;
     const loBody = new T.InstancedMesh(loBodyGeo, specMat, N), loRest = new T.InstancedMesh(loRestGeo, new T.MeshLambertMaterial({ vertexColors: true }), N);
@@ -5032,7 +5074,7 @@ function buildModelCar(lv, spec) {
   }
 
   paint = paint || new T.MeshPhysicalMaterial();
-  if (spec.formula && !paint.userData.shined) { addShine(paint, 'paint', { gloss: 0.7 }); paint.userData.shined = true; paint.needsUpdate = true; }
+  if (spec.formula && !paint.userData.shined) { addShine(paint, 'paint', { gloss: 1.15 }); paint.userData.shined = true; paint.needsUpdate = true; }
   paint.color.set(lv.body); paint.map = null; paint.metalness = spec.look ? spec.look.metal : 0.08; paint.roughness = spec.look ? spec.look.rough : 0.38;
   if ('clearcoat' in paint) { paint.clearcoat = 1; paint.clearcoatRoughness = 0.08; }
   headMat = headMat || new T.MeshStandardMaterial();
@@ -6112,7 +6154,79 @@ const UIS = {
       else this.tone(t, 1250, 820, 0.05, 0.11, 'triangle');
     } catch (e) { /* bez zvuku */ }
   },
+  ready() {
+    if (!saved.sound) return null;
+    try {
+      if (!this.ctx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; this.ctx = new C(); }
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      if (!this.noise) { const c = this.ctx, b = c.createBuffer(1, c.sampleRate, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; this.noise = b; }
+      return this.ctx;
+    } catch (e) { return null; }
+  },
+  // šum přes filtr, jehož frekvence se posune (vzduch, „švih“)
+  sweep(f0, f1, dur, vol, q = 1.2) {
+    const c = this.ready(); if (!c) return;
+    const t = c.currentTime + 0.005, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    s.buffer = this.noise; f.type = 'bandpass'; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(c.destination); s.start(t); s.stop(t + dur + 0.05);
+  },
+  open() { this.sweep(500, 3200, 0.22, 0.16); this.tone2(660, 990, 0.12, 0.05, 0.08); },
+  close() { this.sweep(2600, 420, 0.2, 0.13); },
+  tone2(f0, f1, dur, vol, delay = 0) { const c = this.ready(); if (c) this.tone(c.currentTime + 0.005 + delay, f0, f1, dur, vol, 'sine'); },
+  hover() { const now = performance.now(); if (now - (this.hv || 0) < 70) return; this.hv = now; this.tone2(1900, 1500, 0.03, 0.025); },
+  // mince při nákupu v dílně: dva zvonivé tóny a třpyt
+  coin() {
+    const c = this.ready(); if (!c) return;
+    const t = c.currentTime + 0.01;
+    for (const [f, d, v] of [[1318, 0, 0.16], [1976, 0.09, 0.14], [2637, 0.17, 0.08]]) { this.tone(t + d, f, f * 1.002, 0.35, v, 'triangle'); this.tone(t + d, f * 2, f * 2, 0.18, v * 0.35, 'sine'); }
+    for (let k = 0; k < 6; k++) this.tone(t + 0.2 + k * 0.04, 3000 + Math.random() * 2500, 3500, 0.06, 0.03, 'sine');
+  },
+  // krátké vytočení motoru při výběru auta / týmu (pila přes zkreslení, otáčky nahoru a dolů)
+  rev(f1 = false) {
+    const c = this.ready(); if (!c) return;
+    const t = c.currentTime + 0.01, o = c.createOscillator(), o2 = c.createOscillator(), ws = c.createWaveShaper(), lp = c.createBiquadFilter(), g = c.createGain();
+    const cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; cv[i] = Math.tanh(x * 3); } ws.curve = cv;
+    const b0 = f1 ? 260 : 70, b1 = f1 ? 760 : 210;
+    for (const [os, m] of [[o, 1], [o2, 0.5]]) { os.type = m === 1 ? 'sawtooth' : 'square'; os.frequency.setValueAtTime(b0 * m, t); os.frequency.exponentialRampToValueAtTime(b1 * m, t + 0.28); os.frequency.exponentialRampToValueAtTime(b0 * 1.1 * m, t + 0.75); os.connect(ws); os.start(t); os.stop(t + 0.85); }
+    lp.type = 'lowpass'; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(f1 ? 5200 : 2600, t + 0.28); lp.frequency.exponentialRampToValueAtTime(800, t + 0.8);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.07, t + 0.05); g.gain.setValueAtTime(0.07, t + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.82);
+    ws.connect(lp); lp.connect(g); g.connect(c.destination);
+  },
+  // kulisa hlavní nabídky: vzdálený šum diváků a občas formule, která projede kolem (s Dopplerem)
+  ambient(on) {
+    const c = on ? this.ready() : this.ctx; if (!c) return;
+    if (!this.amb && on) {
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = this.noise; s.loop = true; f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = 0.5; g.gain.value = 0;
+      s.connect(f); f.connect(g); g.connect(c.destination); s.start(); this.amb = g; this.passAt = c.currentTime + 4;
+    }
+    if (!this.amb) return;
+    this.amb.gain.setTargetAtTime(on && saved.sound ? 0.018 : 0, c.currentTime, 0.6);
+    if (on && saved.sound && c.currentTime > this.passAt) { this.passAt = c.currentTime + 9 + Math.random() * 12; this.passby(); }
+  },
+  passby() {
+    const c = this.ready(); if (!c) return;
+    const t = c.currentTime + 0.02, o = c.createOscillator(), o2 = c.createOscillator(), ws = c.createWaveShaper(), lp = c.createBiquadFilter(), g = c.createGain(), pan = c.createStereoPanner ? c.createStereoPanner() : null;
+    const cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; cv[i] = Math.tanh(x * 2.5); } ws.curve = cv;
+    const f = 520 + Math.random() * 120;
+    for (const [os, m] of [[o, 1], [o2, 2.01]]) { os.type = 'sawtooth'; os.frequency.setValueAtTime(f * 1.12 * m, t); os.frequency.setValueAtTime(f * 1.12 * m, t + 1.0); os.frequency.exponentialRampToValueAtTime(f * 0.86 * m, t + 1.35); os.connect(ws); os.start(t); os.stop(t + 2.6); }
+    lp.type = 'lowpass'; lp.frequency.value = 2400;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03, t + 1.1); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+    ws.connect(lp); lp.connect(g);
+    if (pan) { pan.pan.setValueAtTime(-0.9, t); pan.pan.linearRampToValueAtTime(0.9, t + 2.4); g.connect(pan); pan.connect(c.destination); } else g.connect(c.destination);
+  },
 };
+// otevření a zavření okna (dílna, tým, výsledky…) zahraje „švih“; najetí myší na tlačítko jemně cvakne; v menu hraje kulisa
+new MutationObserver((list) => {
+  for (const m of list) { const el = m.target; if (!el.classList || !el.classList.contains('modal')) continue; if (el.hidden) UIS.close(); else UIS.open(); }
+}).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType !== 'mouse') return;
+  const el = e.target && e.target.closest ? e.target.closest('.btn, .car-pick, .stage, .team, .tpick, .bs-buy, .tog') : null;
+  if (el && el !== UIS.lastHover) { UIS.lastHover = el; UIS.hover(); }
+}, true);
+setInterval(() => { try { const m = document.getElementById('menu'); UIS.ambient(!!(m && !m.hidden && G.mode === 'menu')); } catch (e) { /* nic */ } }, 600);
 document.addEventListener('click', (e) => {
   const el = e.target && e.target.closest ? e.target.closest('button, summary, [role=button], .stage, .car-pick, .livery, .team, .tpick, .net-pl, #diagLine') : null;
   if (!el || el.disabled || el.closest('#touch') || el.classList.contains('tbtn')) return;
@@ -6170,6 +6284,8 @@ const Sound = {
       this.hiss = mk('highpass', 1400, 0.6);
       this.intake = mk('bandpass', 1700, 0.9, eg); // sání a turbo pod plynem
       this.rumble = mk('lowpass', 150, 1.2); // pásy na krajnici okruhu: hluboké drnčení
+      // drhnutí o zeď: kovové skřípění (dva úzké pásy šumu) a pod ním drnčení karoserie; síla podle rychlosti podél zdi
+      this.scrapeHi = mk('bandpass', 3100, 2.2); this.scrapeMid = mk('bandpass', 1150, 1.4); this.scrapeLo = mk('lowpass', 220, 1.0); this.scrapeK = 0;
       this.crowd = mk('bandpass', 950, 0.5); // diváci na okruhu: ustavičný šum
       this.crowdHi = mk('bandpass', 2400, 0.8);
       // tónové kvílení pneumatik na asfaltu (dvě mírně rozladěné pily s chvěním), k šumu skluzu navíc
@@ -6275,8 +6391,15 @@ const Sound = {
     }
     this.environment(t, dt, speed, loose, slip, off, air, brake, thr, rpm);
   },
+  // drhnutí o zeď: volá se při každém snímku, kdy auto zeď drhne (k = 0..1)
+  scrape(k) { this.scrapeK = Math.max(this.scrapeK || 0, k); },
   // povrch a okolí: štěrk odlétá, drnčení pásů, kvílení pneumatik a brzd, omezovač, diváci
   environment(t, dt, speed, loose, slip, off, air, brake, thr, rpm) {
+    if (this.scrapeHi) {
+      const k = this.scrapeK || 0, wob = 0.75 + 0.25 * Math.sin(t * 47) * Math.sin(t * 13.3);
+      this.scrapeHi.gain.setTargetAtTime(0.16 * k * wob, t, 0.02); this.scrapeMid.gain.setTargetAtTime(0.2 * k, t, 0.03); this.scrapeLo.gain.setTargetAtTime(0.32 * k, t, 0.03);
+      this.scrapeK = k * Math.exp(-dt * 14);
+    }
     const circuit = !!(W.td && W.td.st.circuit), sp = Math.min(1, speed / 45);
     // kamínky: na šotolině, sněhu a písku se odrážejí o podlahu a podběhy (náhodné cvaky, víc na krajnici)
     if (!air && speed > 6 && (loose || off)) {
@@ -6314,7 +6437,7 @@ const Sound = {
   silence() {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    for (const g of [this.eg, this.gravel, this.wind, this.skid, this.hiss, this.turbo.g, this.whine.g, this.f1, this.opp, this.rainG, this.rumble, this.crowd, this.crowdHi, this.squeal && this.squeal.g]) if (g) g.gain.setTargetAtTime(0, t, 0.1);
+    for (const g of [this.eg, this.gravel, this.wind, this.skid, this.hiss, this.turbo.g, this.whine.g, this.f1, this.opp, this.rainG, this.scrapeHi, this.scrapeMid, this.scrapeLo, this.rumble, this.crowd, this.crowdHi, this.squeal && this.squeal.g]) if (g) g.gain.setTargetAtTime(0, t, 0.1);
   },
   // nejbližší soupeř: hlasitost podle vzdálenosti, výška tónu podle jeho otáček a přibližování (Doppler)
   opponent(dist, vClose, speed, pan = 0) {
@@ -7166,7 +7289,8 @@ function physics(dt, inp) {
 
   // omezovač rychlosti v boxové uličce (Velká cena): formule sama přibrzdí na 80 km/h a víc plynu nedá
   car.limiter = !!(G.gp && pitLimitZone(td, rp.s, rp.lat));
-  if (car.limiter && vf > PIT_LIMIT - 0.3) inp = { ...inp, throttle: 0, nos: false };
+  // omezovač: plyn se u hranice plynule ubírá (dřív se zapínal a vypínal každých pár snímků a auto se klepalo dopředu a dozadu)
+  if (car.limiter) inp = { ...inp, throttle: inp.throttle * clamp((PIT_LIMIT - 0.25 - vf) / 1.8, 0, 1), nos: false };
   // zpátečka: auto skoro stojí a brzda se drží déle než 0,6 s → couvá (ruční brzda ani stání v boxech necouvá)
   if (!isBike()) {
     if (inp.brake > 0 && !inp.throttle && !inp.hb) { if (vf < 0.8) car.revT = (car.revT || 0) + dt; }
@@ -7240,6 +7364,11 @@ function physics(dt, inp) {
       const side = lat > 0 ? 1 : -1, lim = side > 0 ? wr : -wl, nx = td.NX[i] * side, nz = td.NZ[i] * side;
       car.x += td.NX[i] * (lim - lat); car.z += td.NZ[i] * (lim - lat);
       const vn = car.vx * nx + car.vz * nz;
+      // drhnutí podél zdi: zvuk skřípění a proud jisker, dokud auto o zeď tře
+      { const vt = Math.hypot(car.vx - nx * vn, car.vz - nz * vn);
+        if (vt > 3 && !carType().bike) { Sound.scrape(Math.min(1, vt / 35)); car.scrT = (car.scrT || 0) + dt;
+          if (car.scrT > 0.05 && !st.trail) { car.scrT = 0; sparkBurst(car.x + nx * 1.05, car.y + 0.25, car.z + nz * 1.05, Math.min(14, 2 + vt * 0.25), Math.min(1.2, vt / 40)); }
+          car.vx *= 1 - Math.min(0.5, 0.6 * dt); car.vz *= 1 - Math.min(0.5, 0.6 * dt); } }
       if (vn > 0) {
         car.vx -= nx * vn * 1.3; car.vz -= nz * vn * 1.3;
         const keep = 1 - Math.min(0.35, vn * 0.02); car.vx *= keep; car.vz *= keep;
@@ -9584,7 +9713,13 @@ function gpPitPilot() {
   gp.pilotLat = latT;
   if (waiting && gp.pilot === 'in' && rel > tg - 1.5 && car.vf < 6) return { steer: autopilot(1, null, latT * p.side).steer, throttle: 0, brake: 1, hb: true }; // stojí a čeká
   const ap = autopilot(1, null, latT * p.side);
-  return { steer: ap.steer, throttle: car.vf < vt - Math.min(0.5, vt * 0.3) ? 1 : 0, brake: car.vf > vt + 1.2 ? 1 : 0, hb: false };
+  // plyn i brzda plynule podle rozdílu rychlosti (ne zapnuto/vypnuto), ať se auto v uličce neklepe
+  // skoro na místě se nezatáčí (u stání se auto dřív na místě klepalo ze strany na stranu)
+  // řízení se vyhlazuje: při brzdění (ABS drží auto ve stopě) se rejd a natáčení auta jinak přetahovaly snímek po snímku
+  // a formule se v uličce třásla ze strany na stranu
+  const stK = clamp((car.vf - 1) / 4, 0, 1);
+  gp.stF = (gp.stF ?? ap.steer) + (ap.steer * stK - (gp.stF ?? ap.steer)) * 0.18;
+  return { steer: gp.stF, throttle: Math.min(clamp((vt - car.vf) / 2.2, 0, 1), 0.3 + car.vf / 14), brake: clamp((car.vf - vt - 0.4) / 1.6, 0, 1), hb: false }; // od stání jemný rozjezd (plný plyn na místě protáčel kola a zadek se cukal)
 }
 function gpSound() {
   let best = null, bd = 1e9;
@@ -9973,7 +10108,7 @@ function shopBuy(id) {
   saved.money = (saved.money | 0) - shopPrice(it, l); saved.shop = { ...(saved.shop || {}), [id]: l + 1 }; persist();
   if (saved.car === 'f1' && car3d && !G.gp) setLivery(saved.livery); // nový vzhled auta (křídla, ráfky)
   toast(`Koupeno: ${it.tiers[l]}`, 1.8);
-  try { Sound.init(); Sound.fanfare(false); } catch (e) { /* bez zvuku */ }
+  UIS.coin();
   shopPop = id; openShop(); renderMenu();
 }
 $('bShopAll').hidden = !SHOP_FREE;
@@ -9995,7 +10130,7 @@ function openTeams() {
     b.className = 'team'; b.setAttribute('aria-pressed', String(f1Team() === key)); b.style.setProperty('--tc', tm.body);
     b.innerHTML = `<span class="sw" style="background:linear-gradient(135deg, ${tm.body} 0 58%, ${tm.a1} 58% 74%, ${tm.a2} 74%)"></span><span><b></b><small></small></span>`;
     b.querySelector('b').textContent = tm.name; b.querySelector('small').textContent = `${tm.full} · #${tm.num}`;
-    b.onclick = () => { saved.team = key; persist(); setLivery(saved.livery); openTeams(); renderMenu(); };
+    b.onclick = () => { saved.team = key; persist(); UIS.rev(true); setLivery(saved.livery); openTeams(); renderMenu(); };
     list.appendChild(b);
   }
   // výběr okruhu
@@ -10798,7 +10933,7 @@ function renderMenu() {
     // formule: první klepnutí ji vybere, druhé (nebo dvojklik) otevře výběr týmu a Velkou cenu
     else b.onclick = () => {
       if (ct.formula && saved.car === id) { openTeams(); return; }
-      saved.car = id; persist(); renderMenu(); ensureCarModel(ct.model).then(() => { if (saved.car === id) setLivery(saved.livery); });
+      saved.car = id; persist(); UIS.rev(!!ct.formula); renderMenu(); ensureCarModel(ct.model).then(() => { if (saved.car === id) setLivery(saved.livery); });
     };
     cl.appendChild(b);
   }
