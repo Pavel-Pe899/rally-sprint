@@ -196,7 +196,6 @@
   #menu .car-pick[aria-pressed="true"] { border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .25), #23262d 70%); box-shadow: 0 3px 0 #050608, 0 0 14px rgba(255, 196, 25, .3); }
   #menu .stat { border: 2px solid #050608; background: linear-gradient(180deg, #2b2f38, #1b1e24); box-shadow: 0 3px 0 #050608; }
   #menu .label { color: #e6ebf3; }
-  @media (max-width: 600px), (max-height: 520px) { #menu .row2 { display: contents; } #menu #bStart { font-size: 20px; padding: 11px 14px; } #menu .row2 .btn { flex-direction: row; font-size: 19px; } }
   @media (max-height: 520px) and (min-width: 761px) {
     #menu .sheet { gap: 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: 0; width: min(430px, 100%); }
     #menu .logo { font-size: 34px; }
@@ -323,7 +322,7 @@
   body:not(.touch) .touch-only { display: none; }
   /* na dotykových zařízeních místo velkého budíku jen malý ukazatel rychlosti */
   body.touch .hud-tacho {
-    right: auto; bottom: auto; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(164px + env(safe-area-inset-top, 0px));
+    right: auto; bottom: auto; left: calc(12px + env(safe-area-inset-left, 0px)); top: calc(var(--tlb, 112px) + 48px);
     width: auto; height: auto; display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 6px;
     background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
   }
@@ -333,7 +332,8 @@
   body.touch .tacho-gear { position: static; transform: none; font-size: 18px; }
   body.touch #hMap { width: 84px; height: 84px; }
   body.touch .hud-km { font-size: 13px; }
-  body.touch .hud-btns { bottom: auto; top: calc(118px + env(safe-area-inset-top, 0px)); gap: 6px; }
+  /* --tlb = spodní hrana panelu s časem (měří ji hra), vše pod ním se řadí od ní – nic se nepřekrývá */
+  body.touch .hud-btns { bottom: auto; top: calc(var(--tlb, 112px) + 6px); gap: 6px; }
   body.touch .hbtn { height: 34px; min-width: 38px; padding: 0 10px; font-size: 13px; }
 
   /* nízká obrazovka (telefon na šířku) */
@@ -349,8 +349,6 @@
     .note-sub { font-size: 12px; }
     .hud-toast { top: calc(66px + env(safe-area-inset-top, 0px)); }
     body.touch #hMap { width: 60px; height: 60px; }
-    body.touch .hud-btns { top: calc(92px + env(safe-area-inset-top, 0px)); }
-    body.touch .hud-tacho { top: calc(134px + env(safe-area-inset-top, 0px)); }
     .tbtn { width: 70px; height: 70px; }
     .tbtn.gas { width: 84px; height: 100px; }
     .tbtn.brake { width: 76px; height: 80px; }
@@ -368,14 +366,14 @@
     .hud-tr { padding: 6px; }
     #hMap, body.touch #hMap { width: 64px; height: 64px; }
     .hud-km { font-size: 12px; }
-    .hud-note { top: calc(118px + env(safe-area-inset-top, 0px)); max-width: calc(100% - 24px); padding: 6px 12px 6px 8px; gap: 8px; }
+    .hud-note { top: calc(var(--tlb, 112px) + 6px); max-width: calc(100% - 24px); padding: 6px 12px 6px 8px; gap: 8px; }
     .hud-note svg { width: 40px; height: 40px; }
-    .hud-brake { top: calc(178px + env(safe-area-inset-top, 0px)); font-size: 16px; padding: 3px 12px; }
+    .hud-brake { top: calc(var(--tlb, 112px) + 66px); font-size: 16px; padding: 3px 12px; }
     .note-main { font-size: 24px; }
     .note-sub { font-size: 13px; max-width: calc(100vw - 110px); overflow: hidden; text-overflow: ellipsis; }
-    .hud-toast { top: calc(186px + env(safe-area-inset-top, 0px)); font-size: 18px; }
-    body.touch .hud-btns { top: calc(192px + env(safe-area-inset-top, 0px)); }
-    body.touch .hud-tacho { top: calc(192px + env(safe-area-inset-top, 0px)); left: auto; right: calc(12px + env(safe-area-inset-right, 0px)); }
+    .hud-toast { top: calc(var(--tlb, 112px) + 74px); font-size: 18px; }
+    body.touch .hud-btns { top: calc(var(--tlb, 112px) + 80px); }
+    body.touch .hud-tacho { top: calc(var(--tlb, 112px) + 80px); left: auto; right: calc(12px + env(safe-area-inset-right, 0px)); }
     .tz { gap: 10px; }
     .tz.l { left: calc(12px + env(safe-area-inset-left, 0px)); }
     .tz.r { right: calc(12px + env(safe-area-inset-right, 0px)); }
@@ -522,7 +520,7 @@
   .gt-row.me .pos { background: #e10600; color: #fff; } .gt-row.me .gap { color: #2a3347; }
   body.touch .gp-tower { top: calc(150px + env(safe-area-inset-top, 0px)); }
   @media (max-height: 450px) { body.touch .gp-tower { --row: 16px; width: 120px; top: calc(100px + env(safe-area-inset-top, 0px)); } body.touch .gt-row { grid-template-columns: 17px 4px 1fr auto 8px; gap: 4px; font-size: 11px; } body.touch .gt-row .pos { font-size: 10px; } body.touch .gt-row .gap { font-size: 9px; } body.touch .gt-row .ty { width: 8px; height: 8px; border-width: 2px; } }
-  @media (max-width: 600px) { .gp-tower { top: calc(236px + env(safe-area-inset-top, 0px)); } }
+  @media (max-width: 600px) { .gp-tower { top: calc(var(--tlb, 112px) + 124px); } }
   /* dílna týmu */
   .shop-top { width: 100%; margin: 4px 0 10px; background: linear-gradient(180deg, #8dff55 0%, #36c91f 100%); color: #fff; border: 3px solid #050608; box-shadow: 0 5px 0 #050608, inset 0 3px 0 rgba(255, 255, 255, .45); text-shadow: 0 2px 0 #0b4d0a; }
   canvas.hero { display: none; width: 100%; height: auto; border-radius: 14px; border: 3px solid #050608; box-shadow: 0 6px 0 rgba(0,0,0,.35); margin-bottom: 10px; aspect-ratio: 960 / 420; }
@@ -562,7 +560,7 @@
   .shop-it { --rc: #4fd35a; --rc2: #1f9a2f; position: relative; display: flex; flex-direction: column; border-radius: 18px; border: 4px solid #050608; background: #1b1e24; overflow: hidden; box-shadow: 0 7px 0 #050608; transition: transform .15s; }
   .shop-it:hover { transform: translateY(-3px); }
   .shop-it.r1 { --rc: #36b4ff; --rc2: #1561d8; }
-  .shop-it.r2 { --rc: #c85bff; --rc2: #7a22d8; }
+  .shop-it.r2 { --rc: #ff8a2f; --rc2: #d64400; }
   .shop-it.r3 { --rc: #ffd23f; --rc2: #e58a00; }
   .shop-it.pop { animation: shopPop .55s cubic-bezier(.2, 1.6, .4, 1); }
   @keyframes shopPop { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
@@ -649,7 +647,51 @@
   #hud .gp-pit { border-radius: 0; clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); padding: 8px 22px; font-style: italic; font-size: 22px; background: linear-gradient(180deg, #ff3b2f, #c40900); box-shadow: none; }
   #hud .gp-pit.done { background: linear-gradient(180deg, #0f2a17, #0a1d10); color: #4cff7a; box-shadow: inset 0 0 0 3px #3fdc6b; text-shadow: 0 0 10px rgba(76, 255, 122, .6); }
   #hud .gp-pit.req { background: linear-gradient(180deg, #3b98ff, #1f63d8); }
-  @media (max-width: 600px) { #hud .hud-gp { top: calc(146px + env(safe-area-inset-top, 0px)); } #hud .hud-time { font-size: 32px; } }   /* panel s hodinami je vyšší */
+  @media (max-width: 600px) { #hud .hud-gp { top: calc(var(--tlb, 112px) + 34px); } #hud .hud-time { font-size: 32px; } }   /* panel s hodinami je vyšší */
+  /* ===== TELEFONY (nízký displej na šířku nebo úzký na výšku); iPad a počítač zůstávají beze změny ===== */
+  .shop-x { position: sticky; top: 0; align-self: flex-end; z-index: 6; margin: -6px -6px -46px 0; width: 42px; height: 42px; flex: none; border-radius: 50%; border: 3px solid #050608; background: linear-gradient(180deg, #ff5a36, #c40500); color: #fff; font: 900 20px var(--display); box-shadow: 0 4px 0 #050608; cursor: pointer; touch-action: manipulation; }
+  @media (max-height: 520px), (max-width: 600px) {
+    /* lobby: spodní lišta = velké Odstartovat + dvě čtvercová tlačítka s ikonou */
+    #menu .actions { flex-direction: row; align-items: stretch; gap: 8px; padding: 10px 6px calc(10px + env(safe-area-inset-bottom, 0px)); }
+    #menu .actions > .btn { flex: 1 1 0; min-width: 0; height: 52px; font-size: 17px; padding: 0 10px; justify-content: center; }
+    #menu .actions > .btn .t { gap: 7px; } #menu .actions > .btn .ic { width: .9em; height: .9em; }
+    #menu .actions > .btn small { display: none; }
+    #menu .actions:has(#bGpMenu:not([hidden])) > .btn { font-size: 16px; padding: 8px; }
+    #menu .actions:has(#bGpMenu:not([hidden])) > .btn .ic { display: none; }
+    #menu .actions .row2 { display: flex; gap: 8px; flex: none; }
+    #menu .row2 .btn { width: 72px; height: 52px; padding: 3px 2px; font-size: 12.5px; letter-spacing: .02em; align-items: center; justify-content: center; gap: 0; }
+    #menu .row2 .btn .t { flex-direction: column; gap: 3px; text-align: center; }
+    #menu .row2 .btn .ic { width: 19px; height: 19px; }
+    #menu .row2 .btn small { display: none; }
+    #menu .shop-top { font-size: 20px; padding: 8px 14px; }
+    #menu .settings { padding: 10px; }
+    #menu .cars { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #menu .car-pick small { display: none; }
+    /* dílna: malý náhled, auta v posuvném pásu, barvy a polepy jako pásy, díly ve 2–3 sloupcích */
+    .shop-card { padding: 10px; gap: 8px; }
+    .shop-card > * { flex-shrink: 0; }
+    .shop-card canvas.hero { width: auto; height: 128px; max-height: none; align-self: center; margin-bottom: 0; border-width: 2px; }
+    .shop-cars { display: flex; overflow-x: auto; gap: 6px; margin-bottom: 0; padding-bottom: 6px; scrollbar-width: none; }
+    .shop-car { flex: none; width: 116px; }
+    .shop-card h2 { font-size: 26px; -webkit-text-stroke: 5px #050608; text-shadow: 0 3px 0 #050608; }
+    .shop-money { font-size: 17px; padding: 3px 12px 3px 4px; } .coin { width: 24px; height: 24px; font-size: 13px; }
+    .shop-help { display: none; }
+    .shop-body { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .shop-decals { position: static; padding: 8px; }
+    .shop-decals h3 { font-size: 17px; margin-bottom: 4px; -webkit-text-stroke: 3px #050608; }
+    .shop-colors { display: flex; overflow-x: auto; gap: 4px; margin-bottom: 8px; scrollbar-width: none; } .color-it { flex: none; width: 50px; }
+    #shopDecals { grid-auto-flow: column; grid-auto-columns: 128px; overflow-x: auto; scrollbar-width: none; }
+    .decal-it b { font-size: 12px; } .decal-it small { font-size: 10px; }
+    .shop-list { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .shop-it { border-width: 3px; border-radius: 14px; box-shadow: 0 5px 0 #050608; }
+    .shop-it .nm { font-size: 18px; -webkit-text-stroke: 4px #050608; }
+    .shop-it .art { padding: 6px 0; } .shop-it .art canvas.thumb { width: 58%; }
+    .shop-it .ds { min-height: 0; font-size: 12px; }
+    .bs-buy { font-size: 17px; margin: 8px; padding: 8px 10px 7px; }
+    .shop-all .btn { font-size: 18px; padding: 9px 14px; }
+  }
+  /* telefon na šířku: menší panel s časem bez hodin (víc místa na trať) */
+  @media (max-height: 450px) { #hud .hud-clock { display: none; } #hud .hud-time { font-size: 30px; } #hud .hud-tl { padding: 5px 30px 6px 12px; } }
   /* dekorace v pravém dolním rohu: červené šikmé pruhy */
   #hud::after { content: ''; position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 260px; height: 8px; pointer-events: none;
     background: linear-gradient(90deg, transparent 0 40%, rgba(225, 6, 0, .85) 40% 100%) 0 100% / 100% 3px no-repeat, repeating-linear-gradient(115deg, transparent 0 6px, rgba(225, 6, 0, .9) 6px 10px) 100% 0 / 60px 8px no-repeat; }
@@ -824,6 +866,7 @@
 
 <div id="shopModal" class="modal" hidden>
   <div class="card shop-card">
+    <button class="shop-x" id="bShopX" aria-label="Zavřít dílnu">✕</button>
     <canvas id="shopHero" class="hero"></canvas>
     <div class="shop-cars" id="shopCars"></div>
     <div class="shop-head"><h2>Dílna <em id="shopTitleCar">týmu</em></h2><div class="shop-money"><span class="coin">$</span><b id="shopMoney">0</b></div></div>
@@ -9087,7 +9130,25 @@ function thumbSvg(td) {
 let toastT = 0;
 function toast(text, dur = 2) { hud.toast.textContent = text; hud.toast.classList.add('show'); toastT = dur; }
 
+// rozložení HUD podle skutečné velikosti panelu s časem: tlačítka, rychlost a další panely se řadí pod něj
+// (výška panelu se mění s písmem, hodinami a vlajkou – pevné pozice se na některých displejích překrývaly)
+let hudLayT = 0;
+function layoutHud() {
+  const hudEl = $('hud'); if (hudEl.hidden) return;
+  const tl = hudEl.querySelector('.hud-tl'); if (!tl) return;
+  const r = tl.getBoundingClientRect(); if (!r.height) return;
+  hudEl.style.setProperty('--tlb', Math.round(r.bottom) + 'px');
+  // Velká cena na šířku: panel s pořadím uprostřed nahoře nesmí zajet pod panel s časem ani pod mapu
+  const gpEl = $('hGp');
+  if (gpEl && !gpEl.hidden && innerWidth > 600) {
+    gpEl.style.left = ''; gpEl.style.transform = '';
+    const g = gpEl.getBoundingClientRect(), tr = hudEl.querySelector('.hud-tr').getBoundingClientRect();
+    if (g.left < r.right + 8) { const x = Math.min(r.right + 8, tr.left - 8 - g.width); gpEl.style.left = Math.max(r.right + 8, x) + 'px'; gpEl.style.transform = 'none'; }
+  }
+}
+window.addEventListener('resize', () => setTimeout(layoutHud, 50));
 function updateHud(dt) {
+  hudLayT -= dt; if (hudLayT <= 0) { hudLayT = 0.5; layoutHud(); }
   const td = W.td;
   const race = G.mode === 'race';
   setText(hud.time, 'time', fmt(G.phase === 'countdown' ? 0 : G.phase === 'done' ? G.result : G.time + G.penalty));
@@ -10720,6 +10781,7 @@ $('bShopAll').onclick = () => {
   if (saved.car === sel && car3d && !G.gp) setLivery(saved.livery);
   toast('Všechny díly na maximum', 1.8); openShop(); renderMenu();
 };
+$('bShopX').onclick = () => $('bShopClose').click();
 $('bShopClose').onclick = () => { $('shopModal').hidden = true; shopPrev.queue.length = 0; };   // nedokreslené náhledy se zahodí (za jízdy by brzdily hru)
 $('bShop').onclick = () => openShop();
 $('bShopTop').onclick = () => { saved.shopSel = saved.car; openShop(); };
