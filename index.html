@@ -4560,16 +4560,53 @@ function buildWorld(td) {
   };
   gantry(td.startIdx, st.circuit ? 'START · CÍL' : 'START', st.name.toUpperCase());
   // okruh: pět startovních světel F1 pod bránou (rozsvěcují se při startu Velké ceny)
+  // startovní rampa F1 ve 3D: pět sloupků po čtyřech světlech pod startovním portálem (horní dvě se rozsvěcují červeně,
+  // se stříškou proti slunci a září viditelnou i z konce roštu), podél roštu menší opakovací světla na sloupech.
+  // startLights[k] = { m: materiál čoček sloupku k, g: materiály záře }
   const startLights = [];
   if (st.circuit) {
-    const i = td.startIdx, lg = new T.Group(), housing = new T.MeshStandardMaterial({ color: '#15171b', roughness: 0.6 });
-    for (let k = 0; k < 5; k++) {
-      const hb = new T.Mesh(new T.BoxGeometry(0.62, 1.3, 0.3), housing); hb.position.set((k - 2) * 1.1, 4.0, -0.25); lg.add(hb);
-      const lm = new T.MeshStandardMaterial({ color: '#3a0805', emissive: '#ff1a0e', emissiveIntensity: 0, roughness: 0.3 });
-      for (const y of [4.3, 3.7]) { const b = new T.Mesh(new T.CircleGeometry(0.21, 16), lm); b.position.set((k - 2) * 1.1, y, -0.41); b.rotation.y = Math.PI; lg.add(b); }
-      startLights.push(lm);
-    }
+    const n = X.length, i = td.startIdx;
+    const housing = new T.MeshStandardMaterial({ color: '#141519', roughness: 0.55, metalness: 0.35 });
+    const rim = new T.MeshStandardMaterial({ color: '#2c3038', roughness: 0.35, metalness: 0.8 });
+    const offLens = new T.MeshStandardMaterial({ color: '#160606', roughness: 0.15, metalness: 0.2 });
+    const glowTex = canvasTex(128, 128, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,220,200,1)'); gr.addColorStop(0.18, 'rgba(255,70,30,.95)'); gr.addColorStop(0.45, 'rgba(255,30,10,.35)'); gr.addColorStop(1, 'rgba(255,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    for (let k = 0; k < 5; k++) startLights.push({ m: new T.MeshStandardMaterial({ color: '#3a0805', emissive: '#ff1a0e', emissiveIntensity: 0, roughness: 0.2 }), g: [] });
+    // jedna jednotka světel: sc = velikost, rows = počet řad (červené jsou horní dvě)
+    const unit = (sc, rows) => {
+      const u = new T.Group(), sp = 1.15 * sc, ph = (0.3 + rows * 0.45) * sc;
+      add3(softBox(5 * sp + 0.25 * sc, 0.16 * sc, 0.5 * sc, 0.4, 10), rim, 0, ph / 2 + 0.06 * sc, 0, u);                         // horní nosník
+      for (let k = 0; k < 5; k++) {
+        const x = (2 - k) * sp;   // řidič se dívá po +z, jeho levá strana je +x: první sloupek vlevo
+        add3(softBox(0.78 * sc, ph, 0.46 * sc, 0.35, 14), housing, x, 0, 0, u);
+        add3(softBox(0.82 * sc, ph + 0.04 * sc, 0.05 * sc, 0.4, 10), rim, x, 0, -0.24 * sc, u);                                    // rámeček čela
+        for (let r = 0; r < rows; r++) {
+          const y = ph / 2 - (0.36 + r * 0.45) * sc, lit = r < 2;
+          const lens = add3(new T.CylinderGeometry(0.17 * sc, 0.17 * sc, 0.05 * sc, 24).rotateX(Math.PI / 2), lit ? startLights[k].m : offLens, x, y, -0.27 * sc, u);
+          void lens;
+          add3(new T.CylinderGeometry(0.205 * sc, 0.205 * sc, 0.2 * sc, 20, 1, true, -Math.PI / 2, Math.PI).rotateX(Math.PI / 2), housing, x, y, -0.35 * sc, u).material.side = T.DoubleSide;   // stříška
+          if (lit) {
+            const gm = new T.SpriteMaterial({ map: glowTex, color: '#ffffff', transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, fog: false });
+            const gs = new T.Sprite(gm); gs.scale.setScalar(1.25 * sc); gs.position.set(x, y, -0.36 * sc); u.add(gs);
+            startLights[k].g.push(gm);
+          }
+        }
+      }
+      u.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+      return u;
+    };
+    // hlavní rampa pod portálem nad startovní čarou
+    const main = unit(1.25, 4); main.position.set(0, 3.25, -0.2);
+    const lg = new T.Group(); lg.add(main);
     lg.position.set(X[i], Y[i], Z[i]); lg.rotation.y = td.HD[i]; group.add(lg);
+    // opakovací světla podél roštu (vlevo u zdi), každých 34 m
+    for (const d of [34, 68]) {
+      const j = ((i - Math.round(d / td.ds)) % n + n) % n, side = -1, off = HW + 1.4;
+      const rg = new T.Group();
+      add3(new T.CylinderGeometry(0.09, 0.11, 4.2, 10), rim, 0, 2.1, 0.3, rg);
+      add3(softBox(0.12, 0.12, 0.7, 0.4, 6), rim, 0, 4.1, 0.0, rg);
+      const ru = unit(0.42, 2); ru.position.set(0, 4.25, -0.25); rg.add(ru);
+      rg.position.set(X[j] + NX[j] * side * off, Y[j], Z[j] + NZ[j] * side * off); rg.rotation.y = td.HD[j]; group.add(rg);
+    }
   }
   const clock = makeClock();
   clock.draw('0:00', '#ffc419', 0);
@@ -9995,7 +10032,7 @@ function gpEnd() {
   $('hGp').hidden = true; $('gpTower').hidden = true;
   for (const el of hud.mapAI || []) el.remove();
   hud.mapAI = [];
-  if (W && W.startLights) for (const m of W.startLights) m.emissiveIntensity = 0;
+  setStartLights(0);
   gpCrewReset();
   if (car3d && car3d.envMats) { for (const m of car3d.envMats) m.envMapIntensity = 1; car3d.envK = 1; }
 }
@@ -12167,6 +12204,11 @@ function tick(now) {
   perfCheck(dt, now);
 }
 let tickErrors = 0;
+// startovní světla: n rozsvícených sloupků (čočky + záře)
+function setStartLights(n) {
+  if (!W || !W.startLights) return;
+  W.startLights.forEach((c, k) => { const on = k < n; c.m.emissiveIntensity = on ? 4.5 : 0; c.m.color.set(on ? '#ff2a14' : '#3a0805'); for (const g of c.g) g.opacity = on ? 1 : 0; });
+}
 function tickUpdate(dt) {
   let inp = HOLD;
   if (!G.paused) {
@@ -12183,11 +12225,11 @@ function tickUpdate(dt) {
         const lit = clamp(Math.floor((4.6 - G.countdown) / 0.62), 0, 5);
         if (lit !== G.lastBeep) {
           G.lastBeep = lit; if (lit) Sound.beep(440, 0.12);
-          hud.center.innerHTML = `<span class="gp-lights">${[0, 1, 2, 3, 4].map((k) => `<i class="${k < lit ? 'on' : ''}"><u></u><u></u></i>`).join('')}</span>`; hud.center.className = 'hud-center';
-          W.startLights.forEach((m, k) => { m.emissiveIntensity = k < lit ? 3.2 : 0; });
+          hud.center.textContent = ''; hud.center.className = 'hud-center';   // světla svítí ve 3D na startovní rampě
+          setStartLights(lit);
         }
       } else if (n !== G.lastBeep && n >= 1 && n <= 3) { G.lastBeep = n; Sound.beep(520); hud.center.textContent = String(n); hud.center.className = 'hud-center'; W.clock.draw(String(n), '#ff3b30', 6 - n); }
-      if (G.countdown <= 0.6 && G.gp) { for (const m of W.startLights) m.emissiveIntensity = 0; gpRadio('Jeď!'); }
+      if (G.countdown <= 0.6 && G.gp) { setStartLights(0); gpRadio('Jeď!'); }
       if (G.countdown <= 0.6) { G.phase = 'run'; if (G.net && G.net.at) G.time = clamp((Date.now() - G.net.at) / 1000, 0, 5); Tilt.calibrate(); Chat.say('start'); W.clock.draw('GO', '#3fdc86', 5); Sound.beep(1040, 0.4); hud.center.textContent = 'START'; hud.center.className = 'hud-center small'; setTimeout(() => { if (G.phase === 'run') hud.center.textContent = ''; }, 900); }
     } else if (G.phase === 'run') {
       inp = window.__rally && window.__rally.auto ? autopilot(window.__rally.auto) : readInput();
