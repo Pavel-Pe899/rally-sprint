@@ -562,6 +562,42 @@
   @keyframes sp { to { transform: rotate(360deg); } }
   #fatal { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 17px; line-height: 1.5; background: var(--ink); }
   @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } .hud-toast, .stage { transition: none; } }
+
+  /* ===== HUD v závodním stylu: šikmé tmavé panely s červenou hranou, kurzíva, ikony (stopky, kamera, počasí) ===== */
+  #hud { --hp: linear-gradient(100deg, rgba(14, 16, 22, .93) 0%, rgba(22, 25, 33, .88) 70%, rgba(14, 16, 22, .8) 100%); --red: #e10600; }
+  #hud .panel, #hud .hbtn { border: 0; border-radius: 0; background: var(--hp); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+  #hud .hud-tl { clip-path: polygon(0 0, 100% 0, calc(100% - 22px) 100%, 0 100%); padding: 6px 34px 8px 16px; border-radius: 14px 0 0 14px; }
+  #hud .hud-tl::after { content: ''; position: absolute; top: 0; bottom: 0; right: 4px; width: 8px; background: var(--red); transform: skewX(-12deg); box-shadow: 0 0 12px rgba(225, 6, 0, .6); }
+  .hud-clock { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; font-style: italic; letter-spacing: .06em; color: #cfd5de; padding-bottom: 3px; margin-bottom: 4px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+  .hud-clock::before { content: ''; width: 14px; height: 14px; border: 2px solid #cfd5de; border-radius: 50%; background: linear-gradient(#cfd5de, #cfd5de) 50% 30% / 2px 5px no-repeat, linear-gradient(#cfd5de, #cfd5de) 62% 52% / 4px 2px no-repeat; }
+  #hud .hud-stage { display: flex; align-items: center; gap: 8px; font-style: italic; letter-spacing: .08em; color: #d9dee6; }
+  .hud-flag { width: 22px; height: 14px; flex: none; transform: skewX(-12deg); box-shadow: 0 0 0 1px rgba(0, 0, 0, .4); }
+  #hud .hud-time { display: flex; align-items: center; gap: 10px; font-style: italic; font-weight: 900; font-size: 44px; letter-spacing: .02em; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+  #hud .hud-time::before { content: ''; flex: none; width: .72em; height: .72em; background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='12' cy='14' r='8'/%3E%3Cpath d='M12 14V10M9 2h6M12 2v4M19 6l-1.5 1.5'/%3E%3C/svg%3E"); }
+  #hud .hud-split { font-style: italic; }
+  #hud .hbtn { clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); padding: 0 18px; font-style: italic; font-weight: 800; letter-spacing: .06em; border-bottom: 3px solid transparent; }
+  #hud .hbtn#bCam { border-bottom-color: var(--red); }
+  #hud .hbtn#bCam::before { content: ''; display: inline-block; width: 18px; height: 14px; margin-right: 8px; vertical-align: -2px; background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath fill='%23cfd5de' d='M3 4h4l2-3h6l2 3h4a2 2 0 012 2v9a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2z'/%3E%3Ccircle cx='12' cy='10' r='4' fill='%23141720'/%3E%3C/svg%3E"); }
+  #hud .hbtn#bSound::before { content: ''; display: inline-block; width: 16px; height: 13px; margin-right: 8px; vertical-align: -1px; background: linear-gradient(#cfd5de, #cfd5de) 0 100% / 3px 40% no-repeat, linear-gradient(#cfd5de, #cfd5de) 33% 100% / 3px 65% no-repeat, linear-gradient(#cfd5de, #cfd5de) 66% 100% / 3px 85% no-repeat, linear-gradient(#cfd5de, #cfd5de) 100% 100% / 3px 100% no-repeat; }
+  /* tachometr: ručička žlutá, rychlost kurzívou, převodový stupeň ve žlutém štítku */
+  #hud .tacho-speed { font-style: italic; font-weight: 900; }
+  #hud .tacho-gear { background: #ffc419; color: #141414; font-style: italic; font-weight: 900; border-radius: 9px; box-shadow: 0 3px 0 rgba(0, 0, 0, .35); }
+  /* Velká cena: pořadí s červeným lomítkem, kolo a počasí, pneumatiky jako ukazatel, BOX jako zelený šikmý štítek */
+  #hud .hud-gp { clip-path: polygon(22px 0, 100% 0, calc(100% - 22px) 100%, 0 100%); padding: 6px 30px 6px 32px; gap: 16px; }
+  #hud .gp-pos { position: relative; padding-right: 18px; }
+  #hud .gp-pos b { font-style: italic; font-size: 44px; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+  #hud .gp-pos small { font-style: italic; }
+  #hud .gp-pos::after { content: ''; position: absolute; right: 0; top: 4px; bottom: 4px; width: 5px; background: var(--red); transform: skewX(-18deg); }
+  #hud .gp-info { font-style: italic; letter-spacing: .06em; font-size: 15px; }
+  #hud .gp-tyre { width: 150px; height: 18px; border-radius: 9px; background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+  #hud .gp-tyre em { color: #fff; font-weight: 800; font-style: italic; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+  #hud .gp-pit { border-radius: 0; clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); padding: 8px 22px; font-style: italic; font-size: 22px; background: linear-gradient(180deg, #ff3b2f, #c40900); box-shadow: none; }
+  #hud .gp-pit.done { background: linear-gradient(180deg, #0f2a17, #0a1d10); color: #4cff7a; box-shadow: inset 0 0 0 3px #3fdc6b; text-shadow: 0 0 10px rgba(76, 255, 122, .6); }
+  #hud .gp-pit.req { background: linear-gradient(180deg, #3b98ff, #1f63d8); }
+  @media (max-width: 600px) { #hud .hud-gp { top: calc(146px + env(safe-area-inset-top, 0px)); } #hud .hud-time { font-size: 32px; } }   /* panel s hodinami je vyšší */
+  /* dekorace v pravém dolním rohu: červené šikmé pruhy */
+  #hud::after { content: ''; position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 260px; height: 8px; pointer-events: none;
+    background: linear-gradient(90deg, transparent 0 40%, rgba(225, 6, 0, .85) 40% 100%) 0 100% / 100% 3px no-repeat, repeating-linear-gradient(115deg, transparent 0 6px, rgba(225, 6, 0, .9) 6px 10px) 100% 0 / 60px 8px no-repeat; }
 </style>
 
 <canvas id="scene"></canvas>
@@ -570,7 +606,8 @@
 
 <div id="hud" hidden>
   <div class="hud-tl panel">
-    <div class="hud-stage" id="hStage"></div>
+    <div class="hud-clock" id="hClock"></div>
+    <div class="hud-stage"><i class="hud-flag" id="hFlag" hidden></i><span id="hStage"></span></div>
     <div class="hud-time" id="hTime">0:00.00</div>
     <div class="hud-split" id="hSplit"></div>
   </div>
@@ -3630,7 +3667,7 @@ function buildWorld(td) {
         const bx = x + nx * 0.45, bz = z + nz * 0.45;
         if (i > r0) u += Math.hypot(x - fp[fp.length - 6], z - fp[fp.length - 4]) / 32;
         // u garáží boxů zeď ani plot nejsou (garáže jsou hranice uličky): ty úseky se vynechají
-        const pr = td.pit && side === td.pit.side ? td.pit.relOf(S[i]) : 1e9, gap = (q) => q > td.pit.garage[0] - 3 && q < td.pit.garage[1] + 3;
+        const pr = td.pit && side === td.pit.side ? td.pit.relOf(S[i]) : 1e9, gap = (q) => q > td.pit.boxes[0] - 10.2 && q < td.pit.boxes[td.pit.boxes.length - 1] + 10.2; // zeď končí přesně u budovy garáží (dřív mezi nimi zůstala díra)
         const hidden = pr < 1e8 && gap(pr), hiddenNext = i < r1 && td.pit && side === td.pit.side && gap(td.pit.relOf(S[i + 1]));
         // líc zdi s reklamami (na pravé straně se text čte opačným směrem, proto u obráceně), horní hrana a zadní strana z betonu
         const uu = side > 0 ? -u : u;
@@ -3789,9 +3826,14 @@ function buildWorld(td) {
         box(len - 1, 1.7, 0.1, 0, top + 1.5, z - 0.27, '#22405a');                           // prosklené lóže
         for (let x = -len / 2 + 4; x < len / 2; x += 8) box(0.15, 1.7, 0.12, x, top + 1.5, z - 0.3, '#c9ced4');
       }
-      for (const sx of [-1, 1]) box(0.4, topY + 0.6, D + 0.4, sx * (len / 2 + 0.2), (topY + 0.6) / 2, D / 2 - 0.25, '#b8bcc1'); // boční zdi
-      box(len + 0.8, topY + 3.2, 0.4, 0, (topY + 3.2) / 2, D, '#aeb3b8');                   // zadní stěna
-      const roofY = topY + 3.6;
+      const roofY = topY + 3.6, roofAt = (z) => roofY + 0.1 * (z - (D / 2 - 0.6));   // střecha stoupá dozadu (sklon 0,1)
+      for (const sx of [-1, 1]) {
+        box(0.4, topY + 0.6, D + 0.4, sx * (len / 2 + 0.2), (topY + 0.6) / 2, D / 2 - 0.25, '#b8bcc1'); // boční zdi
+        // horní část boční zdi až pod střechu (sleduje její sklon), dřív tu byla mezi zdí a střechou díra
+        const Hup = roofY - topY + 1.5, zc = D / 2 - 0.25;
+        parts.push({ geo: new T.BoxGeometry(0.4, Hup, D + 0.4).rotateX(-0.1).translate(sx * (len / 2 + 0.2), roofAt(zc) - Hup / 2 - 0.12, zc), color: '#b8bcc1' });
+      }
+      box(len + 0.8, roofAt(D) - 0.05, 0.4, 0, (roofAt(D) - 0.05) / 2, D, '#aeb3b8');                   // zadní stěna až ke střeše
       parts.push({ geo: new T.BoxGeometry(len + 3, 0.3, D + 3.5).rotateX(-0.1).translate(0, roofY, D / 2 - 0.6), color: '#eef0f2' });
       for (let x = -len / 2; x <= len / 2 + 0.1; x += len / Math.max(1, Math.round(len / 16))) {
         box(0.3, roofY, 0.3, x, roofY / 2, D + 0.1, '#7d858d');                            // sloup
@@ -4023,6 +4065,16 @@ function buildWorld(td) {
       const parts = [], box = (w, h, d, x, y, z, color, rx = 0) => parts.push({ geo: new T.BoxGeometry(w, h, d).rotateX(rx).translate(x, y, z), color });
       const crewHome = [];
       
+      // čela budovy boxů: betonové bloky na obou koncích řady garáží (od zdi u uličky dozadu přes celou hloubku), aby mezi zdí
+      // okruhu a budovou nezůstala mezera s trávou
+      for (const [r, dir] of [[p.boxes[0] - 10.8 - 1.6, -1], [p.boxes[p.boxes.length - 1] + 10.8 + 1.6, 1]]) {
+        const i = relIdx(r), rot = HD[i] + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), [cx, cy, cz] = at(i, p.edge + 0.3, -0.06);
+        const capG = new T.Group(); capG.position.set(cx, cy, cz); capG.rotation.y = rot; group.add(capG);
+        const parts2 = [{ geo: new T.BoxGeometry(3.6, 9.4, 18.4).translate(0, 4.7, 18.4 / 2 - 1.2), color: '#c9ced3' },
+          { geo: new T.BoxGeometry(3.8, 0.5, 18.8).translate(0, 9.5, 18.4 / 2 - 1.2), color: '#eef0f2' },
+          { geo: new T.BoxGeometry(0.1, 7.6, 0.3).translate(dir * 1.85, 4.2, -1.3), color: '#2a2e35' }];
+        const cap = new T.Mesh(mergeColored(parts2), standMat); cap.castShadow = cap.receiveShadow = true; capG.add(cap);
+      }
       p.boxes.forEach((b, k) => {
         const tm = F1_TEAMS[teams[k % teams.length]], i = relIdx(b);
         const rot = HD[i] + (sd > 0 ? -Math.PI / 2 : Math.PI / 2), ax = sd > 0 ? 1 : -1; // místní x podél trati, z od trati
@@ -8671,6 +8723,9 @@ function updateHud(dt) {
   if (cache.dash !== dash) { cache.dash = dash; hud.mapDone.style.strokeDashoffset = dash; }
   setText(hud.km, 'km', `${((prog * td.length) / 1000).toFixed(1)} / ${(td.length / 1000).toFixed(1)} km`);
 
+  // hodiny a datum v horním panelu (jednou za sekundu)
+  { const d = new Date(), ck = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (cache.clock !== ck) { cache.clock = ck; const DN = ['NE', 'PO', 'ÚT', 'ST', 'ČT', 'PÁ', 'SO']; $('hClock').textContent = `${ck}  |  ${DN[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`; } }
   // tachometr
   const kmh = Math.round(Math.abs(car.vf) * 3.6);
   setText(hud.speed, 'spd', String(kmh));
@@ -8814,6 +8869,8 @@ function startRace() {
   camS.init = false;
   overlay.menu.hidden = true; overlay.results.hidden = true; overlay.pause.hidden = true;
   overlay.hud.hidden = false; overlay.touch.hidden = !IS_TOUCH;
+  { const FL = { miami: 'linear-gradient(#3c3b6e 0 45%, transparent 45%) 0 0 / 45% 100% no-repeat, repeating-linear-gradient(#b22234 0 15%, #fff 15% 30%)', monza: 'linear-gradient(90deg, #009246 0 33%, #fff 33% 66%, #ce2b37 66%)', silverstone: 'linear-gradient(#c8102e, #c8102e) 50% 50% / 100% 22% no-repeat, linear-gradient(90deg, #c8102e, #c8102e) 50% 50% / 16% 100% no-repeat, linear-gradient(#fff, #fff) 50% 50% / 100% 40% no-repeat, linear-gradient(90deg, #fff, #fff) 50% 50% / 30% 100% no-repeat, #012169', redbullring: 'linear-gradient(#ed2939 0 33%, #fff 33% 66%, #ed2939 66%)', spa: 'linear-gradient(90deg, #111 0 33%, #fdda24 33% 66%, #ef3340 66%)' };
+    const f = $('hFlag'), bg = FL[td.st.id]; f.hidden = !bg; if (bg) f.style.background = bg; }
   hud.stage.textContent = G.gp ? `${gpTitle()} · ${F1_TEAMS[f1Team()].name}` : G.net ? `Proti sobě · ${td.st.name}` : (G.champ ? `${G.champ.k + 1}/5 · ` : '') + td.st.name;
   hud.split.textContent = G.ghost ? `Duch rekordu ${fmt(G.ghost.t)}` : ''; hud.split.className = 'hud-split';
   G.splitShown = G.ghost ? 6 : 0;
