@@ -496,6 +496,17 @@
   canvas.hero.on { display: block; }
   .shop-card canvas.hero { max-height: 280px; object-fit: cover; }
   .team-card canvas.hero { max-height: 190px; object-fit: cover; }
+  .shop-body { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .shop-body.f1 { grid-template-columns: minmax(0, 1fr); } .shop-body.f1 .shop-decals { display: none; }
+  .shop-decals { position: sticky; top: 0; padding: 10px; border-radius: 16px; border: 3px solid #050608; background: linear-gradient(180deg, #23262d, #15171c); box-shadow: 0 6px 0 #050608; }
+  .shop-decals h3 { margin: 0 0 8px; font: italic 900 22px var(--display); color: #fff; -webkit-text-stroke: 4px #050608; paint-order: stroke fill; }
+  #shopDecals { display: grid; gap: 8px; }
+  .decal-it { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "pv pv" "b s"; gap: 4px 6px; align-items: center; padding: 6px; border-radius: 12px; border: 3px solid #050608; background: #1b1e24; color: #fff; font-family: var(--display); cursor: pointer; text-align: left; box-shadow: 0 4px 0 #050608; touch-action: manipulation; }
+  .decal-it .pv { grid-area: pv; display: block; border-radius: 8px; overflow: hidden; } .decal-it .pv canvas { display: block; width: 100%; height: auto; }
+  .decal-it b { grid-area: b; font-size: 14px; font-weight: 900; } .decal-it small { grid-area: s; font-size: 11px; font-weight: 800; color: #ffd23f; }
+  .decal-it.on { border-color: #36c91f; box-shadow: 0 4px 0 #050608, 0 0 12px rgba(141, 255, 85, .5); } .decal-it.on small { color: #7dff9a; }
+  .decal-it.locked .pv { filter: grayscale(.6) brightness(.8); }
+  @media (max-width: 700px) { .shop-body { grid-template-columns: minmax(0, 1fr); } .shop-decals { position: static; } #shopDecals { grid-auto-flow: column; grid-auto-columns: 150px; overflow-x: auto; } }
   .shop-cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
   .shop-car { position: relative; display: grid; gap: 1px; text-align: left; padding: 8px 10px 12px; border-radius: 12px; border: 3px solid #050608; background: linear-gradient(180deg, #2a2e36, #1b1e24); color: #fff; font-family: var(--display); cursor: pointer; box-shadow: 0 4px 0 #050608; touch-action: manipulation; }
   .shop-car b { font-size: 15px; font-weight: 900; line-height: 1.05; text-shadow: 0 2px 0 #050608; } .shop-car small { font-size: 11px; color: #ffd23f; font-weight: 800; }
@@ -776,7 +787,7 @@
     <div class="shop-cars" id="shopCars"></div>
     <div class="shop-head"><h2>Dílna <em id="shopTitleCar">týmu</em></h2><div class="shop-money"><span class="coin">$</span><b id="shopMoney">0</b></div></div>
     <p class="shop-help">Nahoře vyber auto, pod ním jsou jeho díly. Peníze dostaneš za umístění ve Velké ceně: 1. místo 1 500 $, 2. místo 900 $, 3. místo 500 $ (delší závod 2,5×). Každé auto má vlastní vylepšení.</p>
-    <div class="shop-list" id="shopList"></div>
+    <div class="shop-body" id="shopBody"><aside class="shop-decals"><h3>Polepy</h3><div id="shopDecals"></div></aside><div class="shop-list" id="shopList"></div></div>
     <div class="shop-all"><button class="btn" id="bShopAll" hidden>Všechny díly na maximum (zdarma)</button><button class="btn ghost" id="bShopClose">Zavřít</button></div>
   </div>
 </div>
@@ -5111,7 +5122,19 @@ function buildModelCar(lv, spec) {
     let yaw = ang + Math.PI / 2; // osa kola
     yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
     if (yaw > Math.PI / 2) yaw -= Math.PI; if (yaw < -Math.PI / 2) yaw += Math.PI;
-    const fix = Math.abs(yaw) > 0.03 && Math.abs(yaw) < 0.7 ? yaw : 0;
+    // natočení, při kterém je pneumatika (při pohledu shora) nejužší = osa kola míří podél X (spolehlivější než samotná PCA)
+    // vrcholy pneumatiky ve světových souřadnicích (natočení může být v matici dílu, ne ve vrcholech)
+    tire.m.updateMatrixWorld(true);
+    const wpts = [], wv = new T.Vector3();
+    for (let i = 0; i < tp.count; i += 3) { wv.fromBufferAttribute(tp, i).applyMatrix4(tire.m.matrixWorld); wpts.push(wv.x, wv.z); }
+    let best = 0, bw = 1e9;
+    for (let f = -0.6; f <= 0.6001; f += 0.01) {
+      const c0 = Math.cos(f), s0 = Math.sin(f); let lo = 1e9, hi = -1e9;
+      for (let i = 0; i < wpts.length; i += 2) { const x = c0 * (wpts[i] - cl.x) + s0 * (wpts[i + 1] - cl.z); if (x < lo) lo = x; if (x > hi) hi = x; }
+      if (hi - lo < bw - 1e-4) { bw = hi - lo; best = f; }
+    }
+    void yaw;
+    const fix = Math.abs(best) > 0.02 ? best : 0;
     if (fix) {
       fixM.makeTranslation(cl.x, 0, cl.z).multiply(tmpM.makeRotationY(fix)).multiply(new T.Matrix4().makeTranslation(-cl.x, 0, -cl.z));
       for (const p of cl.parts) p.m.applyMatrix4(fixM);
@@ -5171,6 +5194,18 @@ function buildModelCar(lv, spec) {
   const bb = new T.Box3().setFromObject(body);
   const paintMeshes = [];
   body.traverse((o) => { if (o.isMesh && o.material === paint) paintMeshes.push(o); });
+  // otvor střešního okna (G 63): v modelu je díra do kabiny s tmavým sklem → zalepí se plechem v barvě laku
+  const sunroofs = [];
+  body.traverse((o) => { if (o.isMesh && /sunroof/i.test(o.name + ' ' + (o.material && o.material.name))) sunroofs.push(o); });
+  for (const o of sunroofs) {
+    o.geometry.computeBoundingBox();
+    const sb = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);
+    o.visible = false;
+    const w = sb.max.x - sb.min.x + 0.08, d = sb.max.z - sb.min.z + 0.08;
+    const lid = new T.Mesh(new T.BoxGeometry(w, 0.03, d), paint);
+    lid.position.copy(body.worldToLocal(new T.Vector3((sb.min.x + sb.max.x) / 2, sb.max.y + 0.012, (sb.min.z + sb.max.z) / 2)));
+    lid.castShadow = true; lid.userData.added = true; body.add(lid); lid.updateMatrixWorld(true); paintMeshes.push(lid);
+  }
   const ray = new T.Raycaster();
   const hit = (from, dir) => { ray.set(from, dir.normalize()); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
   const decal = (h, w, hgt, map, offset = 0.012) => { // nálepka na povrch
@@ -5202,7 +5237,7 @@ function buildModelCar(lv, spec) {
     const h = hit(new T.Vector3(side * 3, spec.formula ? 0.48 : 0.62, spec.formula ? -0.72 : midZ + 0.05), new T.Vector3(-side, 0, 0));
     if (h) {
       if (spec.formula) decal(h, 0.42, 0.21, doorTexture(lv.num || '4', lv));
-      else decal(h, 0.95, 0.48, doorTexture('7', lv));
+      // silniční auta: místo rallyového čísla polep z dílny (applyDecal)
     }
   }
   // formule: nápisy týmu a sponzorů jako na skutečném voze (bočnice, kryt motoru, křídla, pneumatiky); jen písmo, žádná loga
@@ -5292,9 +5327,7 @@ function buildModelCar(lv, spec) {
     kersMatRef = shopBodyLook(spec.shop || {}, { hitAny, body, bb, lv });
   }
   const roof = hit(new T.Vector3(0, 3, midZ - 0.3), new T.Vector3(0, -1, 0));
-  if (roof) { const d = decal(roof, 0.55, 0.55, roofTexture('7')); d.rotation.set(-Math.PI / 2, 0, 0); }
-  // lapače bláta za koly (formule je nemá)
-  if (!spec.formula) for (const w of wheels) add3(new T.BoxGeometry(0.28, 0.3, 0.025), acc1, w.pivot.position.x * 0.97, 0.18, w.pivot.position.z - 0.42, body);
+  void roofTexture;
   // anténa
   if (roof && !spec.formula) { const ant = add3(new T.CylinderGeometry(0.008, 0.012, 0.5, 4), trim, -0.35, roof.p.y + 0.24, roof.p.z - 0.45, body); ant.rotation.x = -0.25; }
 
@@ -5360,6 +5393,7 @@ function buildModelCar(lv, spec) {
     trimS.position.set(0, 0.66, -0.16); body.add(trimS);
     driver.push(helm, hans, sh, trimS);
   }
+  if (!spec.formula && spec.decal) applyDecal(spec.decal, { body, bb, lv, paintMeshes });
   if (!spec.formula && spec.shop) roadShopLook(spec.shop, { body, wheels, bb, lv, carId: Object.keys(CAR_TYPES).find((k) => CAR_TYPES[k].model === spec.model) });   // tuning silničního auta z dílny
   const blob = new T.Mesh(new T.PlaneGeometry((bb.max.x - bb.min.x) * 1.45, (bb.max.z - bb.min.z) * 1.15), new T.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false, opacity: 0.85 }));
   blob.rotation.x = -Math.PI / 2; blob.renderOrder = 1;
@@ -5553,7 +5587,7 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
       put(fin, platePaint, 0, down(-1.4) - 0.005, -1.45);
     }
     if (sh.engine >= 3) {
-      const ti = addShine(new T.MeshStandardMaterial({ color: '#7d6fae', metalness: 0.95, roughness: 0.25 }), 'titan', { gloss: 1.3 });   // titan zbarvený žárem do fialova
+      const ti = addShine(new T.MeshStandardMaterial({ color: '#8c929c', metalness: 0.95, roughness: 0.25 }), 'titan', { gloss: 1.3 });   // titan zbarvený žárem do fialova
       put(new T.CylinderGeometry(0.036, 0.04, 0.2, 20).rotateX(Math.PI / 2), ti, 0, 0.58, -2.66);
       for (const x of [-0.06, 0.06]) put(new T.CylinderGeometry(0.014, 0.016, 0.16, 12).rotateX(Math.PI / 2), ti, x, 0.52, -2.67);   // wastegate
     }
@@ -5580,7 +5614,7 @@ function shopBodyLook(sh, { hitAny, body, bb, lv }) {
   // ---- KERS: zářivé pásky zapuštěné do boků, baterie s chladičem, zadní lišta a anténa
   let kmat = null;
   if (sh.kers > 0) {
-    kmat = glow(sh.kers >= 3 ? '#b06bff' : '#35d0ff', 0.9);
+    kmat = glow('#35d0ff', 0.9);
     for (const sd of [-1, 1]) {
       const len = 0.5 + 0.2 * sh.kers;
       put(new T.CapsuleGeometry(0.014 + 0.003 * sh.kers, len, 6, 12).rotateX(Math.PI / 2), kmat, sd * (side(0.8, -1.4, sd) - 0.004), 0.8, -1.4);
@@ -5994,8 +6028,8 @@ const F1_TEAMS = {
     sp: [['pod', 'ORACLE', '#ff3b30', 'ital'], ['podF', 'Mobil 1', '#ffffff', 'ital'], ['podR', 'HONDA', '#e60012', 'box', '#ffffff'], ['cover2', 'BYBIT', '#f7a600', 'bold'], ['rwEnd', 'RAUCH', '#ffffff', 'bold'], ['fwEnd', 'Accenture', '#ffffff', 'thin'], ['wing2', 'HARD ROCK', '#ffd400', 'bold']] },
   aston: { full: 'Aston Martin Aramco F1 Team', code: 'AST', spons: 'ARAMCO', wing: 'ASTON MARTIN', tc: '#cedc00', name: 'Aston Martin', cov: '#00665c', body: '#00665c', a1: '#cedc00', a2: '#0b1412', rim: '#141414', num: '14', desc: 'britská zelená a limetková',
     sp: [['pod', 'ARAMCO', '#cedc00', 'ital'], ['podF', 'Cognizant', '#ffffff', 'bold'], ['podR', 'VALVOLINE', '#ffffff', 'box', '#d8232a'], ['cover2', 'BOSS', '#ffffff', 'thin'], ['rwEnd', 'PEPPERSTONE', '#ffffff', 'bold'], ['fwEnd', 'CROWDSTRIKE', '#ffffff', 'bold'], ['wing2', 'ARAMCO', '#cedc00', 'bold']] },
-  alpine: { full: 'BWT Alpine F1 Team', code: 'ALP', spons: 'BWT', wing: 'ALPINE', tc: '#ffffff', name: 'Alpine', cov: '#1176e0', body: '#1176e0', a1: '#ff6fb5', a2: '#0b1a33', rim: '#141414', num: '10', desc: 'modrá a růžová',
-    sp: [['pod', 'BWT', '#ff6fb5', 'ital'], ['podF', 'CASTROL', '#ffffff', 'box', '#00964a'], ['podR', 'OTRO', '#ffffff', 'bold'], ['cover2', 'ALPINE', '#ffffff', 'ital'], ['rwEnd', 'BWT', '#ff6fb5', 'bold'], ['fwEnd', 'KRAKEN', '#ffffff', 'bold'], ['wing2', 'Renault', '#ffffff', 'thin']] },
+  alpine: { full: 'BWT Alpine F1 Team', code: 'ALP', spons: 'BWT', wing: 'ALPINE', tc: '#ffffff', name: 'Alpine', cov: '#1176e0', body: '#1176e0', a1: '#ffffff', a2: '#0b1a33', rim: '#141414', num: '10', desc: 'modrá a bílá',
+    sp: [['pod', 'BWT', '#ffffff', 'ital'], ['podF', 'CASTROL', '#ffffff', 'box', '#00964a'], ['podR', 'OTRO', '#ffffff', 'bold'], ['cover2', 'ALPINE', '#ffffff', 'ital'], ['rwEnd', 'BWT', '#ffffff', 'bold'], ['fwEnd', 'KRAKEN', '#ffffff', 'bold'], ['wing2', 'Renault', '#ffffff', 'thin']] },
   williams: { full: 'Atlassian Williams Racing', code: 'WIL', tw: '#00a3e0', spons: 'ATLASSIAN', wing: 'WILLIAMS', tc: '#ffffff', name: 'Williams', cov: '#10337f', body: '#10337f', a1: '#00a3e0', a2: '#071a45', rim: '#121212', num: '23', desc: 'tmavě modrá a světle modré pruhy',
     sp: [['pod', 'ATLASSIAN', '#ffffff', 'ital'], ['podF', 'GULF', '#ffffff', 'box', '#f26522'], ['podR', 'KOMATSU', '#ffffff', 'bold'], ['cover2', 'DURACELL', '#f0a500', 'bold'], ['rwEnd', 'SANTANDER', '#ffffff', 'box', '#ec0000'], ['fwEnd', 'ATLASSIAN', '#ffffff', 'bold'], ['wing2', 'WILLIAMS', '#00a3e0', 'ital']] },
   rbulls: { full: 'Visa Cash App Racing Bulls', code: 'VRB', tw: '#3d63e0', spons: 'VISA', wing: 'RACING BULLS', tc: '#ffffff', name: 'Racing Bulls', cov: '#1e3aa8', body: '#1e3aa8', a1: '#ffffff', a2: '#0d1a52', rim: '#121212', num: '22', desc: 'modrá, bílá a červená',
@@ -6057,6 +6091,125 @@ function shopCar(ct) {
   shopCache = { sig, base: ct, car };
   return car;
 }
+// ---------------------------------------------------------------- polepy (jako v Rocket League): grafika na bocích, kapotě a střeše
+// Polep se kreslí do plátna a promítne na karoserii po pruzích (každý kousek se natočí podle tvaru auta, takže kopíruje oblé boky).
+// Barvy se berou z laku: a1 = hlavní barva polepu, a2 = doplňková.
+const DECALS = [
+  { id: 'none', name: 'Bez polepu', price: 0 },
+  { id: 'stripes', name: 'Závodní pruhy', price: 400 },
+  { id: 'swoosh', name: 'Rychlá vlna', price: 600 },
+  { id: 'checker', name: 'Šachovnice', price: 700 },
+  { id: 'flames', name: 'Plameny', price: 900 },
+  { id: 'tri', name: 'Tři linky', price: 500 },
+  { id: 'splash', name: 'Barevný stříkanec', price: 800 },
+  { id: 'hex', name: 'Hexa digi', price: 900 },
+  { id: 'tiger', name: 'Tygří pruhy', price: 1000 },
+];
+const decalOf = (carId) => ((saved.decals || {})[carId]) || 'none';
+const decalOwned = (carId, id) => id === 'none' || SHOP_FREE || !!((saved.decalsOwned || {})[carId + ':' + id]);
+const clearEdge = (g, w, h) => { g.clearRect(0, 0, w, 2); g.clearRect(0, h - 2, w, 2); g.clearRect(0, 0, 2, h); g.clearRect(w - 2, 0, 2, h); };
+// textura boku (délka 1024 × výška 256, x = 0 je předek auta)
+function decalSideTex(id, lv) {
+  const A = lv.a1, B = lv.a2;
+  return canvasTex(1024, 256, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    if (id === 'stripes') { g.fillStyle = A; g.fillRect(0, h * 0.72, w, h * 0.09); g.fillStyle = B; g.fillRect(0, h * 0.84, w, h * 0.04); }
+    else if (id === 'swoosh') {
+      const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, A); gr.addColorStop(0.75, A); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(w * 0.05, h * 0.92); g.bezierCurveTo(w * 0.35, h * 0.9, w * 0.55, h * 0.35, w * 0.98, h * 0.3); g.lineTo(w * 0.98, h * 0.42); g.bezierCurveTo(w * 0.6, h * 0.5, w * 0.4, h * 0.98, w * 0.05, h * 1.0); g.fill();
+      g.strokeStyle = B; g.lineWidth = 6; g.beginPath(); g.moveTo(w * 0.1, h * 0.86); g.bezierCurveTo(w * 0.38, h * 0.84, w * 0.56, h * 0.28, w * 0.95, h * 0.22); g.stroke();
+    } else if (id === 'checker') {
+      const s = 26;
+      for (let x = 0; x < w * 0.55; x += s) for (let y = h * 0.35; y < h; y += s) { const k = ((x + y) / s) & 1, fade = 1 - x / (w * 0.55); if (!k || Math.random() > fade * 1.3) continue; g.fillStyle = A; g.fillRect(w - x - s, y, s, s); }
+      g.fillStyle = B; g.fillRect(w * 0.42, h * 0.3, w * 0.58, 5);
+    } else if (id === 'flames') {
+      for (const [col, k] of [[B, 1.0], [A, 0.75]]) {
+        g.fillStyle = col; g.beginPath(); g.moveTo(0, h * 0.35);
+        for (let i = 0; i < 6; i++) { const x0 = w * (0.08 + i * 0.09) * k + w * 0.05, y0 = h * (0.4 + 0.08 * Math.sin(i * 2.1)); g.quadraticCurveTo(x0 + w * 0.05, y0 - h * 0.1, x0 + w * 0.11 * k, y0 + h * 0.05); g.quadraticCurveTo(x0 + w * 0.03, y0 + h * 0.12, x0 + w * 0.02, y0 + h * 0.2); }
+        g.lineTo(w * 0.55 * k, h * 0.95); g.lineTo(0, h * 0.95); g.fill();
+      }
+    } else if (id === 'tri') { for (const [c, y] of [[A, 0.5], [B, 0.58], [A, 0.66]]) { g.fillStyle = c; g.beginPath(); g.moveTo(w * 0.04, h * y); g.lineTo(w, h * (y - 0.12)); g.lineTo(w, h * (y - 0.08)); g.lineTo(w * 0.04, h * (y + 0.04)); g.fill(); } }
+    else if (id === 'splash') {
+      const rnd = mulberry32(7);
+      for (let i = 0; i < 46; i++) { const x = w * (0.35 + rnd() * 0.6), y = h * (0.3 + rnd() * 0.65), r = 6 + rnd() * rnd() * 46; g.fillStyle = i % 3 ? A : B; g.beginPath(); g.arc(x, y, r, 0, 6.29); g.fill(); if (r > 20) { g.fillRect(x - r * 0.1, y, r * 0.2, r * 1.6 * rnd()); } }
+    } else if (id === 'hex') {
+      const s = 22, rnd = mulberry32(3);
+      for (let y = h * 0.25; y < h; y += s * 0.86) for (let x = 0; x < w; x += s * 1.5) { const xx = x + ((y / (s * 0.86)) & 1) * s * 0.75, p = xx / w; if (rnd() > p * 1.25 - 0.1) continue; g.fillStyle = rnd() < 0.3 ? B : A; g.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; g.lineTo(xx + Math.cos(a) * s * 0.42, y + Math.sin(a) * s * 0.42); } g.fill(); }
+    } else if (id === 'tiger') {
+      const rnd = mulberry32(11); g.fillStyle = A;
+      for (let i = 0; i < 12; i++) { const x = w * (0.06 + i * 0.08 + rnd() * 0.02), t = h * (0.3 + rnd() * 0.15); g.beginPath(); g.moveTo(x, h); g.quadraticCurveTo(x + 30, h * 0.6, x + 8 + rnd() * 30, t); g.quadraticCurveTo(x + 50, h * 0.65, x + 34, h); g.fill(); }
+    }
+    clearEdge(g, w, h);
+  });
+}
+// textura shora (šířka 256 přes auto × délka 1024 od předku dozadu) – pruhy přes kapotu, střechu a víko
+function decalTopTex(id, lv) {
+  const A = lv.a1, B = lv.a2;
+  if (id !== 'stripes' && id !== 'tri' && id !== 'checker') return null;
+  return canvasTex(256, 1024, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    if (id === 'stripes') { for (const x of [0.36, 0.55]) { g.fillStyle = A; g.fillRect(w * x, 0, w * 0.13, h); g.fillStyle = B; g.fillRect(w * x - 4, 0, 3, h); g.fillRect(w * (x + 0.13) + 1, 0, 3, h); } }
+    else if (id === 'tri') { for (const [c, x] of [[A, 0.42], [B, 0.48], [A, 0.54]]) { g.fillStyle = c; g.fillRect(w * x, 0, w * 0.04, h); } }
+    else { const s = 32; for (let y = 0; y < h * 0.22; y += s) for (let x = 0; x < w; x += s) if (((x + y) / s) & 1) { g.fillStyle = A; g.fillRect(x, y, s, s); } }
+    clearEdge(g, w, h);
+  });
+}
+// polep na karoserii: promítne se přímo na trojúhelníky laku (boky z boku, pruhy shora) – kopíruje tvar a podběhy kol
+function applyDecal(id, { body, bb, lv, paintMeshes }) {
+  if (!id || id === 'none' || !paintMeshes.length) return;
+  body.updateMatrixWorld(true);
+  const ray = new T.Raycaster();
+  const hitN = (from, dir) => { ray.set(from, dir); const h = ray.intersectObjects(paintMeshes, false)[0]; return h ? { p: h.point, n: h.face.normal.clone().transformDirection(h.object.matrixWorld) } : null; };
+  const zF = bb.max.z - 0.2, zR = bb.min.z + 0.15, L = zF - zR;
+  // výška pásu boku: od prahu po linii oken (paprsky v půlce auta)
+  const mid = (zF + zR) / 2;
+  let yTop = 0.95, yBot = 0.3;
+  for (let y = 1.6; y > 0.3; y -= 0.02) { const h = hitN(new T.Vector3(3, y, mid), new T.Vector3(-1, 0, 0)); if (h && Math.abs(h.n.x) > 0.55) { yTop = y; break; } }
+  for (let y = 0.1; y < yTop; y += 0.02) { const h = hitN(new T.Vector3(3, y, mid), new T.Vector3(-1, 0, 0)); if (h && Math.abs(h.n.x) > 0.55) { yBot = y; break; } }
+  const Hs = Math.max(0.2, yTop - yBot);
+  const hm = hitN(new T.Vector3(3, (yTop + yBot) / 2, mid), new T.Vector3(-1, 0, 0)), sideX = hm ? Math.abs(hm.p.x) : 0.8;
+  const Wt = Math.min(1.5, sideX * 2 * 0.8);
+  const clampTex = (t) => { if (t) { t.wrapS = t.wrapT = T.ClampToEdgeWrapping; t.needsUpdate = true; } return t; };
+  const sideT = clampTex(decalSideTex(id, lv)), topT = clampTex(decalTopTex(id, lv));
+  const mat = (tex, key) => addShine(new T.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.3, metalness: 0.15, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false }), key, { gloss: 0.9 });
+  const sm = mat(sideT, 'decal-wrap'), tm = topT && mat(topT, 'decal-top');
+  const A = new T.Vector3(), B = new T.Vector3(), C = new T.Vector3(), N = new T.Vector3(), E1 = new T.Vector3(), E2 = new T.Vector3(), W = [A, B, C];
+  for (const m of paintMeshes) {
+    const g = m.geometry, pos = g.attributes.position, nor = g.attributes.normal, ix = g.index;
+    if (!pos) continue;
+    const mw = m.matrixWorld, nTri = ix ? ix.count / 3 : pos.count / 3;
+    const out = { s: { p: [], n: [], uv: [] }, t: { p: [], n: [], uv: [] } };
+    for (let t = 0; t < nTri; t++) {
+      const vi = [0, 1, 2].map((k) => (ix ? ix.getX(t * 3 + k) : t * 3 + k));
+      for (let k = 0; k < 3; k++) W[k].fromBufferAttribute(pos, vi[k]).applyMatrix4(mw);
+      N.crossVectors(E1.subVectors(B, A), E2.subVectors(C, A));
+      if (N.lengthSq() < 1e-12) continue;
+      N.normalize();
+      const cx = (A.x + B.x + C.x) / 3, cy = (A.y + B.y + C.y) / 3, cz = (A.z + B.z + C.z) / 3;
+      let tgt = null, uvOf = null;
+      if (Math.abs(N.x) > 0.42 && Math.abs(cx) > sideX * 0.7 && cy > yBot - 0.12 && cy < yTop + 0.04 && cz > zR - 0.1 && cz < zF + 0.1) {
+        tgt = out.s; uvOf = (v) => [(zF - v.z) / L, (v.y - yBot) / Hs];
+      } else if (tm && Math.abs(N.y) > 0.5 && cy > yTop - 0.15 && Math.abs(cx) < Wt / 2 + 0.05) {
+        tgt = out.t; uvOf = (v) => [(v.x + Wt / 2) / Wt, 1 - (bb.max.z - 0.05 - v.z) / (bb.max.z - bb.min.z - 0.1)];
+      }
+      if (!tgt) continue;
+      for (let k = 0; k < 3; k++) {
+        tgt.p.push(pos.getX(vi[k]), pos.getY(vi[k]), pos.getZ(vi[k]));
+        if (nor) tgt.n.push(nor.getX(vi[k]), nor.getY(vi[k]), nor.getZ(vi[k]));
+        tgt.uv.push(...uvOf(W[k]));
+      }
+    }
+    for (const [o, mt] of [[out.s, sm], [out.t, tm]]) {
+      if (!o.p.length) continue;
+      const dg = new T.BufferGeometry();
+      dg.setAttribute('position', new T.Float32BufferAttribute(o.p, 3));
+      dg.setAttribute('uv', new T.Float32BufferAttribute(o.uv, 2));
+      if (o.n.length) dg.setAttribute('normal', new T.Float32BufferAttribute(o.n, 3)); else dg.computeVertexNormals();
+      const dm = new T.Mesh(dg, mt); dm.userData.added = true; dm.userData.decal = true; dm.renderOrder = 2; m.add(dm);
+    }
+  }
+}
+
 // ---------------------------------------------------------------- tuning silničních aut (dílna pro BMW, Porsche, Senna, G 63, Audi)
 // Úpravy jako u skutečných tunerů, ne přeplácané: kola, snížení, lip spoiler / ducktail / GT křídlo, přední lip, prahy a splitter,
 // sportovní výfuk, barevné třmeny brzd. Každý stupeň vypadá jinak a díly sedí na karoserii (poloha se hledá paprsky na model).
@@ -6075,16 +6228,16 @@ const shopLvC = (carId, id) => (CAR_TYPES[carId] && CAR_TYPES[carId].formula ? s
 const shopLevels = (carId) => Object.fromEntries(shopItemsFor(carId).map((it) => [it.id, shopLvC(carId, it.id)]));
 const roadCache = new Map();
 function roadShopCar(ct, carId) {
-  const L = shopLevels(carId), sig = carId + Object.values(L).join('');
-  if (!Object.values(L).some((v) => v > 0)) return ct;
+  const L = shopLevels(carId), dc = decalOf(carId), sig = carId + Object.values(L).join('') + dc;
+  if (!Object.values(L).some((v) => v > 0)) return dc === 'none' ? ct : { ...ct, decal: dc };
   if (roadCache.has(sig)) return roadCache.get(sig);
   const car = { ...ct, power: ct.power * (1 + 0.06 * L.engine + 0.02 * L.exhaust + 0.01 * L.wheels), vmax: ct.vmax * (1 + 0.02 * L.engine),
-    grip: ct.grip * (1 + 0.01 * L.wheels + 0.025 * L.susp + 0.015 * L.aero + 0.01 * L.front + 0.025 * L.tyres), brakeK: 1 + 0.06 * L.brakes, shop: L };
+    grip: ct.grip * (1 + 0.01 * L.wheels + 0.025 * L.susp + 0.015 * L.aero + 0.01 * L.front + 0.025 * L.tyres), brakeK: 1 + 0.06 * L.brakes, shop: L, decal: dc };
   roadCache.set(sig, car);
   return car;
 }
 // původní spoiler modelu (oblast nad víkem kufru), který koupený spoiler nahradí
-const SPOILER_CUT = { bmw: { z: -1.82, y: 0.95 }, audi: { z: -2.05, y: 0.98 }, senna: { z: -1.98, y: 1.035 }, p911: { z: -1.9, y: 0.905 } };
+const SPOILER_CUT = { bmw: { z: -1.82, y: 0.95 }, audi: { z: -2.05, y: 0.98 }, p911: { z: -1.9, y: 0.905, x: 0.98 } };
 function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
   const cut = sh.aero > 0 && SPOILER_CUT[carId];
   if (cut) {
@@ -6096,7 +6249,7 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
       for (let i = 0; i < n; i += 3) {
         const a = ix ? ix.getX(i) : i, b2 = ix ? ix.getX(i + 1) : i + 1, c2 = ix ? ix.getX(i + 2) : i + 2;
         cm.set((p.getX(a) + p.getX(b2) + p.getX(c2)) / 3, (p.getY(a) + p.getY(b2) + p.getY(c2)) / 3, (p.getZ(a) + p.getZ(b2) + p.getZ(c2)) / 3).applyMatrix4(o.matrix);
-        if (!(cm.z < cut.z && cm.y > cut.y && Math.abs(cm.x) < 0.8)) keep.push(a, b2, c2);
+        if (!(cm.z < cut.z && cm.y > cut.y && Math.abs(cm.x) < (cut.x || 0.8))) keep.push(a, b2, c2);
       }
       geo.setIndex(keep); o.geometry = geo;
     });
@@ -6125,7 +6278,15 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
     let zLid = z0 + 0.35, yLid = topAt(zLid);
     for (let z = z0 + 0.05; z < z0 + 1.2; z += 0.03) { const y = topAt(z); if (y > (tall ? Hh * 0.85 : 0.55)) { zLid = z; yLid = y; break; } }
     const w = Math.min(Wd * (tall ? 0.85 : 0.82), 1.5);
-    if (tall) {                   // střešní spoiler: tvarovaná lišta nad zadními dveřmi, se stupněm delší a více skloněná
+    if (carId === 'senna') {
+      // Senna má velké křídlo už z výroby: úpravy se přidají na něj (horní klapka, zadní lišta, větší bočnice), nic se nepřekrývá
+      let zw = z0 + 0.3, yw = 0;
+      for (let z = z0 + 0.05; z < z0 + 1.0; z += 0.02) { const y = topAt(z, 0.35); if (y > yw) { yw = y; zw = z; } }
+      const ww = Math.min(Wd * 0.9, 1.75);
+      put(softBox(ww, 0.03, 0.012, 0.5, 10), carbon, 0, yw + 0.02, zw - 0.12);                                         // gurney
+      if (sh.aero >= 2) put(airfoilGeo(0.14, ww, -0.08, 0.1), carbon, 0, yw + 0.06, zw - 0.04, 0.55);                  // horní klapka
+      if (sh.aero >= 3) for (const s of [-1, 1]) put(plateGeo(roundedPlatePts(zw - 0.17, zw + 0.06, yw - 0.02, yw + 0.13, 0.03, 0.04), 0.008), carbon, s * (ww / 2 + 0.006), 0, 0);   // malé bočnice jen u klapky
+    } else if (tall) {                   // střešní spoiler: tvarovaná lišta nad zadními dveřmi, se stupněm delší a více skloněná
       const d = [0, 0.16, 0.26, 0.36][sh.aero];
       const rs = warpGeo(softBox(w, 0.05, d, 0.5, 16), (x, y, z) => { const t = clamp(0.5 - z / d, 0, 1); return [x * (1 - 0.04 * t), y * (1 - 0.4 * t) - 0.05 * t, z]; });
       put(rs, sh.aero >= 3 ? carbon : paintM, 0, yLid + 0.02, zLid - d / 2 + 0.12, -0.08);
@@ -6139,16 +6300,17 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
     } else {
       // GT křídlo jako u závodních aut GT3: dvouprvkové (hlavní profil a klapka), drží ho dva „labutí krky“ ze zadní hrany
       // víka, které ho chytají shora; velké tvarované bočnice s výřezem a zadní lištou (gurney). Karbon s leskem.
-      const ww = Math.min(Wd * 0.94, 1.72), yW = yLid + 0.34, zW = zLid + 0.22, ch = 0.32;
+      const ww = Math.min(Wd * 0.84, 1.6), yW = yLid + 0.3, zW = zLid + 0.2, ch = 0.3;
       put(airfoilGeo(ch, ww, -0.085, 0.11), carbon, 0, yW, zW + ch * 0.5, 0.1);                 // hlavní profil
       put(airfoilGeo(ch * 0.45, ww, -0.09, 0.1), carbon, 0, yW + 0.055, zW - ch * 0.48, 0.42);   // klapka nad odtokovou hranou
       put(softBox(ww, 0.02, 0.008, 0.5, 8), gloss, 0, yW + 0.105, zW - ch * 0.66, 0.42);          // gurney
       for (const s of [-1, 1]) {
         const x = s * ww * 0.28;
-        put(pylonGeo([[x, yLid + 0.01, zLid + 0.05], [x, yLid + 0.2, zLid - 0.02], [x, yW + 0.09, zW - 0.02], [x, yW + 0.03, zW + 0.12]], 0.022, 0.32), carbon, 0, 0, 0);   // labutí krk
-        put(new T.CylinderGeometry(0.035, 0.04, 0.012, 16), gloss, x, yLid + 0.006, zLid + 0.05);    // patka na víku
-        const pts = [[zW + ch * 0.62, yW - 0.04], [zW + ch * 0.62, yW + 0.07], [zW + 0.02, yW + 0.15], [zW - ch * 0.72, yW + 0.16], [zW - ch * 0.78, yW + 0.03], [zW - ch * 0.5, yW - 0.1], [zW + ch * 0.2, yW - 0.12]];
-        put(plateGeo(pts, 0.009), carbon, s * (ww / 2 + 0.006), 0, 0);                               // tvarovaná bočnice
+        // pevný nosník (plochá deska jako u GT3), dole široký na víku, nahoře pod profilem
+        const py = [[zLid + 0.16, yLid - 0.01], [zLid - 0.04, yLid - 0.01], [zW - ch * 0.05, yW - 0.01], [zW + ch * 0.45, yW - 0.01], [zW + ch * 0.4, yW - 0.07], [zLid + 0.12, yLid + 0.06]];
+        put(plateGeo(py, 0.014), carbon, x, 0, 0);
+        const pts = [[zW + ch * 0.6, yW - 0.03], [zW + ch * 0.6, yW + 0.06], [zW + 0.02, yW + 0.12], [zW - ch * 0.68, yW + 0.13], [zW - ch * 0.72, yW + 0.02], [zW - ch * 0.4, yW - 0.06], [zW + ch * 0.2, yW - 0.07]];
+        put(plateGeo(pts, 0.008), carbon, s * (ww / 2 + 0.005), 0, 0);                               // tvarovaná bočnice
       }
     }
   }
@@ -6168,7 +6330,7 @@ function roadShopLook(sh, { body, wheels, bb, lv, carId }) {
   // ---- výfuk pod zadním nárazníkem
   if (sh.exhaust > 0) {
     const yu = under(z0 + 0.25), ye = yu + 0.07, ze = rearAt(ye + 0.04) - 0.02;
-    const ti = sh.exhaust >= 3 ? addShine(new T.MeshStandardMaterial({ color: '#7a6db0', metalness: 0.95, roughness: 0.22 }), 'tune-ti', { gloss: 1.3 }) : chrome;
+    const ti = sh.exhaust >= 3 ? addShine(new T.MeshStandardMaterial({ color: '#8c929c', metalness: 0.95, roughness: 0.22 }), 'tune-ti', { gloss: 1.3 }) : chrome;
     const xs = sh.exhaust >= 3 ? [-0.5, -0.38, 0.38, 0.5] : [-0.45, 0.45];
     for (const x0 of xs) {
       const x = x0 * Math.min(1, Wd / 1.8), r = sh.exhaust === 2 ? 0.045 : 0.038;
@@ -8034,7 +8196,7 @@ function cockpitUpdate(dt, on) {
       g.fillStyle = '#8a97a8'; g.font = '700 15px Arial, sans-serif'; g.fillText('km/h', 178, 94);
       const nf = clamp(car.nos / Math.max(0.1, nosTank()), 0, 1);
       g.fillStyle = '#1a2230'; g.fillRect(14, 116, 228, 12);
-      g.fillStyle = car.nosOn ? '#b06bff' : '#2f9bff'; g.fillRect(14, 116, 228 * nf, 12);
+      g.fillStyle = car.nosOn ? '#ffb020' : '#2f9bff'; g.fillRect(14, 116, 228 * nf, 12);
       g.fillStyle = '#8a97a8'; g.font = '700 12px Arial, sans-serif'; g.textAlign = 'left'; g.fillText('KERS', 14, 108);
       cockpit.disp.needsUpdate = true;
     }
@@ -10199,7 +10361,7 @@ function shopThumb2D(id, l) {
     c.fillStyle = '#0c0d0f'; c.beginPath(); c.ellipse(64, 40, 34, 32, 0, 0, 7); c.fill();
     c.fillStyle = '#17191d'; c.beginPath(); c.ellipse(64, 40, 24, 22, 0, 0, 7); c.fill();
     c.strokeStyle = '#e8102a'; c.lineWidth = 3; c.beginPath(); c.arc(64, 40, 27, 0, 7); c.stroke();
-    if (l >= 1) { c.strokeStyle = l === 3 ? '#b06bff' : '#ffffff'; c.lineWidth = l === 3 ? 4 : 2; if (l === 3) { c.shadowColor = '#b06bff'; c.shadowBlur = 10; } c.beginPath(); c.arc(64, 40, 30, 0, 7); c.stroke(); c.shadowBlur = 0; }
+    if (l >= 1) { c.strokeStyle = l === 3 ? '#ffb020' : '#ffffff'; c.lineWidth = l === 3 ? 4 : 2; if (l === 3) { c.shadowColor = '#ffb020'; c.shadowBlur = 10; } c.beginPath(); c.arc(64, 40, 30, 0, 7); c.stroke(); c.shadowBlur = 0; }
     if (l >= 2) { c.strokeStyle = '#ffd200'; c.lineWidth = 1.5; c.beginPath(); c.arc(64, 40, 32, 0, 7); c.stroke(); }
     c.fillStyle = '#9aa3b2'; c.font = '700 9px Arial'; c.textAlign = 'center'; c.fillText('PIRELLI', 64, 14);
     void w; void col;
@@ -10211,7 +10373,7 @@ function shopThumb2D(id, l) {
     c.shadowBlur = 0; c.strokeStyle = '#3a3d44'; c.lineWidth = 1; for (let y = 16; y < 70; y += 10) { c.beginPath(); c.moveTo(42, y); c.lineTo(86, y + 4); c.stroke(); }
   } else if (id === 'kers') {
     rr(34, 18, 60, 44, 6, '#15171b');
-    const col = l >= 3 ? '#b06bff' : '#35d0ff';
+    const col = l >= 3 ? '#ffb020' : '#35d0ff';
     if (l >= 1) { c.fillStyle = col; c.shadowColor = col; c.shadowBlur = 8 + l * 3; c.fillRect(40, 38 - l * 2, 48, 3 + l * 2); c.shadowBlur = 0; }
     if (l >= 2) for (let k = 0; k < 4; k++) rr(40 + k * 12, 22, 8, 10, 2, acc);
     if (l >= 3) { c.fillStyle = col; c.shadowColor = col; c.shadowBlur = 8; c.fillRect(44, 56, 40, 3); c.shadowBlur = 0; }
@@ -10349,7 +10511,7 @@ const carShotCache = new Map();
 function renderCarShot(carId, shop, view, W2, H2) {
   const key = [carId, JSON.stringify(shop), view, W2, saved.livery, f1Team()].join('|');
   if (carShotCache.has(key)) return carShotCache.get(key);
-  const ct = CAR_TYPES[carId], spec = { ...ct, shop };
+  const ct = CAR_TYPES[carId], spec = { ...ct, shop, decal: shop && shop.decal };
   const lv = ct.formula ? { ...LIVERIES[0], team: f1Team() } : LIVERIES[clamp(saved.livery | 0, 0, LIVERIES.length - 1)];
   const c = buildModelCar(lv, spec);
   c.beams.visible = false; c.pod.visible = false; c.flame.visible = false;
@@ -10369,6 +10531,8 @@ function renderCarShot(carId, shop, view, W2, H2) {
     wheels: [[wp.x + 1.9, wp.y + 0.15, wp.z + 0.25], [wp.x, wp.y, wp.z], 22], brakes: [[wp.x + 1.9, wp.y + 0.15, wp.z + 0.25], [wp.x, wp.y, wp.z], 22],
     tyres: [[wp.x + 1.5, wp.y + 1.0, wp.z + 1.2], [wp.x, wp.y - 0.05, wp.z], 24],
     susp: [[Wd / 2 + 5.2, 0.55, 0.2], [0, 0.45, 0], 30],
+    side: [[Wd / 2 + 4.4, 1.35, bb.max.z * 0.35], [0, 0.55, 0], 38],
+    top: [[0.01, Hh + 5, 0.2], [0, 0, 0], 40],
     aero: [[Wd * 0.9, Hh + 0.9, bb.min.z - 2.6], [0, Hh * 0.62, bb.min.z + 0.45], 30], exhaust: [[Wd * 0.55, 0.45, bb.min.z - 2.2], [0, 0.3, bb.min.z + 0.2], 30],
     front: [[Wd * 0.9, 0.7, bb.max.z + 2.4], [0, 0.25, bb.max.z - 0.3], 32], engine: [[Wd * 0.8, Hh + 1.1, bb.max.z + 2.0], [0, Hh * 0.55, bb.max.z * 0.4], 32],
   }[view] || null;
@@ -10400,7 +10564,7 @@ function showShopHero(carId) {
   const el = $('shopHero'); if (!el) return;
   el.classList.remove('on');
   ensureCarModel(CAR_TYPES[carId].model).then(() => {
-    try { const h = renderCarShot(carId, shopLevels(carId), 'hero', 960, 420); el.width = h.width; el.height = h.height; el.getContext('2d').drawImage(h, 0, 0); el.classList.add('on'); } catch (e) { console.error('hero', e); }
+    try { const h = renderCarShot(carId, { ...shopLevels(carId), decal: CAR_TYPES[carId].formula ? undefined : decalOf(carId) }, 'hero', 960, 420); el.width = h.width; el.height = h.height; el.getContext('2d').drawImage(h, 0, 0); el.classList.add('on'); } catch (e) { console.error('hero', e); }
   });
 }
 let shopPop = null;
@@ -10443,6 +10607,24 @@ function openShop() {
       b.onclick = () => shopBuy(it.id);
     }
     list.appendChild(row);
+  }
+  // polepy (levý sloupec, jen silniční auta)
+  $('shopBody').classList.toggle('f1', !!ct.formula);
+  const dl = $('shopDecals'); dl.innerHTML = '';
+  if (!ct.formula) for (const dc of DECALS) {
+    const own = decalOwned(sel, dc.id), cur = decalOf(sel) === dc.id, b = document.createElement('button');
+    b.className = 'decal-it' + (cur ? ' on' : '') + (own ? '' : ' locked');
+    b.innerHTML = '<span class="pv"></span><b></b><small></small>';
+    b.querySelector('b').textContent = dc.name;
+    b.querySelector('small').textContent = cur ? 'NASAZENO' : own ? 'NASADIT' : moneyStr(dc.price);
+    if (ready) b.querySelector('.pv').appendChild((() => { const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const c2 = cv.getContext('2d'); c2.fillStyle = '#1b1e24'; c2.fillRect(0, 0, 256, 128); shopPrev.queue.push({ cv, run: () => renderCarShot(sel, { ...shopLevels(sel), decal: dc.id }, 'side', 256, 128) }); if (!shopPrev.timer) shopPrev.timer = setTimeout(shopPrevPump, 30); return cv; })());
+    b.onclick = () => {
+      if (!own) { if ((saved.money | 0) < dc.price) { toast('Na tenhle polep zatím nemáš peníze', 1.6); return; } saved.money = (saved.money | 0) - dc.price; saved.decalsOwned = { ...(saved.decalsOwned || {}), [sel + ':' + dc.id]: 1 }; UIS.coin(); }
+      saved.decals = { ...(saved.decals || {}), [sel]: dc.id }; persist();
+      if (saved.car === sel && car3d && !G.gp) setLivery(saved.livery);
+      openShop(); renderMenu();
+    };
+    dl.appendChild(b);
   }
   $('shopTitleCar').textContent = ct.name;
   shopPop = null;
@@ -11772,7 +11954,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { start: gpStart, end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
