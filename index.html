@@ -12,6 +12,27 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
+<script>
+// kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
+// Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
+// (jen mimo závod a nejvýš jednou za minutu).
+window.__BUILD = 'mvxnmblm';
+(function () {
+  function check() {
+    try {
+      var g = window.__rally && window.__rally.G; if (g && g.mode === 'race') return;
+      var last = +(sessionStorage.getItem('rs.reloadAt') || 0); if (Date.now() - last < 60000) return;
+      fetch('version.txt?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (v) {
+        v = (v || '').trim(); if (!v || v === window.__BUILD) return;
+        var g2 = window.__rally && window.__rally.G; if (g2 && g2.mode === 'race') return;
+        sessionStorage.setItem('rs.reloadAt', String(Date.now())); location.reload();
+      }).catch(function () {});
+    } catch (e) { /* nic */ }
+  }
+  setTimeout(check, 1500);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+})();
+</script>
 </head>
 <body>
 <title>Rally Sprint</title>
