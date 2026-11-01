@@ -7628,11 +7628,12 @@ function readInput() {
   if (tv != null && !touchKeys.left && !touchKeys.right) steer = clamp(steer + tv, -1, 1);
   if (saved.autoGas && !brake && !hb) throttle = Math.max(throttle, 1);
   if (nos && !brake) throttle = 1; // nitro jede vždycky s plným plynem
-  // asistence (menu): ABS povolí brzdu, když auto ve smyku ztrácí směr; stabilizace ubere plyn a pootočí volant proti smyku
+  // asistence (menu): ABS povolí brzdu, když auto ve smyku ztrácí směr; stabilizace ve velkém smyku jen ubere plyn
+  // (do volantu nesahá – řízení je vždycky hráče; smyk navíc jemně tlumí ve fyzice, viz espDamp)
   if (saved.asABS && brake > 0 && Math.abs(car.vr || 0) > 2.2 && Math.abs(car.vf) > 8) brake = Math.min(brake, 0.55 + 0.25 * Math.sin(nowT / 40));
   if (saved.asESP && Math.abs(car.vf) > 6) {
-    const slipA = Math.atan2(car.vr || 0, Math.max(3, Math.abs(car.vf)));
-    if (Math.abs(slipA) > 0.14) { throttle *= clamp(1 - (Math.abs(slipA) - 0.14) * 4, 0.25, 1); steer = clamp(steer - slipA * 0.9, -1, 1); }
+    const slipA = Math.abs(Math.atan2(car.vr || 0, Math.max(3, Math.abs(car.vf))));
+    if (slipA > 0.3) throttle *= clamp(1 - (slipA - 0.3) * 2.5, 0.5, 1);
   }
   return { steer: clamp(steer, -1, 1), throttle, brake, hb, nos };
 }
@@ -8142,6 +8143,8 @@ function physics(dt, inp) {
   const sp0 = Math.abs(car.vf), slow = lerp(1, 0.55, clamp((sp0 - 15) / 30, 0, 1));
   const rate = (Math.abs(inp.steer) > Math.abs(car.steer) && Math.sign(inp.steer) === Math.sign(car.steer || inp.steer) ? 3.4 : 7) * slow;
   const steerIn = clamp(inp.steer + dmgPull(), -1, 1);   // poškozené zavěšení táhne na stranu
+  // stabilizace: velký smyk (otáčení auta) se jemně utlumí, řízení zůstává hráči
+  if (saved.asESP && Math.abs(car.vf) > 6 && Math.abs(Math.atan2(car.vr || 0, Math.abs(car.vf))) > 0.35) car.omega *= 1 - Math.min(0.5, dt * 1.2);
   car.steer += clamp(steerIn - car.steer, -rate * dt, rate * dt);
 
   const fx = Math.sin(car.h), fz = Math.cos(car.h), rx = -fz, rz = fx;
@@ -12016,9 +12019,10 @@ $('bPhoto').onclick = () => photoStart();
 // ---- úprava rozložení dotykových tlačítek: v režimu úprav se tlačítka přetahují prstem, posuvník mění velikost;
 // poloha se ukládá jako posun vůči původnímu místu (v pixelech), velikost jako násobek
 function layoutApply() {
-  const L = saved.touchLayout || {}, k = saved.touchScale || 1;
+  const L = saved.touchLayout || {}, k = clamp(+saved.touchScale || 1, 0.7, 1.4);
+  const lim = (v, m) => clamp(Number.isFinite(v) ? v : 0, -m, m);
   for (const b of document.querySelectorAll('#touch .tbtn')) {
-    const o = L[b.dataset.k];
+    const o0 = L[b.dataset.k], o = o0 && [lim(o0[0], innerWidth * 0.45), lim(o0[1], innerHeight * 0.6)];
     b.style.transform = `${o ? `translate(${o[0]}px, ${o[1]}px) ` : ''}scale(${k})`;
     b.style.transformOrigin = 'center bottom';
   }
