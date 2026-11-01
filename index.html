@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mvyb84pc';
+window.__BUILD = 'mvycf8uj';
 (function () {
   function check() {
     try {
@@ -538,6 +538,18 @@ window.__BUILD = 'mvyb84pc';
   @keyframes layWiggle { from { filter: brightness(1); } to { filter: brightness(1.35); } }
   .rp-bar.lay { top: calc(14px + env(safe-area-inset-top, 0px)); bottom: auto; }
   .rp-bar label { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
+  /* okno Nastavení (přepínače přesunuté z lobby) */
+  .settings-card { width: min(560px, 100%); gap: 10px; }
+  .settings-card .label { margin: 6px 0 0; }
+  .settings-card .setup-top { font-size: 19px; }
+  .settings-card .setup-top .ic { color: #7fb4ff; }
+  .settings-card .setup-top { justify-content: space-between; } .settings-card .setup-top .t { white-space: nowrap; flex: none; } .settings-card .setup-top small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 600px) { .settings-card .setup-top small { display: none; } .settings-card h2 em { display: block; font-size: .6em; } }
+  .settings-card .help { font-size: 13px; opacity: .8; margin: 6px 0 0; }
+  #menu .settings-btn { order: 13; font-size: 21px; }
+  #menu .settings-btn .ic { color: #ffd23f; }
+  #menu .settings-btn small { color: #ffd23f; font-weight: 700; }
+  @media (max-height: 520px), (max-width: 600px) { #menu .settings-btn small { display: none; } }
   /* nastavení auta */
   .setup-card { width: min(560px, 100%); }
   #menu .setup-top { margin: 0 0 4px; font-size: 20px; }
@@ -960,7 +972,6 @@ window.__BUILD = 'mvyb84pc';
       <p class="tagline" id="tagline">Šest rychlostních zkoušek, přes 33 km šotoliny, sněhu, asfaltu, písku a rudé keňské savany. Spolujezdec hlásí každou zatáčku.</p>
     </div>
     <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Dílna</span> <small>díly formule</small></button>
-    <button class="btn ghost setup-top" id="bSetup"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="16" cy="6" r="2.4" fill="currentColor"/><circle cx="10" cy="12" r="2.4" fill="currentColor"/><circle cx="18" cy="18" r="2.4" fill="currentColor"/></svg>Nastavení auta</span> <small>přítlak · převody · podvozek · pneu</small></button>
     <p class="label" id="lblStages">Rychlostní zkoušky</p>
     <div class="stages" id="stageList"></div>
     <div class="detail" id="stageDetail"></div>
@@ -980,55 +991,14 @@ window.__BUILD = 'mvyb84pc';
         <button class="btn ghost" id="bWeekly" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm-2 8h14v10H5zm2 2v3h3v-3z" fill="currentColor"/></svg>Výzva týdne</span> <small id="bWeeklySub"></small></button>
       </div>
     </div>
+    <button class="btn ghost settings-btn" id="bSettings"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg>Nastavení</span> <small>zvuk, řízení, asistenti, rally, grafika</small></button>
     <div class="actions start-bar">
       <button class="btn" id="bStart"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Odstartovat</span> <small id="bStartSub"></small></button>
     </div>
     <div class="settings">
-      <p class="label" id="lblCars">Auto a nastavení</p>
+      <p class="label" id="lblCars">Auto</p>
       <div class="cars" id="carList"></div>
-      <div class="toggles">
-        <button class="tog" id="tVoice"><i></i>Hlas spolujezdce</button>
-        <button class="tog" id="tSound"><i></i>Zvuk</button>
-        <button class="tog" id="tAuto"><i></i>Automatický plyn</button>
-        <button class="tog" id="tBrake"><i></i>Automatické brzdění</button>
-        <button class="tog" id="tGhost"><i></i>Duch rekordu</button>
-        <button class="tog" id="tLine"><i></i>Ideální stopa (okruh)</button>
-        <button class="tog" id="tFog"><i></i>Ranní mlha (rally)</button>
-        <button class="tog" id="tWx">Počasí (rally): <b id="tWxVal"></b></button>
-        <button class="tog" id="tTyre">Pneumatiky: <b id="tTyreVal"></b></button>
-        <button class="tog" id="tSpare"><i></i>Rezerva v kufru</button>
-        <button class="tog" id="tLineC"><i></i>Stopa jen v zatáčkách</button>
-        <button class="tog" id="tDmg"><i></i>Poškození aut</button>
-        <button class="tog" id="tABS"><i></i>Asistent ABS</button>
-        <button class="tog" id="tESP"><i></i>Stabilizace (proti smyku)</button>
-        <button class="tog" id="tRumble"><i></i>Vibrace</button>
-        <button class="tog touch-only" id="tLayout">Rozložení tlačítek…</button>
-        <button class="tog" id="tHandling">Řízení: <b id="tHandlingVal"></b></button>
-        <button class="tog" id="tQuality">Grafika: <b id="tQualityVal"></b></button>
-        <button class="tog touch-only" id="tTilt"><i></i>Zatáčení náklonem</button>
-        <button class="tog" id="tScale">Zatáčky: <b id="tScaleVal"></b></button>
-      </div>
-      <p class="vinfo" id="voiceInfo" hidden></p>
-      <p class="vinfo" id="tiltInfo" hidden></p>
     </div>
-    <p class="help">
-      <kbd>↑</kbd> plyn · <kbd>↓</kbd> brzda/couvání · <kbd>←</kbd><kbd>→</kbd> zatáčení · <kbd>Mezerník</kbd> ruční brzda · <kbd>N</kbd> nebo <kbd>Shift</kbd> nitro (jedna nádrž na zkoušku) ·
-      <kbd>C</kbd> kamera · <kbd>R</kbd> zpět na trať · <kbd>Esc</kbd> pauza. Funguje i herní ovladač.
-      Na telefonu tlačítka na displeji, nejlépe na šířku, nebo zatáčení naklápěním telefonu jako volantem.
-    </p>
-    <p class="help credit">Modely aut (Sketchfab): <a href="https://sketchfab.com/3d-models/free-bmw-m3-e30-ac3c7013434e403e8faff87948caf422" target="_blank" rel="noopener">[FREE] BMW M3 E30</a> od Martina Trafase,
-      <a href="https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e" target="_blank" rel="noopener">FREE 1975 Porsche 911 (930) Turbo</a> od Lionsharp Studios,
-      <a href="https://sketchfab.com/3d-models/mclaren-senna-free-ea3e43a6eb004853a87fe9c58422eb96" target="_blank" rel="noopener">McLaren Senna Free</a> od Black Snow
-      (vše <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) a
-      <a href="https://sketchfab.com/3d-models/mercedes-benz-g63-amg-w464-3b25ec59233a4a82a6732b0a1419e553" target="_blank" rel="noopener">Mercedes-Benz G63 AMG (W464)</a> od ceron_alex
-      (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>, jen nekomerčně),
-      <a href="https://sketchfab.com/3d-models/2020-audi-rs5-coupe-db82f980fc0d408fbbde8deff36a82bd" target="_blank" rel="noopener">2020 Audi RS5 Coupé</a> od Ddiaz Design
-      (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>, upravený model pod stejnou licencí),
-      <a href="https://sketchfab.com/3d-models/formula-1-car-version-1-84423c99221240c497f38a549ea50a2a" target="_blank" rel="noopener">Formula 1 Car (Version 1)</a> od Snoozy
-      (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, obarveno do barev týmu).
-      Postava jezdce: X Bot z <a href="https://www.mixamo.com" target="_blank" rel="noopener">Adobe Mixamo</a> (z ukázek three.js).
-      Tvary okruhů Miami, Monza a Silverstone: <a href="https://github.com/bacinger/f1-circuits" target="_blank" rel="noopener">bacinger/f1-circuits</a> (MIT).
-      Upraveno: bez interiéru a log, zjednodušeno, vlastní lak. Jména týmů F1 jsou ochranné známky svých vlastníků; hra není spojená s výrobci aut ani s týmy.</p>
   </div>
 </div>
 
@@ -1168,6 +1138,69 @@ window.__BUILD = 'mvyb84pc';
     <p class="help">Krátké úkoly na rallyových etapách. Za každou novou hvězdu 150 $, za 20 hvězd úspěch Kaskadér.</p>
     <div id="stuntBody"></div>
     <div class="actions"><button class="btn ghost" id="stuntClose">Zpět</button></div>
+  </div>
+</div>
+
+<div id="settingsModal" class="modal" hidden>
+  <div class="card settings-card">
+    <h2>Nastavení <em>zvuk, řízení, asistenti, rally, grafika</em></h2>
+    <button class="btn ghost setup-top" id="bSetup"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="16" cy="6" r="2.4" fill="currentColor"/><circle cx="10" cy="12" r="2.4" fill="currentColor"/><circle cx="18" cy="18" r="2.4" fill="currentColor"/></svg>Nastavení auta</span> <small>přítlak · převody · podvozek · pneu</small></button>
+    <p class="label">Zvuk a hlas</p>
+    <div class="toggles">
+        <button class="tog" id="tVoice"><i></i>Hlas spolujezdce</button>
+        <button class="tog" id="tSound"><i></i>Zvuk</button>
+        <button class="tog" id="tRumble"><i></i>Vibrace</button>
+    </div>
+    <p class="vinfo" id="voiceInfo" hidden></p>
+    <p class="label">Řízení a ovládání</p>
+    <div class="toggles">
+        <button class="tog" id="tHandling">Řízení: <b id="tHandlingVal"></b></button>
+        <button class="tog" id="tScale">Zatáčky: <b id="tScaleVal"></b></button>
+        <button class="tog touch-only" id="tTilt"><i></i>Zatáčení náklonem</button>
+        <button class="tog touch-only" id="tLayout">Rozložení tlačítek…</button>
+    </div>
+    <p class="vinfo" id="tiltInfo" hidden></p>
+    <p class="label">Asistenti</p>
+    <div class="toggles">
+        <button class="tog" id="tAuto"><i></i>Automatický plyn</button>
+        <button class="tog" id="tBrake"><i></i>Automatické brzdění</button>
+        <button class="tog" id="tABS"><i></i>Asistent ABS</button>
+        <button class="tog" id="tESP"><i></i>Stabilizace (proti smyku)</button>
+        <button class="tog" id="tLine"><i></i>Ideální stopa (okruh)</button>
+        <button class="tog" id="tLineC"><i></i>Stopa jen v zatáčkách</button>
+        <button class="tog" id="tGhost"><i></i>Duch rekordu</button>
+    </div>
+    <p class="label">Rally</p>
+    <div class="toggles">
+        <button class="tog" id="tWx">Počasí (rally): <b id="tWxVal"></b></button>
+        <button class="tog" id="tTyre">Pneumatiky: <b id="tTyreVal"></b></button>
+        <button class="tog" id="tSpare"><i></i>Rezerva v kufru</button>
+        <button class="tog" id="tFog"><i></i>Ranní mlha (rally)</button>
+        <button class="tog" id="tDmg"><i></i>Poškození aut</button>
+    </div>
+    <p class="label">Grafika</p>
+    <div class="toggles">
+        <button class="tog" id="tQuality">Grafika: <b id="tQualityVal"></b></button>
+    </div>
+    <p class="help">
+      <kbd>↑</kbd> plyn · <kbd>↓</kbd> brzda/couvání · <kbd>←</kbd><kbd>→</kbd> zatáčení · <kbd>Mezerník</kbd> ruční brzda · <kbd>N</kbd> nebo <kbd>Shift</kbd> nitro (jedna nádrž na zkoušku) ·
+      <kbd>C</kbd> kamera · <kbd>R</kbd> zpět na trať · <kbd>Esc</kbd> pauza. Funguje i herní ovladač.
+      Na telefonu tlačítka na displeji, nejlépe na šířku, nebo zatáčení naklápěním telefonu jako volantem.
+    </p>
+    <p class="help credit">Modely aut (Sketchfab): <a href="https://sketchfab.com/3d-models/free-bmw-m3-e30-ac3c7013434e403e8faff87948caf422" target="_blank" rel="noopener">[FREE] BMW M3 E30</a> od Martina Trafase,
+      <a href="https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e" target="_blank" rel="noopener">FREE 1975 Porsche 911 (930) Turbo</a> od Lionsharp Studios,
+      <a href="https://sketchfab.com/3d-models/mclaren-senna-free-ea3e43a6eb004853a87fe9c58422eb96" target="_blank" rel="noopener">McLaren Senna Free</a> od Black Snow
+      (vše <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) a
+      <a href="https://sketchfab.com/3d-models/mercedes-benz-g63-amg-w464-3b25ec59233a4a82a6732b0a1419e553" target="_blank" rel="noopener">Mercedes-Benz G63 AMG (W464)</a> od ceron_alex
+      (<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a>, jen nekomerčně),
+      <a href="https://sketchfab.com/3d-models/2020-audi-rs5-coupe-db82f980fc0d408fbbde8deff36a82bd" target="_blank" rel="noopener">2020 Audi RS5 Coupé</a> od Ddiaz Design
+      (<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>, upravený model pod stejnou licencí),
+      <a href="https://sketchfab.com/3d-models/formula-1-car-version-1-84423c99221240c497f38a549ea50a2a" target="_blank" rel="noopener">Formula 1 Car (Version 1)</a> od Snoozy
+      (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, obarveno do barev týmu).
+      Postava jezdce: X Bot z <a href="https://www.mixamo.com" target="_blank" rel="noopener">Adobe Mixamo</a> (z ukázek three.js).
+      Tvary okruhů Miami, Monza a Silverstone: <a href="https://github.com/bacinger/f1-circuits" target="_blank" rel="noopener">bacinger/f1-circuits</a> (MIT).
+      Upraveno: bez interiéru a log, zjednodušeno, vlastní lak. Jména týmů F1 jsou ochranné známky svých vlastníků; hra není spojená s výrobci aut ani s týmy.</p>
+    <div class="actions"><button class="btn" id="settingsClose">Hotovo</button></div>
   </div>
 </div>
 
@@ -12638,6 +12671,9 @@ function openTrophies(tab = 'ach') {
 for (const b of document.querySelectorAll('#trophyTabs [data-tab]')) b.onclick = () => openTrophies(b.dataset.tab);
 $('trophyClose').onclick = () => { $('trophyModal').hidden = true; renderMenu(); };
 $('bTrophy').onclick = () => openTrophies();
+// okno Nastavení: přepínače (zvuk, řízení, asistenti, rally, grafika) přesunuté z lobby, aby bylo přehlednější
+$('bSettings').onclick = () => { renderMenu(); $('settingsModal').hidden = false; $('settingsModal').querySelector('.card').scrollTop = 0; };
+$('settingsClose').onclick = () => { $('settingsModal').hidden = true; renderMenu(); };
 // ---------------------------------------------------------------- výzva týdne a žebříček
 // Každý týden (ISO týden, pondělí–neděle) má všude stejné zadání odvozené z čísla týdne: etapa, auto, počasí a
 // pravidlo (bez nitra / jen z kabiny / bez poškození / bez pravidla). Cíle na bronz, stříbro a zlato podle ideálního
@@ -13039,7 +13075,7 @@ function edGo(d) {
 }
 // ---------------------------------------------------------------- pódium po Velké ceně
 // Vlastní 3D scéna: noční obloha s ohňostrojem, stupně vítězů 1-2-3 s čísly a pruhy, stěna se znaky závodu,
-// tři jezdci v kombinézách svých týmů (helma s hledím), vítěz zvedá zlatou trofej, ostatní mávají; padají konfety.
+// formule tří nejlepších týmů na stupních, před vítězným vozem se točí zlatá trofej; padají konfety.
 // Kamera pomalu krouží, po 7 s (nebo po ťuknutí) se ukážou výsledky, pódium zůstane v pozadí.
 const pdM = new T.Matrix4(), pdP = new T.Vector3(), pdS = new T.Vector3(), pdQ = new T.Quaternion(), pdE = new T.Euler(), pdC = new T.Color();
 const PODIUM = { on: false, scene: null, cam: null, t: 0, fw: null, conf: null, shown: false };
@@ -13061,40 +13097,38 @@ function podiumShow(rows) {
     g.globalAlpha = 1; g.fillStyle = 'rgba(255,196,25,.5)'; g.fillRect(0, 126, w, 4);
   });
   wallTex.wrapS = T.RepeatWrapping; wallTex.repeat.set(2, 1);
-  const wall = new T.Mesh(new T.PlaneGeometry(22, 5.5), new T.MeshStandardMaterial({ map: wallTex, roughness: 0.6, emissive: '#ffffff', emissiveMap: wallTex, emissiveIntensity: 0.35 }));
-  wall.position.set(0, 2.75, -3.2); sc.add(wall);
-  for (const y of [0.05, 5.5]) { const led = new T.Mesh(new T.BoxGeometry(22, 0.08, 0.08), new T.MeshBasicMaterial({ color: '#ffc419' })); led.position.set(0, y, -3.15); sc.add(led); }
+  const wall = new T.Mesh(new T.PlaneGeometry(26, 5.5), new T.MeshStandardMaterial({ map: wallTex, roughness: 0.6, emissive: '#ffffff', emissiveMap: wallTex, emissiveIntensity: 0.35 }));
+  wall.position.set(0, 2.75, -4.8); sc.add(wall);
+  for (const y of [0.05, 5.5]) { const led = new T.Mesh(new T.BoxGeometry(26, 0.08, 0.08), new T.MeshBasicMaterial({ color: '#ffc419' })); led.position.set(0, y, -4.75); sc.add(led); }
   // stupně vítězů
   const stepM = new T.MeshStandardMaterial({ color: '#e9ecf1', roughness: 0.4, metalness: 0.1 });
-  const H = [1.25, 0.9, 0.62], X = [0, -2.2, 2.2];
+  const H = [1.25, 0.9, 0.62], X = [0, -3.1, 3.1];   // stupně jsou široké a hluboké na celou formuli
   const people = [];
   top.forEach((r, k) => {
     const tm = F1_TEAMS[r.team] || F1_TEAMS[me];
     const numTex = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#e9ecf1'; g.fillRect(0, 0, w, h); g.fillStyle = tm.body; g.fillRect(0, h - 46, w, 46); g.fillStyle = '#10131a'; g.font = 'italic 900 170px "Saira Condensed", Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(k + 1), w / 2, h / 2 - 18); });
-    const st = new T.Mesh(new T.BoxGeometry(2.1, H[k], 1.6), [stepM, stepM, stepM, stepM, new T.MeshStandardMaterial({ map: numTex, roughness: 0.45 }), stepM]);
+    const st = new T.Mesh(new T.BoxGeometry(2.9, H[k], 6.8), [stepM, stepM, stepM, stepM, new T.MeshStandardMaterial({ map: numTex, roughness: 0.45 }), stepM]);
     st.position.set(X[k], H[k] / 2, 0); sc.add(st);
-    const trim = new T.Mesh(new T.BoxGeometry(2.12, 0.05, 1.62), new T.MeshStandardMaterial({ color: k === 0 ? '#ffc419' : k === 1 ? '#c7ccd4' : '#c8803c', metalness: 0.9, roughness: 0.25 }));
+    const trim = new T.Mesh(new T.BoxGeometry(2.92, 0.05, 6.82), new T.MeshStandardMaterial({ color: k === 0 ? '#ffc419' : k === 1 ? '#c7ccd4' : '#c8803c', metalness: 0.9, roughness: 0.25 }));
     trim.position.set(X[k], H[k], 0); sc.add(trim);
-    // jezdec: postava v kombinéze týmu (vítěz ruce nahoře s trofejí, ostatní mávají)
-    const pose = crewPose(k === 0 ? 'cheer' : 'wave');
-    const g = new T.Group(); g.position.set(X[k], H[k], 0.1); g.rotation.y = (k === 1 ? 0.18 : k === 2 ? -0.18 : 0);
-    if (pose) {
-      const suit = new T.MeshStandardMaterial({ color: tm.body, roughness: 0.7 }), tr = new T.MeshStandardMaterial({ color: tm.a1, roughness: 0.6 }), dk = new T.MeshStandardMaterial({ color: '#16181d', roughness: 0.7 });
-      g.add(new T.Mesh(pose.suit, suit), new T.Mesh(pose.trim, tr), new T.Mesh(pose.dark, dk));
-      const hm = new T.Mesh(new T.SphereGeometry(0.135, 20, 14).scale(0.95, 1, 1.08), new T.MeshStandardMaterial({ color: tm.a1 && new T.Color(tm.a1).getHSL({}).l > 0.3 ? tm.a1 : '#eef1f5', roughness: 0.2, metalness: 0.3 }));
-      hm.position.copy(pose.head); g.add(hm);
-      const vz = new T.Mesh(new T.SphereGeometry(0.14, 20, 8, Math.PI / 2 - 0.8, 1.6, 1.15, 0.5).scale(0.95, 1, 1.08), new T.MeshStandardMaterial({ color: '#0b0e14', roughness: 0.05, metalness: 0.8 }));
-      vz.position.copy(pose.head); g.add(vz);
-      if (k === 0) {
-        // zlatá trofej nad hlavou
-        const pts = [[0, 0], [0.09, 0], [0.09, 0.03], [0.03, 0.06], [0.025, 0.2], [0.06, 0.24], [0.14, 0.3], [0.17, 0.42], [0.16, 0.5], [0.145, 0.5], [0.15, 0.42], [0.12, 0.32], [0, 0.3]].map(([x, y]) => new T.Vector2(x, y));
-        const cup = new T.Mesh(new T.LatheGeometry(pts, 32), addShine(new T.MeshStandardMaterial({ color: '#f2c14e', metalness: 1, roughness: 0.18 }), 'trophy', { gloss: 1.6 }));
-        cup.position.copy(pose.hand).add(new T.Vector3(0, 0.02, 0)); cup.scale.setScalar(1.15); g.add(cup); PODIUM.cup = cup;
-      }
+    // formule týmu na stupni, přídí ke kameře (místo jezdců); vítěz má před vozem zlatou trofej
+    const g = new T.Group(); g.position.set(X[k], H[k], -0.3); g.rotation.y = (k === 1 ? 0.22 : k === 2 ? -0.22 : 0);
+    if (carModels.f1) {
+      const c = buildModelCar({ ...LIVERIES[0], team: r.team && F1_TEAMS[r.team] ? r.team : me }, CAR_TYPES.f1);
+      c.beams.visible = false; c.pod.visible = false; c.flame.visible = false;
+      for (const gr of c.dryGroups || []) gr.visible = true;
+      for (const gr of c.wetGroups || []) gr.visible = false;
+      c.root.position.set(0, 0, 0); c.root.rotation.set(0, 0, 0); c.root.traverse((o) => { o.castShadow = false; });
+      g.add(c.root);
+    }
+    if (k === 0) {
+      const pts = [[0, 0], [0.09, 0], [0.09, 0.03], [0.03, 0.06], [0.025, 0.2], [0.06, 0.24], [0.14, 0.3], [0.17, 0.42], [0.16, 0.5], [0.145, 0.5], [0.15, 0.42], [0.12, 0.32], [0, 0.3]].map(([x, y]) => new T.Vector2(x, y));
+      const cup = new T.Mesh(new T.LatheGeometry(pts, 32), addShine(new T.MeshStandardMaterial({ color: '#f2c14e', metalness: 1, roughness: 0.18 }), 'trophy', { gloss: 1.6 }));
+      cup.position.set(X[k] + 1.05, H[k], 2.7); cup.scale.setScalar(1.7); sc.add(cup); PODIUM.cup = cup;
     }
     // jmenovka nad hlavou
     const lab = canvasTex(256, 64, (c, w, h) => { c.fillStyle = 'rgba(10,12,18,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = tm.tw || tm.body; c.fillRect(0, 0, 10, h); c.fillStyle = '#fff'; c.font = 'italic 900 34px "Saira Condensed", Arial'; c.textBaseline = 'middle'; c.fillText(`${k + 1}. ${tm.code}${r.me ? ' · TY' : ''}`, 22, h / 2 + 2); });
-    const sp = new T.Sprite(new T.SpriteMaterial({ map: lab, depthTest: false })); sp.scale.set(1.5, 0.375, 1); sp.position.set(X[k], H[k] + 2.45, 0.1); sc.add(sp);
+    const sp = new T.Sprite(new T.SpriteMaterial({ map: lab, depthTest: false })); sp.scale.set(1.8, 0.45, 1); sp.position.set(X[k], H[k] + 1.9, -0.3); sc.add(sp);
     sc.add(g); people.push(g);
   });
   // ohňostroj: částice s odporem vzduchu a gravitací, aditivní světlo
@@ -13107,7 +13141,7 @@ function podiumShow(rows) {
   // konfety: malé barevné lístky, padají a točí se
   const CN = IS_TOUCH ? 220 : 400, conf = new T.InstancedMesh(new T.PlaneGeometry(0.07, 0.11), new T.MeshBasicMaterial({ side: T.DoubleSide }), CN), cdat = [];
   const ccols = top.map((r) => (F1_TEAMS[r.team] || F1_TEAMS[me]).body).concat(['#ffc419', '#ffffff', '#e10600']);
-  for (let i = 0; i < CN; i++) { cdat.push({ x: (Math.random() - 0.5) * 9, y: 4 + Math.random() * 8, z: (Math.random() - 0.5) * 4, vy: 0.6 + Math.random() * 0.8, r: Math.random() * 6, rs: 2 + Math.random() * 6 }); conf.setColorAt(i, pdC.set(ccols[i % ccols.length])); }
+  for (let i = 0; i < CN; i++) { cdat.push({ x: (Math.random() - 0.5) * 13, y: 4 + Math.random() * 8, z: (Math.random() - 0.5) * 4, vy: 0.6 + Math.random() * 0.8, r: Math.random() * 6, rs: 2 + Math.random() * 6 }); conf.setColorAt(i, pdC.set(ccols[i % ccols.length])); }
   conf.frustumCulled = false; sc.add(conf);
   const cam = new T.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
   Object.assign(PODIUM, { on: true, scene: sc, cam, t: 0, shown: false, people, fw: { pos, col, vel, life, N, geo: fg, next: 0.2, i: 0 }, conf: { mesh: conf, d: cdat } });
@@ -13126,11 +13160,10 @@ const fwCols = ['#ffd24a', '#ff4a3a', '#4ad2ff', '#7dff6a', '#ffffff', '#ff9a2a'
 function podiumTick(dt) {
   const P = PODIUM; P.t += dt;
   // kamera: pomalý oblouk před pódiem, mírně zdola
-  const a = Math.sin(P.t * 0.18) * 0.55, R = 9.5 - Math.min(2, P.t * 0.25);
+  const a = Math.sin(P.t * 0.18) * 0.55, R = 11.5 - Math.min(2, P.t * 0.25);
   P.cam.aspect = window.innerWidth / window.innerHeight; P.cam.updateProjectionMatrix();
-  P.cam.position.set(Math.sin(a) * R, 1.7 + Math.sin(P.t * 0.3) * 0.3, Math.cos(a) * R); P.cam.lookAt(0, 1.9, 0);
-  // jezdci se pohupují radostí, vítěz zvedá trofej
-  P.people.forEach((g, k) => { g.position.y = [1.25, 0.9, 0.62][k] + Math.abs(Math.sin(P.t * (k ? 3 : 4.2) + k)) * (k ? 0.04 : 0.08); });
+  P.cam.position.set(Math.sin(a) * R, 2.6 + Math.sin(P.t * 0.3) * 0.3, Math.cos(a) * R); P.cam.lookAt(0, 1.5, 0);
+  // vozy stojí, trofej před vítězem se točí
   if (P.cup) P.cup.rotation.y += dt * 1.2;
   // ohňostroj: nová salva každých ~0,6 s
   const F = P.fw; F.next -= dt;
@@ -14795,7 +14828,7 @@ $('tABS').onclick = () => { saved.asABS = !saved.asABS; persist(); renderMenu();
 $('tESP').onclick = () => { saved.asESP = !saved.asESP; persist(); renderMenu(); };
 $('tLineC').onclick = () => { saved.rlineCorners = !saved.rlineCorners; persist(); renderMenu(); };
 $('tRumble').onclick = () => { saved.rumble = saved.rumble === false; persist(); renderMenu(); if (saved.rumble !== false) rumble(0.8, 200); };
-$('tLayout').onclick = () => layoutEdit(true);
+$('tLayout').onclick = () => { $('settingsModal').hidden = true; layoutEdit(true); };
 $('tTyre').onclick = () => { const ks = Object.keys(RTYRE); saved.rtyre = ks[(ks.indexOf(rwTyre()) + 1) % ks.length]; persist(); renderMenu(); toast(`Pneumatiky: ${RTYRE[saved.rtyre].n} – ${RTYRE[saved.rtyre].d}`, 2); };
 $('tSpare').onclick = () => { saved.spare = saved.spare === false; persist(); renderMenu(); toast(saved.spare !== false ? 'Rezerva v kufru: auto je o kousek těžší, defekt vyměníš' : 'Bez rezervy: lehčí auto, ale defekt musíš dojet', 2.4); };
 $('bWheel').onclick = () => tyChange();
