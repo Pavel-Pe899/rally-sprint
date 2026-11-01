@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mvycf8uj';
+window.__BUILD = 'mvye908y';
 (function () {
   function check() {
     try {
@@ -3335,7 +3335,7 @@ function buildWorld(td) {
   const D2 = new Float32Array(GW * GH).fill(1e9);
   const RY = new Float32Array(GW * GH);
   const HG = new Float32Array(GW * GH);
-  const RAD = 9;
+  const RAD = td.st.custom ? 16 : 9;   // vlastní trať z editoru: širší a pozvolnější svahy (kopce až 45 m)
   // most (osmička): buňky kolem spodní silnice u křížení drží její výšku (podjezd); jinde most stojí na násypu z terénu
   let under = null;
   if (td.bridgeH) {
@@ -3363,14 +3363,32 @@ function buildWorld(td) {
       }
     }
   }
+  // okruh: v pásu kolem každého úseku trati nesmí terén vystoupit nad jeho silnici. Kde vedou dva úseky v různé výšce
+  // těsně vedle sebe (Monako: serpentina nad tratí), brala by si buňka u spodní silnice výšku horního úseku a svah by
+  // zasypal spodní trať; horní úsek pak drží betonová opěrná zeď (staví se u zdí okruhu).
+  let MINY = null;
+  if (st.circuit) {
+    MINY = new Float32Array(GW * GH).fill(1e9);
+    const Rc = HW + 9, Rc2 = Rc * Rc, rc = Math.ceil(Rc / CELL);
+    for (let i = 0; i < n; i++) {
+      if (td.bridgeH && td.bridgeH[i] > 0.3) continue;
+      const cx = Math.round((X[i] - gx0) / CELL), cz = Math.round((Z[i] - gz0) / CELL), y = Y[i] - 0.08;
+      for (let dz = -rc; dz <= rc; dz++) { const gz = cz + dz; if (gz < 0 || gz >= GH) continue;
+        for (let dx = -rc; dx <= rc; dx++) { const gx = cx + dx; if (gx < 0 || gx >= GW) continue;
+          if ((gx0 + gx * CELL - X[i]) ** 2 + (gz0 + gz * CELL - Z[i]) ** 2 < Rc2) { const k = gz * GW + gx; if (y < MINY[k]) MINY[k] = y; } } }
+    }
+  }
   const inner = HW + 3.5, bw = 60;
   for (let gz = 0; gz < GH; gz++) for (let gx = 0; gx < GW; gx++) {
     const k = gz * GW + gx;
     const wx = gx0 + gx * CELL, wz = gz0 + gz * CELL;
     const b = td.base(wx, wz);
     const d = Math.sqrt(D2[k]);
-    if (d < inner + bw) { let t = smooth(inner, inner + bw, d); t *= t; HG[k] = lerp(RY[k] - (st.circuit ? 0.08 : 0.6), b, t); }
+    // u vlastních tratí se šířka přechodu řídí převýšením (vysoký kopec = dlouhý mírný svah, ne ostrý zlom u krajnice)
+    const bwk = st.custom ? Math.min(RAD * CELL - inner - 4, bw + Math.abs(b - RY[k]) * 1.8) : bw;
+    if (d < inner + bwk) { let t = smooth(inner, inner + bwk, d); if (!st.custom) t *= t; else t = t * t * (3 - 2 * t) * 0.6 + t * t * 0.4; HG[k] = lerp(RY[k] - (st.circuit ? 0.08 : 0.6), b, t); }
     else HG[k] = b;
+    if (MINY && HG[k] > MINY[k]) HG[k] = MINY[k];
   }
   function terrainAt(x, z) {
     const fx = (x - gx0) / CELL, fz = (z - gz0) / CELL;
@@ -3649,11 +3667,26 @@ function buildWorld(td) {
       }
       i += Math.max(1, Math.round(step / td.ds));
     }
-    // hotel nad tunelem: dlouhá stavba přes střechu tunelu
-    if (st.tunnel) for (let i = td.startIdx; i < td.finishIdx; i += Math.round(18 / td.ds)) {
-      if (!inTunnel(i)) continue;
-      const wt = Math.max(td.wallL[i], td.wallR[i]) + 0.6;
-      box(X[i], Z[i], Y[i] + 6.6, 9 + ((i * 7) % 4), 19, 2 * wt + 12, td.HD[i], tmpC.set('#efe8da').clone(), roofC.set('#9a9690').clone());
+    // hotel nad tunelem: dlouhá stavba přes střechu tunelu. Dřív visel ve vzduchu (nad vjezdem přečníval a po stranách
+    // tunelu pod ním bylo prázdno, zespodu byl vidět dovnitř). Teď: horní část jen nad tubusem, po obou stranách tunelu
+    // křídla stavby až na zem; u portálu stěna domu s otvorem pro tunel.
+    if (st.tunnel) {
+      const hotelC = tmpC.set('#efe8da').clone(), hotelR = roofC.set('#9a9690').clone();
+      for (let i = td.startIdx; i < td.finishIdx; i += Math.round(16 / td.ds)) {
+        if (!inTunnel(i) || !inTunnel(i, -9.5)) continue;   // celý kus (19 m) musí být nad tubusem
+        const wt = Math.max(td.wallL[i], td.wallR[i]) + 0.5, top = Y[i] + 6.6, h = 9 + ((i * 7) % 4);
+        box(X[i], Z[i], top, h, 2 * wt + 1.4, 19, td.HD[i], hotelC, hotelR);   // w = napříč tratí, d = podél
+        for (const sd of [-1, 1]) {
+          const lat = sd * (wt + 3.6), cx = X[i] + NX[i] * lat, cz = Z[i] + NZ[i] * lat, gy = Math.min(terrainAt(cx, cz), Y[i]) - 1.5;
+          box(cx, cz, gy, top + h - gy, 6.6, 19, td.HD[i], hotelC, hotelR);
+        }
+      }
+      // stěna domu nad vjezdem a výjezdem (vyplní prostor mezi tubusem a hotelem)
+      for (const [r, dir] of [[st.tunnel[0] + 0.6, 1], [st.tunnel[1] - 0.6, -1]]) {
+        let i = td.startIdx; while (i < td.finishIdx && relLap(i) < r) i++;
+        const wt = Math.max(td.wallL[i], td.wallR[i]) + 0.5, top = Y[i] + 6.6, h = 10;
+        box(X[i] + TX[i] * dir * 0.6, Z[i] + TZ[i] * dir * 0.6, top - 1.2, h + 1.2, 2 * wt + 14, 1.2, td.HD[i], hotelC, hotelR);
+      }
     }
     const facade = canvasTex(128, 128, (g, w, h) => {
       g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
@@ -4234,7 +4267,7 @@ function buildWorld(td) {
     for (const side of [-1, 1]) {
       const wa = side > 0 ? td.wallR : td.wallL;
       const fp = [], fu = [], cp = [], cu = [], fp2 = [], fu2 = [], fp3 = [], rp = [], fi = [], ci = [], ri = [];
-      const fp2b = [];
+      const fp2b = [], sk = [], su = [], skOk = [];
       let u = 0;
       for (let i = r0; i <= r1; i++) {
         const o = wa[i] * side, x = X[i] + NX[i] * o, z = Z[i] + NZ[i] * o, y = Y[i] - 0.1;
@@ -4247,6 +4280,8 @@ function buildWorld(td) {
         // líc zdi s reklamami (na pravé straně se text čte opačným směrem, proto u obráceně), horní hrana a zadní strana z betonu
         const uu = side > 0 ? -u : u;
         fp.push(x, y, z, x, y + 1.05, z); fu.push(uu, 0, uu, 1);
+        // opěrná zeď: když je terén za zdí níž než silnice (úsek nad jiným úsekem trati), beton sahá až k zemi
+        { const gy = terrainAt(bx + nx * 0.8, bz + nz * 0.8), drop = y - gy; sk.push(bx, y, bz, bx, Math.min(y, gy - 0.4), bz); su.push(u * 8, 0, u * 8, Math.max(0, drop) / 4); skOk.push(drop > 0.35 && !hidden); }
         cp.push(x, y + 1.05, z, bx, y + 1.05, bz, bx, y, bz); cu.push(u * 8, 0, u * 8, 0.12, u * 8, 0.6);
         // plot nad zdí a nahoře přesah k trati, na hraně trubka
         const fx = x + nx * 0.2, fz = z + nz * 0.2;
@@ -4266,6 +4301,8 @@ function buildWorld(td) {
       }
       mk(fp, fu, fi, wallMat, true);
       mk(cp, cu, ci, capMat, false);
+      { const si = []; for (let k = 0; k + 1 < skOk.length; k++) if (skOk[k] || skOk[k + 1]) { const a2 = k * 2; si.push(a2, a2 + 2, a2 + 1, a2 + 1, a2 + 2, a2 + 3); }
+        if (si.length) mk(sk, su, si, capMat, true); }
       mk(fp2, fu2, fi, fenceMat, false);
       mk(fp2b, fu2.map((v, k) => (k % 2 ? v : v + 0.5)), fi, fenceMat, false);   // druhá vrstva pletiva (síť má tloušťku)
       mk(fp3, fu2.map((v, k) => (k % 2 ? v * 0.3 : v)), fi, fenceMat, false);
@@ -12911,6 +12948,12 @@ function edStage(d) {
   st.photo = sf.ph ? { ...(tpl.photo || { terrain: 'grass', sat: 0.4, tint: '#ffffff' }), road: sf.ph, tint: sf.road === 'tarmac' ? '#b8b8b6' : (tpl.photo && tpl.photo.tint) || '#d6c2a4' } : null;
   if (st.water != null && d.hills < 12) st.water = null;
   if (d.loop) Object.assign(st, { circuit: true, hw: 7, kerbs: true, bumps: 0.2, gpName: (d.name || 'MŮJ OKRUH').toUpperCase().slice(0, 18), country: 'VLASTNÍ OKRUH', props: { ...st.props, posts: 'none' } });
+  // krajina ze šablony noční etapy (Zima = Krkonošská noc) za dne: obloha, slunce a světlo z denní etapy
+  if (d.tod !== 'night' && (tpl.night || /noc/i.test(tpl.tod || ''))) {
+    const dk = STAGES.find((x) => x.id === 'sumava');
+    Object.assign(st, { tod: 'Den', sky: dk.sky, sun: dk.sun, hemi: dk.hemi, fog: dk.fog, exposure: dk.exposure, clouds: dk.clouds, mountains: { ...(tpl.mountains || {}), color: '#8a9db8' } });
+    delete st.night; delete st.lamps;
+  }
   if (d.tod === 'sunset') Object.assign(st, GP_TOD.sunset.st);
   if (d.tod === 'night') {
     const nk = STAGES.find((x) => x.id === 'krkonose');
