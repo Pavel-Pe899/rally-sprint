@@ -312,7 +312,7 @@
   .tilt-meter .tm-bar::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: rgba(255, 255, 255, .5); }
   .tilt-meter .tm-bar i { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px rgba(0, 0, 0, .4); }
   .tilt-meter.on { background: rgba(255, 255, 255, .3); }
-  body.tilt .tbtn.steer { display: none; }
+  /* šipky jsou vidět vždycky (i při zatáčení náklonem; dotyk na šipku má přednost před náklonem) */
   /* skryté tlačítko (slovo SPRINT / FLOW v nadpisu) přepíná mezi rallye a horskými koly; nic neprozrazuje */
   .tbadge { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.55); }
   #secret { cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
@@ -12867,6 +12867,8 @@ $('tiltMeter').addEventListener('pointerdown', (e) => {
   e.preventDefault(); Tilt.calibrate(); toast('Střed srovnán', 1);
   const b = e.currentTarget; b.classList.add('on'); setTimeout(() => b.classList.remove('on'), 150);
 });
+// jednorázově: zatáčení náklonem vypnuto (výchozí ovládání jsou šipky); kdo chce, zapne ho v menu znovu
+if (!saved.tiltOff1) { saved.tiltOff1 = true; saved.tilt = false; persist(); }
 if (saved.tilt && IS_TOUCH) Tilt.set(true, false);
 document.addEventListener('pointerdown', () => Tilt.ensure(true), { capture: true });
 $('tScale').onclick = () => {
