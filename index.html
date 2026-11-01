@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mvxzk1s1';
+window.__BUILD = 'mvy148c9';
 (function () {
   function check() {
     try {
@@ -8963,6 +8963,7 @@ function physics(dt, inp) {
         car.omega *= 0.6;
         if (vn > 3) {
           Sound.thump(vn / 10, 'wall'); car.shake = Math.min(1, car.shake + vn / 20);
+          wallPenalty(vn);   // nejdřív penalizace (pravidlo výzvy „bez poškození“ pak náraz do zdi nepočítá podruhé)
           dmgHit(vn, nx, nz); rdHit(vn, nx, nz);
           if (!st.trail) sparkBurst(car.x + nx * 1.1, car.y + 0.4, car.z + nz * 1.1, Math.min(40, 6 + vn * 2.5), Math.min(2, vn / 10));
           if (vn > 9) Chat.say('crash');
@@ -10441,7 +10442,31 @@ const fmt = (t) => {
 };
 const fmtDelta = (d) => `${d < 0 ? '−' : '+'}${Math.abs(d).toFixed(2)}`;
 const MEDAL = { gold: 1.2, silver: 1.38, bronze: 1.6 };
-const medalFor = (td, t) => (t <= td.ideal * MEDAL.gold ? 'gold' : t <= td.ideal * MEDAL.silver ? 'silver' : t <= td.ideal * MEDAL.bronze ? 'bronze' : 'none');
+// Časy medailí pro každou trať a auto zvlášť: ideální jízda tím autem (jeho maximálka, přilnavost v zatáčkách,
+// zrychlení a brzdy po celé délce trati) a k ní rezerva podle toho, jak je trať náročná: čím víc zatáček na kilometr
+// a skoků, tím víc času navíc (na klikaté trati se ideál trefuje hůř). Stříbro +14 %, bronz +32 % proti zlatu.
+const medalCache = new WeakMap();
+function medalTimes(td, ctIn) {
+  const ct = ctIn || carType(), key = [ct.vmax, ct.grip, ct.power, ct.brakeK || 1, ct.bike ? 1 : 0].map((v) => (+v || 0).toFixed(3)).join();
+  const c0 = medalCache.get(td); if (c0 && c0[key]) return c0[key];
+  const st = td.st, n = td.n, K = td.K, ds = td.ds;
+  let base = td.ideal;
+  if (!st.trail && !ct.bike) {
+    const g = st.grip * (ct.grip || 1), aLat = 9.81 * g * 1.25 * 0.9, vCap = Math.min(VMAX * (ct.vmax || 1), st.vmax || 1e9), acc = 8.5 * (ct.power || 1), brk = 9.81 * g * 1.12 * (ct.brakeK || 1);
+    const V = new Float32Array(n);
+    for (let i = 0; i < n; i++) V[i] = Math.min(vCap, Math.sqrt(aLat / Math.max(1e-4, Math.abs(K[i]))));
+    V[0] = 0;
+    for (let i = 1; i < n; i++) V[i] = Math.min(V[i], Math.sqrt(V[i - 1] * V[i - 1] + 2 * acc * (1 - V[i - 1] / (vCap * 1.15)) * ds));
+    for (let i = n - 2; i >= 0; i--) V[i] = Math.min(V[i], Math.sqrt(V[i + 1] * V[i + 1] + 2 * brk * ds));
+    base = 0; for (let i = td.startIdx; i < td.finishIdx; i++) base += ds / Math.max(3, V[i]);
+  }
+  const km = Math.max(0.3, td.length / 1000), turns = td.notes.filter((nt) => nt.kind === 'turn').length, tpk = turns / km;
+  const goldK = clamp(1.12 + 0.009 * tpk + 0.006 * td.crests.length / km + (st.loose ? 0.02 : 0), 1.12, 1.32);
+  const m = { gold: base * goldK, silver: base * goldK * 1.14, bronze: base * goldK * 1.32, base, turns, tpk, goldK };
+  medalCache.set(td, { ...(c0 || {}), [key]: m });
+  return m;
+}
+const medalFor = (td, t) => { const m = medalTimes(td); return t <= m.gold ? 'gold' : t <= m.silver ? 'silver' : t <= m.bronze ? 'bronze' : 'none'; };
 const MEDAL_NAME = { gold: 'Zlato', silver: 'Stříbro', bronze: 'Bronz', none: 'Bez medaile' };
 
 const hud = {
@@ -10724,7 +10749,7 @@ function startRace() {
   podiumHide();
   rdStart();
   Sound.init();
-  G.mode = 'race'; G.phase = 'countdown'; G.countdown = 3.6; G.time = 0; G.penalty = 0; G.result = null;
+  G.mode = 'race'; G.phase = 'countdown'; G.countdown = 3.6; G.time = 0; G.penalty = 0; G.result = null; G.wallPenAt = -9; G.wallHits = 0;
   G.cp = false; G.cpWarn = false; G.splits = []; G.splitShown = 0; G.noteIdx = 0; G.speakIdx = 0; G.callIdx = 0; G.paused = false; G.lastBeep = 4;
   G.rec = []; G.recNext = 0; G.rp = null; G.replay = null; G.photo = null;
   G.ghost = saved.ghost && !G.gp && !G.net ? loadGhost(W.td.st.id) : null;
@@ -10811,7 +10836,8 @@ function showResults(record, prev) {
   if (G.rwPlan && G.rwPlan.type !== 'clear') { const fc = rwForecast(G.rwPlan); html += `<div class="rrow"><span>Počasí v etapě</span><b>${fc.icon} ${fc.text}</b></div>`; }
   if (G.ghost2) { const win = G.result < G.ghost2.t; html += `<div class="rrow ${win ? 'me' : ''}"><span>${win ? '⚔️ Duel vyhraný! ' : '⚔️ Duel prohraný · '}${G.ghost2.n.replace(/[<>&]/g, '')} ${fmt(G.ghost2.t)}</span><b>${fmtDelta(G.result - G.ghost2.t)}</b></div>`; }
   html += '</div>';
-  html += `<div class="detail"><div class="stat"><small><i class="medal m-gold"></i>Zlato</small><b>${fmt(td.ideal * MEDAL.gold)}</b></div><div class="stat"><small><i class="medal m-silver"></i>Stříbro</small><b>${fmt(td.ideal * MEDAL.silver)}</b></div><div class="stat"><small><i class="medal m-bronze"></i>Bronz</small><b>${fmt(td.ideal * MEDAL.bronze)}</b></div></div>`;
+  { const m = medalTimes(td); html += `<div class="detail"><div class="stat"><small><i class="medal m-gold"></i>Zlato</small><b>${fmt(m.gold)}</b></div><div class="stat"><small><i class="medal m-silver"></i>Stříbro</small><b>${fmt(m.silver)}</b></div><div class="stat"><small><i class="medal m-bronze"></i>Bronz</small><b>${fmt(m.bronze)}</b></div></div>`; }
+  if (G.wallHits) html += `<p class="help">Nárazy do zdi: ${G.wallHits}× · penalizace +${fmt(G.wallHits * WALL_PEN).replace(/^0:0?/, '')} s</p>`;
   if (G.weekly && G.wkRes) {
     const r = G.wkRes, ch = G.weekly.ch;
     html += `<p class="label">Výzva týdne</p><div class="rows compact"><div class="rrow me"><span><i class="medal m-${r.medal}"></i> ${MEDAL_NAME[r.medal]}${r.better && r.prev != null ? ' · nový nejlepší čas týdne' : ''}</span><b>${r.pos}. z ${r.n}</b></div>${r.add ? `<div class="rrow"><span>Odměna za výzvu</span><b>+ ${moneyStr(r.add)}</b></div>` : ''}<div class="rrow"><span>Cíl na zlato</span><b>${fmt(ch.goal.gold)}</b></div></div>`;
@@ -10854,16 +10880,24 @@ function showResults(record, prev) {
   $('resultsCard').scrollTop = 0;
 }
 
+// penalizace jen za náraz do zdi: +1,5 s (jeden náraz se počítá jednou, další nejdřív za 1,2 s); vyjetí za čáru se netrestá
+const WALL_PEN = 1.5;
+function wallPenalty(vn) {
+  if (G.mode !== 'race' || G.phase !== 'run' || G.replay || isBike() || vn < 4) return;
+  const now = G.time; if (now - (G.wallPenAt ?? -9) < 1.2) return;
+  G.wallPenAt = now; G.wallPenReal = performance.now(); G.penalty = (G.penalty || 0) + WALL_PEN; G.wallHits = (G.wallHits || 0) + 1;
+  toast(`Náraz do zdi · +${String(WALL_PEN).replace('.', ',')} s`, 1.6);
+  if (G.gp && G.wallHits === 1) gpRadio('Pozor na zdi, každý náraz je penalizace.');
+}
 function resetToTrack(auto) {
   if (G.mode !== 'race' || G.phase !== 'run') return;
   const td = W.td;
   const i = clamp(car.idx - 4, td.startIdx, td.finishIdx - 2);
   placeCar(i);
   if (G.gp) { G.gp.pilot = null; G.gp.pilotLat = null; }
-  if (!G.gp) G.penalty += 5; // ve Velké ceně je trestem ztráta místa (auto se vrátí kus zpátky)
   camS.init = false;
   hud.reset.hidden = true; G.parked = 0; G.stuck = 0;
-  toast(G.gp ? 'Zpět na trati' : auto ? 'Mimo trať · zpět s penalizací +5 s' : 'Zpět na trati · +5 s', 2.2);
+  toast(auto ? 'Mimo trať · zpět na trati' : 'Zpět na trati', 2.2);
   Chat.say('reset');
 }
 
@@ -12317,8 +12351,9 @@ function flagShow(kind, title, sub) {
   el.querySelector('b').textContent = title || ''; el.querySelector('small').textContent = sub || '';
   el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
 }
-// limity trati: všechna čtyři kola za bílou čarou (|lat| > HW + 1) v jízdě; 2 varování, 3. černobílá vlajka, pak +5 s
+// limity trati: dřív varování a +5 s za zkracování; teď se za vyjetí za čáru netrestá (penalizace jen za náraz do zdi)
 function trackLimits(dt) {
+  return;
   const td = W.td; if (!td.st.circuit || inPitArea(td, car.s, car.lat)) { G.tlOut = false; return; }
   const out = Math.abs(car.lat) > HW + 1.0 && Math.abs(car.vf) > 15;
   if (out && !G.tlOut) {
@@ -12362,8 +12397,9 @@ function rdRebuild() {
   rdLights(); rdGlass(); rdHud();
 }
 // náraz: vn = rychlost do překážky (m/s), nx, nz = směr od auta k místu nárazu
+const td0Wall = () => !!(W && W.td && W.td.wallL) && performance.now() - (G.wallPenReal || 0) < 50;   // náraz do zdi už je penalizovaný
 function rdHit(vn, nx, nz) {
-  if (G.weekly && G.weekly.ch.rule === 'clean' && G.phase === 'run' && vn >= 8 && performance.now() - (G.wkHitAt || 0) > 800) { G.wkHitAt = performance.now(); G.penalty += 3; toast('Náraz! +3 s · výzva bez poškození', 1.6); }
+  if (G.weekly && G.weekly.ch.rule === 'clean' && G.phase === 'run' && vn >= 8 && performance.now() - (G.wkHitAt || 0) > 800) { G.wkHitAt = performance.now(); if (!td0Wall()) { G.penalty += 1.5; toast('Náraz! +1,5 s · výzva bez poškození', 1.6); } }
   if (!rdOn() || G.phase !== 'run' || vn < 6) return;
   const k = clamp((vn - 6) / 22, 0, 1), fx = Math.sin(car.h), fz = Math.cos(car.h), fwd = nx * fx + nz * fz, right = nx * -fz + nz * fx;
   const zone = fwd > 0.55 ? 'front' : fwd < -0.55 ? 'rear' : right > 0 ? 'right' : 'left';
@@ -12757,7 +12793,7 @@ const WK_RULES = {
   none: { n: 'Bez pravidla', d: 'jeď, jak umíš', icon: '🏁' },
   noNos: { n: 'Bez nitra', d: 'nádrž nitra je prázdná', icon: '⛽' },
   cockpit: { n: 'Jen z kabiny', d: 'kamera je zamčená v kabině', icon: '🎮' },
-  clean: { n: 'Bez poškození', d: 'každý náraz, který poškodí auto, je +3 s', icon: '🛡️' },
+  clean: { n: 'Bez poškození', d: 'každý náraz (i do stromu a kamene) je +1,5 s', icon: '🛡️' },
 };
 const WK_RIVALS = ['Jirka', 'Bára', 'Tomáš', 'Klára', 'Ondra', 'Eliška', 'Kuba', 'Adéla', 'Matěj'];
 const WK_PRIZE = { gold: 2000, silver: 1000, bronze: 500 };
@@ -12768,7 +12804,7 @@ function wkChallenge(id = wkId()) {
   const rules = Object.keys(WK_RULES), rule = rules[(rnd() * rules.length) | 0];
   const plan = rwPlan(st, rnd() < 0.35 ? 'clear' : 'auto', rnd);
   const td = tracks[STAGES.indexOf(st)], wet = plan.type === 'rain' || plan.type === 'snow' ? 1.06 : plan.type === 'clear' ? 1 : 1.03;
-  const goal = { gold: td.ideal * MEDAL.gold * wet, silver: td.ideal * MEDAL.silver * wet, bronze: td.ideal * MEDAL.bronze * wet };
+  const mt = medalTimes(td, CAR_TYPES[car]), goal = { gold: mt.gold * wet, silver: mt.silver * wet, bronze: mt.bronze * wet };
   // soupeři týdne: stejné časy u všech hráčů (z čísla týdne), od těsně pod zlatem po bronz
   const rivals = WK_RIVALS.slice().sort(() => rnd() - 0.5).slice(0, 6).map((n, k) => ({ n, t: goal.gold * (0.97 + k * 0.055 + rnd() * 0.03), ai: true }));
   return { id, st, idx: STAGES.indexOf(st), car, rule, plan, goal, rivals };
@@ -14833,7 +14869,7 @@ function renderMenu() {
   $('stageDetail').innerHTML =
     `<div class="stat"><small>Délka</small><b>${(td.length / 1000).toFixed(2)} km</b></div>` +
     `<div class="stat"><small>Zatáčky · skoky</small><b>${nTurns} · ${nJumps}</b></div>` +
-    `<div class="stat"><small>Zlato pod</small><b>${fmt(td.ideal * MEDAL.gold)}</b></div>` +
+    `<div class="stat"><small>Zlato pod</small><b>${fmt(medalTimes(td).gold)}</b></div>` +
     (REC.map[td.st.id] ? `<div class="stat rec"><small>Rekord trati · ${REC.map[td.st.id].name.replace(/[<>&]/g, '')}</small><b>${fmt(REC.map[td.st.id].t)}</b></div>` : '');
   $('bStartSub').textContent = td.st.name;
   $('bGpMenu').hidden = bikeM0 || saved.car !== 'f1';
@@ -15370,7 +15406,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { T, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { T, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateSuspension, updateFauna, CAR_TYPES, BIKE_TYPES, carType, toggleMode, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
