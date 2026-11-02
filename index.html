@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mvye908y';
+window.__BUILD = 'mvyv84hz';
 (function () {
   function check() {
     try {
@@ -4268,6 +4268,11 @@ function buildWorld(td) {
       const wa = side > 0 ? td.wallR : td.wallL;
       const fp = [], fu = [], cp = [], cu = [], fp2 = [], fu2 = [], fp3 = [], rp = [], fi = [], ci = [], ri = [];
       const fp2b = [], sk = [], su = [], skOk = [];
+      // je pod bodem (do 3 m od kraje) jiný, níž položený úsek trati?
+      const roadBelow = (x, z, i0, y0) => { const cx = Math.floor(x / 10), cz = Math.floor(z / 10);
+        for (let a = -2; a <= 2; a++) for (let b2 = -2; b2 <= 2; b2++) { const l = tHash.get((cx + a) * 100000 + cz + b2); if (!l) continue;
+          for (const j of l) { let dS = Math.abs(S[j] - S[i0]); if (st.circuit) dS = Math.min(dS, td.length - dS); if (dS < 60 || Y[j] > y0 - 1.5) continue; if ((x - X[j]) ** 2 + (z - Z[j]) ** 2 < (HW + 3) ** 2) return true; } }
+        return false; };
       let u = 0;
       for (let i = r0; i <= r1; i++) {
         const o = wa[i] * side, x = X[i] + NX[i] * o, z = Z[i] + NZ[i] * o, y = Y[i] - 0.1;
@@ -4281,7 +4286,10 @@ function buildWorld(td) {
         const uu = side > 0 ? -u : u;
         fp.push(x, y, z, x, y + 1.05, z); fu.push(uu, 0, uu, 1);
         // opěrná zeď: když je terén za zdí níž než silnice (úsek nad jiným úsekem trati), beton sahá až k zemi
-        { const gy = terrainAt(bx + nx * 0.8, bz + nz * 0.8), drop = y - gy; sk.push(bx, y, bz, bx, Math.min(y, gy - 0.4), bz); su.push(u * 8, 0, u * 8, Math.max(0, drop) / 4); skOk.push(drop > 0.35 && !hidden); }
+        { const gy = terrainAt(bx + nx * 0.8, bz + nz * 0.8), drop = y - gy; sk.push(bx, y, bz, bx, Math.min(y, gy - 0.4), bz); su.push(u * 8, 0, u * 8, Math.max(0, drop) / 4);
+          // most (mostovka i nájezdy) beton dolů nemá – pod ním vede druhá silnice; a nikde nesmí stát přes jiný úsek trati
+          const onBridge = td.bridgeH && td.bridgeH[i] > 0.3;
+          skOk.push(drop > 0.35 && !hidden && !onBridge && !roadBelow(bx, bz, i, y)); }
         cp.push(x, y + 1.05, z, bx, y + 1.05, bz, bx, y, bz); cu.push(u * 8, 0, u * 8, 0.12, u * 8, 0.6);
         // plot nad zdí a nahoře přesah k trati, na hraně trubka
         const fx = x + nx * 0.2, fz = z + nz * 0.2;
@@ -5244,7 +5252,7 @@ function buildWorld(td) {
     }
     if (wi.length) { const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(wp, 3)); g.setIndex(wi); g.computeVertexNormals(); const m = new T.Mesh(g, conc); m.receiveShadow = true; m.castShadow = true; group.add(m); }
     // nápis na čele mostu (z obou stran, čitelný ze spodní silnice)
-    const tex = canvasTex(1024, 96, (g2, w, h) => { g2.fillStyle = '#d7141a'; g2.fillRect(0, 0, w, h); g2.fillStyle = '#ffffff'; g2.font = 'italic 900 64px Arial, sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('SUZUKA CIRCUIT', w / 2, h / 2 + 3); });
+    const tex = canvasTex(1024, 96, (g2, w, h) => { g2.fillStyle = '#d7141a'; g2.fillRect(0, 0, w, h); g2.fillStyle = '#ffffff'; g2.font = 'italic 900 64px Arial, sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(st.custom ? (st.gpName || st.name || 'MŮJ OKRUH').toUpperCase() : 'SUZUKA CIRCUIT', w / 2, h / 2 + 3); });
     for (const sd of [-1, 1]) {
       const i = b.up, sign = new T.Mesh(new T.PlaneGeometry(22, 1.0), new T.MeshLambertMaterial({ map: tex }));
       sign.position.set(X[i] + NX[i] * sd * (W2 + 0.04), Y[i] - 0.6, Z[i] + NZ[i] * sd * (W2 + 0.04));
@@ -15279,7 +15287,10 @@ function tickUpdate(dt) {
       const parked = Math.abs(car.vf) < 1.5 && !(G.gp && (G.gp.service > 0 || G.gp.pilot || G.gp.waiting));
       G.parked = parked ? (G.parked || 0) + dt : 0;
       hud.reset.hidden = !(G.stuck > 1.5 || G.parked > 3 || Math.abs(car.lat) > HW + 14);
-      if (Math.abs(car.lat) > HW + 70 || (lost && G.stuck > 2.5)) resetToTrack(true);
+      // okruh: auto mimo silnici hluboko pod její úrovní (za zdí u úseku nad jiným úsekem) – zpět na trať
+      const under = td.st.circuit && !car.air && Math.abs(car.lat) > HW + 2 && car.y < td.Y[car.idx] - 2;
+      G.under = under ? (G.under || 0) + dt : 0;
+      if (Math.abs(car.lat) > HW + 70 || (lost && G.stuck > 2.5) || G.under > 1) { G.under = 0; resetToTrack(true); }
     }
     if (G.phase === 'demo' && car.s > td.S[td.finishIdx] + 60) { placeCar(td.startIdx - 4); car.vx = Math.sin(car.h) * demoSpeed(); car.vz = Math.cos(car.h) * demoSpeed(); G.cine.fixed = null; }
     if (G.rx && G.mode === 'race') rxTick(dt);
