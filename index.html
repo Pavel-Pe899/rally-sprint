@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mvyv84hz';
+window.__BUILD = 'mvzjf25p';
 (function () {
   function check() {
     try {
@@ -538,6 +538,11 @@ window.__BUILD = 'mvyv84hz';
   @keyframes layWiggle { from { filter: brightness(1); } to { filter: brightness(1.35); } }
   .rp-bar.lay { top: calc(14px + env(safe-area-inset-top, 0px)); bottom: auto; }
   .rp-bar label { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; }
+  #menu .again-top { margin: 0 0 2px; font-size: 21px; }
+  #menu .again-top .ic { color: #8dff55; }
+  #menu .again-top small { color: #ffd23f; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #menu .stat.mine .medal { display: inline-block; vertical-align: -2px; }
+  #menu .stat .to-next { display: block; color: #ffd23f; font-weight: 700; margin-top: 2px; }
   /* okno Nastavení (přepínače přesunuté z lobby) */
   .settings-card { width: min(560px, 100%); gap: 10px; }
   .settings-card .label { margin: 6px 0 0; }
@@ -971,6 +976,7 @@ window.__BUILD = 'mvyv84hz';
       <h1 class="logo"><span id="logoA">RALLY</span><br><em>SPRINT</em></h1>
       <p class="tagline" id="tagline">Šest rychlostních zkoušek, přes 33 km šotoliny, sněhu, asfaltu, písku a rudé keňské savany. Spolujezdec hlásí každou zatáčku.</p>
     </div>
+    <button class="btn ghost again-top" id="bAgainLast" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.2A6 6 0 1 0 12 6v3L7.5 5 12 1z" fill="currentColor"/></svg>Jet znovu</span> <small></small></button>
     <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Dílna</span> <small>díly formule</small></button>
     <p class="label" id="lblStages">Rychlostní zkoušky</p>
     <div class="stages" id="stageList"></div>
@@ -1172,7 +1178,7 @@ window.__BUILD = 'mvyv84hz';
     </div>
     <p class="label">Rally</p>
     <div class="toggles">
-        <button class="tog" id="tWx">Počasí (rally): <b id="tWxVal"></b></button>
+        <button class="tog" id="tWx">Počasí (rally a okruhy): <b id="tWxVal"></b></button>
         <button class="tog" id="tTyre">Pneumatiky: <b id="tTyreVal"></b></button>
         <button class="tog" id="tSpare"><i></i>Rezerva v kufru</button>
         <button class="tog" id="tFog"><i></i>Ranní mlha (rally)</button>
@@ -1204,6 +1210,13 @@ window.__BUILD = 'mvyv84hz';
   </div>
 </div>
 
+<div id="rxModal" class="modal" hidden>
+  <div class="card">
+    <h2>Rallycross <em>4 kola · 5 aut · joker</em></h2>
+    <div class="actions" id="rxList"></div>
+    <div class="actions"><button class="btn ghost" id="rxClose">Zpět</button></div>
+  </div>
+</div>
 <div id="trophyModal" class="modal" hidden>
   <div class="card trophy-card">
     <h2>Síň trofejí <em>úspěchy a odměny</em></h2>
@@ -1574,6 +1587,8 @@ const SPA_PATH = [[-252.4,-807.3], [-365.9,-1004.3], [-367.1,-1013.2], [-362.1,-
 const MONACO_PATH = [[-328.5, 190.9], [-328.5, 157.2], [-327.1, 131.4], [-324.2, 104.6], [-319.2, 86.0], [-313.6, 69.2], [-310.9, 59.0], [-309.5, 49.9], [-310.1, 36.2], [-310.4, 27.7], [-307.6, 22.7], [-300.6, 19.4], [-283.5, 15.2], [-268.3, 14.6], [-247.4, 12.0], [-218.3, 8.3], [-192.5, 3.7], [-126.8, -15.6], [-90.1, -25.6], [-56.5, -31.1], [-33.4, -33.0], [-15.4, -39.5], [36.6, -64.1], [59.4, -73.5], [92.7, -81.0], [120.5, -84.9], [147.1, -89.4], [162.0, -94.6], [180.1, -106.0], [195.9, -122.4], [204.7, -136.2], [208.7, -150.8], [208.0, -165.9], [205.5, -180.2], [199.8, -196.0], [192.3, -210.9], [180.5, -220.1], [169.2, -230.7], [163.8, -235.5], [158.7, -240.6], [153.4, -252.3], [151.7, -262.4], [154.0, -271.4], [159.8, -283.8], [165.3, -292.5], [182.4, -314.2], [269.2, -432.2], [275.3, -440.6], [284.2, -443.2], [295.1, -440.1], [302.7, -433.8], [308.2, -424.0], [309.3, -413.0], [309.6, -403.8], [310.5, -396.3], [315.0, -387.4], [320.2, -380.6], [330.0, -366.9], [336.6, -354.7], [339.2, -347.3], [342.5, -343.0], [347.7, -341.5], [353.8, -343.3], [358.3, -348.0], [359.7, -354.7], [356.7, -360.4], [349.0, -366.0], [326.3, -394.8], [323.1, -401.7], [323.0, -408.4], [324.8, -413.5], [327.2, -418.3], [337.9, -423.8], [354.3, -428.0], [363.3, -431.4], [372.5, -435.1], [385.2, -439.5], [399.1, -440.5], [406.4, -436.8], [409.2, -425.5], [406.6, -358.9], [396.3, -290.5], [385.7, -247.0], [373.8, -215.9], [353.5, -180.4], [330.1, -150.4], [296.3, -113.5], [247.8, -83.8], [218.9, -69.6], [163.3, -43.6], [125.9, -30.7], [70.6, -17.6], [35.0, -12.0], [16.2, -8.4], [12.9, -3.0], [12.7, 1.8], [11.6, 7.4], [9.2, 12.9], [1.2, 15.7], [-10.1, 17.6], [-22.6, 10.4], [-29.5, 10.0], [-129.0, 23.0], [-178.4, 30.2], [-223.9, 37.3], [-236.5, 39.2], [-244.9, 40.7], [-250.9, 46.9], [-260.4, 65.7], [-268.5, 83.9], [-275.0, 102.1], [-277.8, 115.0], [-280.8, 137.6], [-281.0, 176.2], [-280.6, 185.8], [-277.8, 192.4], [-272.1, 198.7], [-259.6, 207.9], [-251.3, 215.6], [-247.6, 223.8], [-246.2, 235.8], [-232.0, 317.9], [-228.4, 332.3], [-227.2, 336.9], [-227.5, 343.1], [-231.2, 348.0], [-239.2, 353.5], [-247.1, 357.5], [-249.0, 363.0], [-247.5, 374.8], [-238.4, 401.4], [-230.0, 421.5], [-221.6, 437.4], [-207.1, 458.1], [-188.8, 476.5], [-175.4, 484.3], [-160.4, 491.3], [-152.9, 494.6], [-149.2, 498.9], [-144.8, 511.9], [-146.9, 518.9], [-153.7, 522.9], [-183.8, 530.8], [-200.5, 533.5], [-211.6, 533.7], [-221.4, 532.2], [-227.6, 527.6], [-231.4, 523.7], [-231.6, 514.5], [-233.0, 507.1], [-235.9, 498.1], [-252.9, 477.2], [-265.3, 457.2], [-275.0, 442.3], [-285.2, 413.9], [-307.9, 335.0], [-314.1, 309.6], [-318.4, 282.3], [-324.1, 242.6]];
 const SUZUKA_PATH = [[684.5, 138.3], [805.4, 283.9], [946.8, 457.2], [959.8, 475.5], [967.0, 494.6], [970.7, 511.9], [970.4, 528.8], [968.3, 541.8], [951.8, 592.8], [944.0, 606.1], [932.6, 616.2], [923.0, 621.6], [905.8, 625.9], [890.1, 625.3], [872.9, 619.5], [856.8, 606.9], [840.5, 582.2], [757.1, 454.1], [741.3, 440.6], [727.7, 436.3], [707.2, 432.8], [664.0, 432.4], [642.3, 426.2], [627.0, 415.4], [615.4, 401.3], [610.0, 387.5], [590.6, 313.8], [582.4, 294.9], [569.5, 278.6], [554.4, 267.6], [535.5, 258.8], [516.1, 255.1], [465.9, 254.3], [442.7, 249.9], [426.9, 242.3], [410.5, 229.6], [398.4, 212.0], [391.0, 194.0], [387.7, 177.0], [387.8, 160.8], [390.9, 147.0], [415.6, 79.7], [419.3, 66.0], [419.9, 48.0], [417.3, 36.1], [410.8, 18.9], [401.2, 4.2], [382.6, -8.9], [360.1, -21.1], [333.4, -34.6], [309.9, -44.0], [292.4, -48.9], [267.7, -53.0], [239.8, -53.5], [217.9, -52.6], [199.5, -47.7], [184.7, -41.3], [161.5, -31.5], [137.2, -17.8], [109.2, 5.1], [87.3, 28.3], [-4.7, 139.9], [-9.5, 146.3], [-24.1, 149.8], [-158.6, 161.9], [-167.2, 160.8], [-176.4, 154.5], [-180.2, 144.0], [-181.8, 135.1], [-202.2, 51.1], [-229.5, -106.7], [-234.7, -135.7], [-236.0, -150.3], [-234.5, -165.5], [-231.6, -181.1], [-225.4, -197.3], [-218.4, -213.5], [-196.7, -263.2], [-194.4, -270.9], [-196.0, -277.9], [-200.1, -284.3], [-207.2, -289.1], [-215.3, -291.7], [-223.1, -291.1], [-232.0, -285.1], [-239.4, -274.5], [-271.1, -219.8], [-296.8, -178.6], [-313.6, -154.1], [-327.4, -138.0], [-339.4, -127.8], [-359.9, -111.6], [-381.5, -100.0], [-404.1, -93.2], [-443.5, -87.5], [-480.8, -85.9], [-508.9, -88.0], [-542.4, -95.3], [-579.0, -105.7], [-620.1, -121.0], [-645.9, -133.0], [-668.7, -146.7], [-689.6, -162.3], [-711.8, -182.2], [-734.7, -207.6], [-749.8, -229.7], [-763.4, -253.9], [-797.0, -343.2], [-814.9, -382.3], [-824.0, -398.0], [-836.4, -409.6], [-852.7, -416.9], [-872.1, -420.6], [-895.3, -420.0], [-916.9, -416.9], [-937.9, -412.2], [-958.4, -403.8], [-975.2, -391.0], [-985.3, -374.8], [-989.3, -358.9], [-988.1, -338.9], [-983.5, -324.0], [-976.9, -309.0], [-965.5, -296.5], [-942.9, -275.3], [-914.8, -251.9], [-887.2, -227.8], [-852.3, -201.3], [-812.4, -174.1], [-771.5, -148.6], [-725.8, -126.8], [-685.0, -105.9], [-643.0, -89.9], [-574.9, -66.3], [-500.0, -37.1], [-409.2, -5.3], [-319.2, 23.1], [-256.9, 44.7], [-176.4, 75.4], [-158.0, 80.1], [-139.7, 80.7], [-120.3, 77.0], [-101.4, 71.8], [-67.4, 58.7], [-36.1, 43.0], [-9.8, 26.8], [17.3, 5.7], [68.1, -41.9], [137.7, -106.8], [157.0, -122.8], [170.8, -132.5], [183.4, -140.8], [192.3, -146.1], [197.2, -146.6], [203.6, -143.9], [219.2, -129.9], [230.5, -120.5], [239.8, -117.8], [248.4, -119.5], [258.6, -126.2], [275.4, -141.5], [294.3, -155.0], [315.3, -163.9], [341.1, -166.1], [365.0, -164.8], [390.4, -159.6], [415.7, -149.7], [437.3, -139.3], [464.3, -121.0], [488.5, -98.5], [513.4, -70.7]];
 // rallycross Sosnová: krátký okruh vymyšlený pro hru (start na asfaltu, šotolinové úseky, joker po vnější straně)
+// druhá rallycrossová trať: táhlé oblouky, vracák a dlouhá šotolinová pasáž
+const RX2_PATH = [[0, 0], [90, 0], [160, 10], [200, 40], [210, 85], [185, 120], [140, 130], [100, 115], [70, 135], [60, 175], [80, 215], [70, 255], [30, 270], [-20, 262], [-60, 235], [-80, 195], [-110, 170], [-150, 160], [-180, 130], [-185, 85], [-160, 45], [-120, 20], [-60, 5]];
 const RX_PATH = [[0, 0], [80, 0], [150, 2], [195, -12], [222, -42], [224, -80], [204, -110], [165, -125], [118, -120], [80, -132], [52, -160], [36, -200], [4, -226], [-40, -232], [-84, -218], [-112, -186], [-118, -146], [-104, -110], [-118, -74], [-150, -50], [-168, -14], [-156, 20], [-120, 34], [-76, 26], [-40, 10]];
 const STAGES = [
   {
@@ -1757,6 +1772,20 @@ const STAGES = [
     trees: [['birch', 0.4], ['pine', 0.35], ['bush', 0.25]], density: 0.9, rocks: 0,
     mountains: { color: '#8aa0a8', snow: false }, props: { posts: 'none', bales: false, spectators: true },
     clouds: ['#ffffff', 0.35], grass: ['#4f7f2a', '#98bd55', 0.35],
+  },
+  {
+    id: 'rx2', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Vysočina', region: 'Rallycross · asfalt a šotolina, joker', surface: 'Asfalt + šotolina', road: 'tarmac', tod: 'Ráno',
+    circuit: true, rx: true, path: RX2_PATH, hw: 6.5, kerbs: true, gpName: 'RALLYCROSS', country: 'VYSOČINA',
+    mix: [[200, 420], [690, 900]], joker: { from: 440, to: 580 },
+    len: 1110, seed: 827, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
+    grip: 1.12, offGrip: 0.6, loose: false,
+    sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
+    hemi: { sky: '#dce9f8', ground: '#5d7440', int: 1.15 }, fog: [200, 900], exposure: 1.0,
+    ground: { a: '#628c36', b: '#527c2e', dirt: '#8e7a58', rock: '#a59f92', beach: '#d9cfa8' },
+    shoulder: { inner: '#a08a68', outer: '#4f8a2e' }, dust: '#b8a17f',
+    trees: [['spruce', 0.5], ['birch', 0.3], ['pine', 0.2]], density: 0.9, rocks: 0,
+    mountains: { color: '#8aa0a8', snow: false }, props: { posts: 'none', bales: false, spectators: true },
+    clouds: ['#ffffff', 0.35], grass: ['#6a7f2a', '#b5b25a', 0.35],
   },
   {
     // Suzuka: jediná osmička v kalendáři – zadní rovinka přejíždí po mostě nad úsekem mezi Degnerem a vlásenkou.
@@ -2235,7 +2264,7 @@ const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in wi
 }
 const QUALITY = {
   high: { name: 'Vysoká', pr: 1.75, shadow: 4096, shadowR: 60, atlas: 2048, grass: 1, trees: 1, dust: 1, lod: 330, post: { samples: 4, blur: true } },
-  mid: { name: 'Střední', pr: 1.5, shadow: 1024, grass: 0.55, trees: 0.8, dust: 0.65, lod: 200, post: { samples: 4, blur: false, bloomDiv: 4 } },
+  mid: { name: 'Střední', pr: 1.5, shadow: 1024, grass: 0.55, trees: 0.8, dust: 0.65, lod: IS_TOUCH ? 150 : 200,   /* telefon: podrobné stromy jen do 150 m */ post: { samples: 4, blur: false, bloomDiv: 4 } },
   low: { name: 'Nízká', pr: 1, shadow: 0, grass: 0, trees: 0.55, dust: 0.4, lod: 120, post: null },
 };
 if (!QUALITY[saved.quality]) saved.quality = IS_TOUCH ? 'mid' : 'high';
@@ -3610,13 +3639,17 @@ function buildWorld(td) {
   };
   // ---- město kolem městského okruhu (Monako): dvě řady domů za zdmi (barvy Riviéry, okna z jedné dlaždice),
   // hotel nad tunelem; mřížka obsazení 4 m, aby stromy a diváci nestáli v domech
-  const cityOcc = st.city ? new Set() : null;
+  const cityOcc = st.city ? new Set() : null, cityChunks = [];
   const cityKey = (x, z) => Math.floor(x / 4) * 100000 + Math.floor(z / 4);
   const cityHit = (x, z) => !!cityOcc && cityOcc.has(cityKey(x, z));
   const relLap = (i) => ((((S[i] - S[td.startIdx]) % td.length) + td.length) % td.length);
   const inTunnel = (i, m = 0) => !!st.tunnel && relLap(i) > st.tunnel[0] - m && relLap(i) < st.tunnel[1] + m;
   if (st.city) {
-    const cr = mulberry32(st.seed + 77), pos = [], nor = [], uv = [], colr = [];
+    // zástavba po blocích 160 m (dřív jedna síť přes celé město: kreslila se celá v každém snímku i ve stínech);
+    // bloky mimo záběr ořízne grafika sama a vzdálené za mlhou se skryjí (W.cityChunks)
+    const cr = mulberry32(st.seed + 77), cityBlocks = new Map();
+    let pos = [], nor = [], uv = [], colr = [];
+    const useBlock = (x, z) => { const k = Math.floor(x / 160) * 100000 + Math.floor(z / 160); let b = cityBlocks.get(k); if (!b) cityBlocks.set(k, (b = { pos: [], nor: [], uv: [], colr: [] })); ({ pos, nor, uv, colr } = b); };
     const PAL = ['#efe0c4', '#f2d6b0', '#e9c6a6', '#f4e8d2', '#e6b9a0', '#dcc6a6', '#f6f1e6', '#e8d4b2', '#d6aa8c', '#f0cfc0', '#e2d8c0'];
     const tmpC = new T.Color(), roofC = new T.Color();
     const quad = (a, b, c, d, nx, ny, nz, u0, v0, u1, v1, cc) => {
@@ -3624,6 +3657,7 @@ function buildWorld(td) {
     };
     // kvádr domu: středem (cx, cz), natočený o ang, šířka w podél trati, hloubka d, od y0 do y0 + h; okna po 3,2 × 3 m
     const box = (cx, cz, y0, h, w, d, ang, c, rc) => {
+      useBlock(cx, cz);
       const ca = Math.cos(ang), sa = Math.sin(ang), P = (lx, lz, y) => [cx + lx * ca + lz * sa, y, cz - lx * sa + lz * ca];
       const hw = w / 2, hd = d / 2, y1 = y0 + h, fl = Math.max(1, Math.round(h / 3)), cw = Math.max(1, Math.round(w / 3.2)), cd = Math.max(1, Math.round(d / 3.2));
       const sides = [[[-hw, -hd], [hw, -hd], cw], [[hw, -hd], [hw, hd], cd], [[hw, hd], [-hw, hd], cw], [[-hw, hd], [-hw, -hd], cd]];
@@ -3699,12 +3733,16 @@ function buildWorld(td) {
       g.strokeStyle = '#3a3a3a'; g.lineWidth = 2; for (let x = 32; x <= 96; x += 8) { g.beginPath(); g.moveTo(x, 96); g.lineTo(x, 84); g.stroke(); }
     });
     facade.wrapS = facade.wrapT = T.RepeatWrapping;
-    const cg = new T.BufferGeometry();
-    cg.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); cg.setAttribute('normal', new T.Float32BufferAttribute(nor, 3));
-    cg.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); cg.setAttribute('color', new T.Float32BufferAttribute(colr, 3));
-    cg.computeBoundingSphere();
-    const city = new T.Mesh(cg, new T.MeshLambertMaterial({ map: facade, vertexColors: true, side: T.DoubleSide }));
-    city.castShadow = true; city.receiveShadow = true; group.add(city);
+    const cityMat = new T.MeshLambertMaterial({ map: facade, vertexColors: true, side: T.DoubleSide });
+    for (const b of cityBlocks.values()) {
+      if (!b.pos.length) continue;
+      const cg = new T.BufferGeometry();
+      cg.setAttribute('position', new T.Float32BufferAttribute(b.pos, 3)); cg.setAttribute('normal', new T.Float32BufferAttribute(b.nor, 3));
+      cg.setAttribute('uv', new T.Float32BufferAttribute(b.uv, 2)); cg.setAttribute('color', new T.Float32BufferAttribute(b.colr, 3));
+      cg.computeBoundingSphere();
+      const city = new T.Mesh(cg, cityMat);
+      city.castShadow = true; city.receiveShadow = true; group.add(city); cityChunks.push(city);
+    }
   }
   const kinds = {};
   const chunks = new Map();
@@ -4937,7 +4975,10 @@ function buildWorld(td) {
       });
       const crewMeshes = [...Object.values(sets.stand), ...Object.values(sets.kneel)];
       for (const m of [...crewMeshes, ...tools]) { m.castShadow = true; m.frustumCulled = false; group.add(m); }
-      pitW.crew = { sets, meshes: crewMeshes, tools, list: crewHome, kneelTool };
+      // střed boxů: mechanici se kreslí jen z blízka (dřív 110 postav i se stíny v každém snímku přes celý okruh)
+      let ccx = 0, ccz = 0; for (const c of crewHome) { ccx += c.x; ccz += c.z; } ccx /= Math.max(1, N); ccz /= Math.max(1, N);
+      let crad = 0; for (const c of crewHome) crad = Math.max(crad, Math.hypot(c.x - ccx, c.z - ccz));
+      pitW.crew = { sets, meshes: crewMeshes, tools, list: crewHome, kneelTool, cx: ccx, cz: ccz, r: crad };
       // startovní rošt: bílé značky pro deset formulí za startovní čarou
       for (let k = 0; k < 10; k++) {
         const i = relIdx(gridRel(k)), lat = gridLat(k); // lat je skutečná boční poloha (kladná vpravo)
@@ -5602,7 +5643,7 @@ function buildWorld(td) {
 
   const rline = st.circuit ? buildRacingLine(td) : null;
   if (rline) { group.add(rline.mesh); if (st.road === 'tarmac') group.add(buildRubberLine(td)); }
-  return { group, td, pit: pitW, startLights, rline, terrainAt, roadDistAt, obstacles, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
+  return { group, td, pit: pitW, startLights, rline, cityChunks, terrainAt, roadDistAt, obstacles, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
 }
 
 // ---------------------------------------------------------------- auto
@@ -7764,6 +7805,15 @@ const Sound = {
     this.opp.gain.setTargetAtTime(dist < 250 ? 0.3 / (1 + dist / 8) : 0, t, 0.06);
     if (this.oppPan) this.oppPan.pan.setTargetAtTime(clamp(pan, -1, 1) * Math.min(1, 25 / (dist + 6)), t, 0.08); // soupeř vlevo se ozve vlevo
   },
+  // poškozený motor: nepravidelné klepání a chrastění (častější s otáčkami a poškozením)
+  damage(k, rpm, dt) {
+    if (!this.ctx || !this.noiseBuf || k < 0.3) return;
+    if (Math.random() > dt * (1 + rpm / 1500) * (k - 0.2) * 3) return;
+    const c = this.ctx, t = c.currentTime + 0.003, src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = this.noiseBuf; f.type = 'bandpass'; f.frequency.value = 500 + Math.random() * 1600; f.Q.value = 6;
+    g.gain.setValueAtTime(0.05 * k, t); g.gain.setTargetAtTime(0, t + 0.01, 0.025);
+    src.connect(f); f.connect(g); g.connect(this.out); src.start(t, Math.random() * 0.8); src.stop(t + 0.12);
+  },
   rain(level) {
     if (!this.ctx || !this.noiseBuf) return;
     if (!this.rainG) {
@@ -8194,6 +8244,10 @@ scene.add(skids.mesh);
 const stones = new Dust(260, { gravity: 18, grow: 0, fade: 1, drag: 0.5 });
 scene.add(stones.points);
 const STONE_COL = { gravel: '#4e4232', snow: '#f4f8ff', sand: '#b48a58', tarmac: '#2a2a2a' };
+// kouř z poškozeného motoru (stoupá, roste, tmavě šedý)
+const smoke = new Dust(IS_TOUCH ? 140 : 220, { gravity: -1.3, grow: 3.0, fade: 0.6, drag: 1.1 });
+smoke.setColor('#4a4a4c', 1);
+scene.add(smoke.points);
 const splash = new Dust(260, { gravity: 11, grow: 1.4, fade: 0.8, drag: 1.2 });
 splash.setColor('#c9c2b4', 1);
 scene.add(splash.points);
@@ -9629,6 +9683,7 @@ function updateCarVisual(dt, inp) {
     w.pivot.position.y = w.baseY + (flying ? -0.06 : 0);
     w.pivot.visible = !swap;
   }
+  tyVisual(r);
   car3d.tailMat.emissiveIntensity = inp.brake > 0 ? 3.2 : W.td.st.night ? 1.2 : 0.4;
   if (car3d.brakeMats && car3d.brakeMats.length) { const bk = clamp(inp.brake, 0, 1) * clamp(Math.abs(car.vf) / 30, 0, 1); for (const b of car3d.brakeMats) b.m.emissiveIntensity = bk * 0.7 * b.glow; } // kroužky brzd při brzdění žhnou
   if (car3d.kersMat) car3d.kersMat.emissiveIntensity = 0.9 + (car.nosOn ? 1.6 : 0) + 0.2 * Math.sin(performance.now() / 160);
@@ -9732,6 +9787,8 @@ function updateCarVisual(dt, inp) {
   stones.update(dt);
   dust.update(dt);
   sparks.update(dt);
+  dmgFx(dt);
+  smoke.update(dt); smoke.mat.uniforms.uScale.value = renderer.domElement.height / (2 * Math.tan((camera.fov * Math.PI) / 360));
   dust.mat.uniforms.uScale.value = sparks.mat.uniforms.uScale.value = stones.mat.uniforms.uScale.value = splash.mat.uniforms.uScale.value = renderer.domElement.height / (2 * Math.tan((camera.fov * Math.PI) / 360));
 
   // auto se během etapy postupně zaprašuje
@@ -9747,7 +9804,7 @@ function updateCarVisual(dt, inp) {
   // světla a stín jdou s autem
   // stínová mapa se posouvá jen po celých bodech své mřížky: jinak se při každém pohybu auta okraje stínů (tráva, stromy)
   // přepočítají jinak a stíny problikávají
-  const sd = st.sun.dir;
+  const sd = (G.gp && G.todSun) || st.sun.dir;   // dlouhá Velká cena: slunce postupně klesá
   tmpV.set(sd[0], sd[1], sd[2]).normalize();
   { const L = tmpV, rx = new T.Vector3(0, 1, 0).cross(L).normalize(), uy = L.clone().cross(rx).normalize();
     const SH = Q().shadowR || 42, texel = (2 * SH) / Math.max(256, sun.shadow.mapSize.x);
@@ -10319,6 +10376,9 @@ function startDemo() {
 
 function startRace() {
   podiumHide();
+  G.todSun = null; G.todT = 0;
+  // poslední samostatná jízda (pro tlačítko „Jet znovu“ v lobby)
+  if (W && !G.gp && !G.net && !G.rx && !G.stunt && !G.weekly && !G.champ) { saved.lastRun = { id: W.td.st.id, car: saved.car || 'bmw' }; persist(); }
   rdStart();
   Sound.init();
   G.mode = 'race'; G.phase = 'countdown'; G.countdown = 3.6; G.time = 0; G.penalty = 0; G.result = null; G.wallPenAt = -9; G.wallHits = 0;
@@ -10751,8 +10811,9 @@ const GP_AI = { alat: 2.15, vtop: 79, brake: 26 };
 // spočítané ze stejného modelu motoru a odporu jako v carDynamics. Obtížnost (volí se ve výběru týmu) mění jen
 // rychlost v zatáčkách (skill): „Rychlí“ jedou zhruba jako dobrý jezdec bez chyb, „velmi rychlí“ ještě rychleji.
 const GP_DIFF = {
-  normal: { name: 'Rychlí', desc: 'jedou jako dobrý jezdec', skills: [0.975, 0.96, 0.945, 0.93, 0.915, 0.9, 0.885, 0.87, 0.855] },
-  hard: { name: 'Velmi rychlí', desc: 'pro zkušené, bez chyb', skills: [1.08, 1.065, 1.05, 1.035, 1.02, 1.005, 0.99, 0.975, 0.96] },
+  // mist: šance na chybu při brzdění do zatáčky (zablokovaná kola, vyjetí do široka); def: jak ostře brání stopu
+  normal: { name: 'Rychlí', desc: 'jedou jako dobrý jezdec, občas chybují', skills: [0.975, 0.96, 0.945, 0.93, 0.915, 0.9, 0.885, 0.87, 0.855], mist: 0.035, def: 1.4 },
+  hard: { name: 'Velmi rychlí', desc: 'pro zkušené, skoro bez chyb, tvrdě brání', skills: [1.08, 1.065, 1.05, 1.035, 1.02, 1.005, 0.99, 0.975, 0.96], mist: 0.008, def: 2.0 },
 };
 function f1Acc(v) {
   const cs = CAR_TYPES.f1, vtop = 57 * cs.vmax;
@@ -10827,6 +10888,24 @@ const GP_TOD = {
   night: { name: 'Noc pod reflektory', desc: 'jako v Singapuru a Las Vegas', st: { tod: 'Noc', floodlit: true, sky: { top: '#02040c', hor: '#1a2442', bottom: '#0d1222' }, sun: { dir: [0.18, 0.95, 0.22], color: '#f4f7ff', int: 2.9 }, hemi: { sky: '#c9d4ee', ground: '#3a3f48', int: 1.05 }, fog: [200, 950], exposure: 1.18, clouds: null } },
 };
 const gpTod = () => (GP_TOD[saved.gpTod] ? saved.gpTod : 'day');
+// dlouhá Velká cena začatá odpoledne: slunce během závodu pomalu klesá a do posledního kola je západ slunce
+// (světla, obloha, mlha a expozice se plynule prolínají; trať se nestaví znovu)
+function todTick(dt) {
+  const gp = G.gp; if (!gp || gp.quali || gpTotal() < 8 || gpTod() !== 'day' || G.phase !== 'run' || WX.cfg) return;   // za deště řídí oblohu počasí
+  G.todT = (G.todT || 0) - dt; if (G.todT > 0) return; G.todT = 0.25;
+  const st = W.td.st, B = GP_TOD.sunset.st, lap = W.td.pit ? W.td.pit.lap : W.td.length;
+  const f = smooth(0.2, 1, clamp((gp.lap + clamp(W.td.pit.relOf(car.s) / lap, 0, 1)) / gpTotal(), 0, 1));
+  const c = (a, b) => new T.Color(a).lerp(new T.Color(b), f), A = st;
+  sun.color.copy(c(A.sun.color, B.sun.color)); sun.intensity = lerp(A.sun.int, B.sun.int, f);
+  G.todSun = [0, 1, 2].map((k) => lerp(A.sun.dir[k], B.sun.dir[k], f));
+  hemi.color.copy(c(A.hemi.sky, B.hemi.sky)); hemi.groundColor.copy(c(A.hemi.ground, B.hemi.ground)); hemi.intensity = lerp(A.hemi.int, B.hemi.int, f);
+  if (scene.fog) scene.fog.color.copy(c(A.sky.hor, B.sky.hor));
+  renderer.toneMappingExposure = lerp(A.exposure, B.exposure, f);
+  const u = W.sky && W.sky.material && W.sky.material.uniforms;
+  if (u) { u.uTop.value.copy(c(A.sky.top, B.sky.top)); u.uHor.value.copy(c(A.sky.hor, B.sky.hor)); u.uBottom.value.copy(c(A.sky.bottom, B.sky.bottom)); u.uSunDir.value.set(...G.todSun).normalize(); u.uSunCol.value.copy(sun.color); }
+  shineScene.value = f > 0.7 ? 0 : 1;
+  if (f > 0.5 && !gp.said.dusk) { gp.said.dusk = 1; gpRadio('Slunce zapadá, světla se mění. Pozor na stíny v brzdných bodech.'); }
+}
 // nastaví denní dobu okruhu; vrací true, když se změnila (trať se musí postavit znovu)
 function applyTod(st, tod) {
   if (!st.circuit) return false;
@@ -10956,7 +11035,24 @@ function gpUpdateAI(dt) {
       }
     } else {
       // provoz na trati: za pomalejším autem přibrzdí, nebo ho objede bokem
-      a.passT = Math.max(0, a.passT - dt);
+      a.passT = Math.max(0, a.passT - dt); a.defT = Math.max(0, (a.defT || 0) - dt); a.defCD = Math.max(0, (a.defCD || 0) - dt); a.mistT = Math.max(0, (a.mistT || 0) - dt);
+      const DF = GP_DIFF[(gp.diff && GP_DIFF[gp.diff]) ? gp.diff : gpDiff()] || GP_DIFF.normal;
+      const kAhead = Math.min(lapN - 1, k + Math.round(70 / ds)), braking = gp.V[kAhead] < gp.V[k] * 0.82;   // před zatáčkou se brzdí
+      // chyba: při brzdění do zatáčky zablokuje kola a vyjede do široka (každý úsek jen jednou)
+      const zone = Math.floor(a.d / 140);
+      if (braking && !SC.on && a.mistZone !== zone && !a.done) { a.mistZone = zone; if (Math.random() < DF.mist) { a.mistT = 1.6; a.mistDir = Math.sign(a.lat || 1) || 1; if (Math.abs(gpPlayerD() - a.d) < 160) gpRadio(`${F1_TEAMS[a.key] ? F1_TEAMS[a.key].name : 'Soupeř'} zablokoval kola, chyboval!`); } }
+      if (a.mistT > 0) { vt *= 0.78; a.latT = clamp(a.lat + a.mistDir * 2.2, -(HW - 1.3), HW - 1.3); a.passT = Math.max(a.passT, 0.3); }
+      // obrana: auto zezadu je rychlejší a blízko → jeden přesun stopy na jeho stranu (blokuje vnitřek), pak zas ideální stopa
+      if (!a.mistT && !a.defCD && !SC.on) for (const o of all) {
+        if (o === a || o.gone || (o.lat * sd > HW + 0.6)) continue;
+        const behind = mod(mod(a.d, lap) - mod(o.d, lap) + lap / 2, lap) - lap / 2;
+        const ov = o.player ? Math.max(0, o.v) : o.v;
+        if (behind > 3 && behind < 22 && ov > a.v + 1.2) {
+          const side = Math.sign(o.lat - a.lat) || 1;
+          a.latT = clamp(a.lat + side * DF.def, -(HW - 1.3), HW - 1.3); a.defT = 1.8; a.defCD = 6; a.passT = Math.max(a.passT, 1.8);
+          break;
+        }
+      }
       let follow = Infinity;
       for (const o of all) {
         if (o === a || o.gone || (o.lat * sd > HW + 0.6)) continue; // auto v boxové uličce nepřekáží
@@ -10971,6 +11067,7 @@ function gpUpdateAI(dt) {
           if (Math.abs(t) > HW - 1.3) { side = -side; t = o.lat + side * 2.9; }
           a.latT = clamp(t, -(HW - 1.3), HW - 1.3); a.passT = 1.6;
           if (gap < 8 && Math.abs(dl) < 2.1) follow = Math.min(follow, ov - 0.5);
+          else if (braking && gap < 14) vt *= 1.02;   // útok na brzdění: vedle soupeře brzdí o kus později
         }
       }
       // bez předjíždění jede po ideální stopě (každý jezdec trochu jinak)
@@ -11028,7 +11125,7 @@ function dmgHit(vn, nx, nz) {
   if (front > 0.55) { DMG.wing = Math.min(1, DMG.wing + v / 14); DMG.side = side > 0.1 ? 1 : side < -0.1 ? -1 : (Math.random() < 0.5 ? 1 : -1); }
   else { DMG.susp = Math.min(1, DMG.susp + v / 18); DMG.pull = side > 0 ? 1 : -1; if (front > 0.2) DMG.wing = Math.min(1, DMG.wing + v / 30); }
   if (!DMG.broken && DMG.wing >= 0.5) {
-    DMG.broken = true; dmgVisual();
+    DMG.broken = true; dmgVisual(); dmgDebris(nx, nz, 0.7, '#18191c');   // kusy křídla zůstanou ležet na trati
     // úlomky karbonu a jiskry
     const bx = car.x + fx * 2.4, bz = car.z + fz * 2.4;
     sparkBurst(bx, car.y + 0.2, bz, 34, 1.6);
@@ -11344,8 +11441,10 @@ const rwTyre = () => (G.champ && G.champ.tyre) || (RTYRE[saved.rtyre] ? saved.rt
 function rwStart() {
   wxEnd(); G.rwPlan = null;
   const td = W.td, st = td.st;
-  if (G.gp || G.net || st.circuit || G.stunt || G.mode !== 'race') return;
+  // rally i okruhy při samostatné jízdě (Velká cena má vlastní počasí, rallycross a výzvy jsou za sucha)
+  if (G.gp || G.net || G.rx || G.stunt || G.mode !== 'race') return;
   const plan = (G.weekly && G.weekly.ch.plan) || (G.champ && G.champ.wx && G.champ.wx[G.champ.k]) || rwPlan(st, saved.rallyWx || 'auto');
+  if (st.circuit && plan.type === 'dust') plan.type = 'rain';
   G.rwPlan = plan;
   if (plan.type === 'clear') return;
   const s0 = td.S[td.startIdx], L = td.S[td.finishIdx] - s0;
@@ -11512,6 +11611,7 @@ function gpTick(dt) {
   }
   { const rel = p.relOf(car.s); carShade(car3d, car.lat * p.side > p.inner - 0.5 && rel > p.entry && rel < p.exit, dt); }
   if (!G.net && !gp.quali) scTick(dt);
+  todTick(dt);
   gpUpdateAI(dt);
   gpUpdateAIVisual(dt);
   gpCrewUpdate(dt);
@@ -11987,12 +12087,53 @@ function rdHit(vn, nx, nz) {
   c3.root.updateMatrixWorld(true);
   const lp = c3.body.worldToLocal(wp.clone()), ln = c3.body.worldToLocal(wp.clone().add(new T.Vector3(nx, 0, nz))).sub(lp).normalize();
   rdDent({ p: lp.toArray(), n: ln.toArray(), depth: 0.04 + 0.11 * k, r: 0.35 + 0.3 * k, zone });
+  if (k > 0.4) dmgDebris(nx, nz, k, (c3.lv && c3.lv.body) || '#cccccc');   // odpadlý nárazník nebo kus karoserie
   RD.ver++; rdHud();
   if (k > 0.45) toast(`Poškození: ${{ front: 'předek', rear: 'zadek', left: 'levý bok', right: 'pravý bok' }[zone]}${RD.susp > 0.3 ? ' · auto táhne' : ''}`, 1.8);
 }
 function rdLand(impact) {
   if (!rdOn() || G.phase !== 'run') return;
   RD.susp = Math.min(1, RD.susp + (impact - 13) / 25); RD.pull = RD.pull || (Math.random() < 0.5 ? -1 : 1); RD.ver++; rdHud();
+}
+// Poškození vidět a slyšet: z motorového prostoru stoupá kouř (od středního poškození bílá pára, pak hustší šedý),
+// motor klepe, po tvrdém nárazu odpadnou kusy (nárazník, kryt, karbon) a zůstanou ležet u trati.
+const debris = [];
+function engineDmg() {
+  if (G.mode !== 'race' || !car3d) return 0;
+  if (car3d.formula) return dmgOn() ? Math.max(DMG.susp * 0.8, DMG.wing * 0.5) : 0;
+  if (!rdOn()) return 0;
+  const rearEngine = saved.car === 'p911';
+  return rearEngine ? Math.max(RD.rear, RD.front * 0.5) : Math.max(RD.front, RD.rear * 0.4);
+}
+function dmgFx(dt) {
+  const k = engineDmg();
+  if (k > 0.4 && G.phase !== 'done') {
+    const fx = Math.sin(car.h), fz = Math.cos(car.h), rear = car3d.formula || saved.car === 'p911', off = rear ? -1.6 : 1.5;
+    const n = (k - 0.35) * 24 * dt, cnt = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+    for (let q = 0; q < cnt; q++) smoke.emit(car.x + fx * off + (Math.random() - 0.5) * 0.6, car.y + 0.9, car.z + fz * off + (Math.random() - 0.5) * 0.6, car.vx * 0.5 + (Math.random() - 0.5), 1.0 + Math.random() * 0.8, car.vz * 0.5 + (Math.random() - 0.5), 0.7 + k * 0.8, 1.3 + k);
+    smoke.setColor(k > 0.7 ? '#3a3a3c' : '#8e8e90', 1);
+  }
+  Sound.damage(k, car.rpm || 0, dt);
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i]; d.t += dt;
+    if (!d.rest) {
+      d.vy -= 9.81 * dt; d.m.position.x += d.vx * dt; d.m.position.y += d.vy * dt; d.m.position.z += d.vz * dt;
+      d.m.rotation.x += d.wx * dt; d.m.rotation.z += d.wz * dt;
+      const gy = W ? W.terrainAt(d.m.position.x, d.m.position.z) : 0, rp = projectRoad(d.m.position.x, d.m.position.z, car.idx), ry = Math.abs(rp.lat) < HW + 3 ? rp.y : gy;
+      if (d.m.position.y < ry + 0.06) { d.m.position.y = ry + 0.06; if (Math.abs(d.vy) < 2) { d.rest = true; d.m.rotation.x = Math.round(d.m.rotation.x / Math.PI) * Math.PI; d.m.rotation.z = 0; } else { d.vy *= -0.3; d.vx *= 0.6; d.vz *= 0.6; } }
+    }
+    if (d.t > 25 || G.mode !== 'race') { scene.remove(d.m); d.m.geometry.dispose(); d.m.material.dispose(); debris.splice(i, 1); }
+  }
+}
+function dmgDebris(nx, nz, k, color) {
+  if (debris.length > 14) return;
+  const n = 1 + Math.round(k * 2);
+  for (let q = 0; q < n; q++) {
+    const big = q === 0 && k > 0.6, geo = big ? new T.BoxGeometry(1.4, 0.18, 0.35) : new T.BoxGeometry(0.25 + Math.random() * 0.3, 0.05, 0.2 + Math.random() * 0.25);
+    const m = new T.Mesh(geo, new T.MeshStandardMaterial({ color: big ? '#1a1b1e' : color, roughness: 0.6, metalness: 0.2 })); m.castShadow = true;
+    m.position.set(car.x + nx * 1.6, car.y + 0.6, car.z + nz * 1.6); scene.add(m);
+    debris.push({ m, t: 0, vx: car.vx * 0.4 + nx * (2 + Math.random() * 3) + (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 3, vz: car.vz * 0.4 + nz * (2 + Math.random() * 3) + (Math.random() - 0.5) * 3, wx: (Math.random() - 0.5) * 12, wz: (Math.random() - 0.5) * 12, rest: false });
+  }
 }
 // promáčklina karoserie: vrcholy laku v okruhu r se posunou dovnitř (geometrie se poprvé zkopíruje, model je sdílený)
 function rdDent(d, quiet) {
@@ -12162,6 +12303,25 @@ function tyHit(power, nx, nz) {
   Voice.say('Píchli jsme kolo!');
   tyHud();
 }
+// pneumatiky na modelu: sjeté a zaprášené jsou světlejší a hnědší, píchlé kolo je splasklé (auto se na ten roh
+// nakloní), rozpadlé jede po ráfku; při výměně je auto na zvedáku a kolo chvíli chybí
+const tyDirt = new T.Color('#6b5d4c');
+function tyVisual(root) {
+  const c3 = car3d; if (!c3 || c3.formula) return;
+  const on = tyOn(), side = on && TY.punct ? TY.punct.side : null, ch = on ? TY.changing : 0;
+  let tilt = 0;
+  for (const w of c3.wheels) {
+    const key = (w.front ? 'f' : 'r') + (w.pivot.position.x > 0 ? 'l' : 'r'), bad = side === key;
+    if (bad && !ch) { w.pivot.position.y -= TY.punct.shred ? 0.11 : 0.06; tilt += (w.pivot.position.x > 0 ? 1 : -1) * (TY.punct.shred ? 0.035 : 0.022); }
+    if (w.tire) {
+      w.tire.visible = !(bad && TY.punct.shred && !ch);
+      const m = w.tire.material; if (m && m.color) { if (!m.userData.c0) m.userData.c0 = m.color.clone(); m.color.copy(m.userData.c0).lerp(tyDirt, on ? clamp(TY.wear * 0.7, 0, 0.6) : 0); }
+    }
+    if (ch && bad) w.pivot.visible = !(ch < 4.6 && ch > 1.4);   // stará pneumatika dole, nová ještě není nasazená
+  }
+  c3.body.rotation.z += tilt;
+  if (ch) root.position.y += 0.14 * clamp(Math.min(6 - ch, ch) / 0.6, 0, 1);   // auto na zvedáku
+}
 // rezerva v kufru = auto o 3 % slabší; s defektem pomalejší
 const tyMemo = { k: null, v: null };
 function tyApply(ct) {
@@ -12262,6 +12422,22 @@ function stuntBuild(d) {
     G.stunt.boxP = [td.X[i], td.Z[i]];
     for (const sd of [-1, 1]) for (const dz of [-3.6, 3.6]) { const m = new T.Mesh(coneG, cm); m.position.set(td.X[i] + td.NX[i] * sd * 2.4 + td.TX[i] * dz, td.Y[i], td.Z[i] + td.NZ[i] * sd * 2.4 + td.TZ[i] * dz); g.add(m); }
   }
+  // značky na trati: u skoku čáry dopadu pro bronz, stříbro a zlato (měřeno od horizontu), u driftu žluté šipky
+  // ve směru zatáček, u slalomu bílé šipky ke straně první branky
+  const decal = (i, lat, w, l, draw, yaw = 0) => {
+    const tex = canvasTex(256, 128, (c2, ww, hh) => { c2.clearRect(0, 0, ww, hh); c2.translate(0, hh); c2.scale(1, -1); draw(c2, ww, hh); });   // obráceně, aby se z auta četlo správně
+    const m = new T.Mesh(new T.PlaneGeometry(w, l).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
+    m.position.set(td.X[i] + td.NX[i] * lat, td.Y[i] + 0.07, td.Z[i] + td.NZ[i] * lat); m.rotation.y = td.HD[i] + yaw; g.add(m); return m;
+  };
+  if (d.kind === 'jump') d.stars.forEach((dist, k) => {
+    const col = ['#c8803c', '#d7dce2', '#ffc419'][k], i = at(d.at + dist);
+    decal(i, 0, 2 * HW, 2.2, (c2, ww, hh) => { c2.fillStyle = col; c2.fillRect(0, hh * 0.38, ww, hh * 0.24); c2.font = '900 46px Arial'; c2.textAlign = 'right'; c2.fillStyle = '#ffffff'; c2.strokeStyle = 'rgba(0,0,0,.6)'; c2.lineWidth = 6; c2.strokeText(`${dist} m`, ww - 8, hh * 0.32); c2.fillText(`${dist} m`, ww - 8, hh * 0.32); });
+  });
+  if (d.kind === 'drift') for (let sA = d.s0 + 20; sA < d.s1 - 10; sA += 22) {
+    const i = at(sA), turn = td.K[Math.min(td.n - 1, i + 6)] > 0 ? -1 : 1;
+    decal(i, 0, 5, 5, (c2, ww, hh) => { c2.translate(ww / 2, hh / 2); c2.scale(1, -1); c2.strokeStyle = 'rgba(255,210,30,.85)'; c2.lineWidth = 16; c2.lineCap = 'round'; c2.beginPath(); c2.moveTo(-50 * turn, -40); c2.quadraticCurveTo(-40 * turn, 30, 40 * turn, 30); c2.stroke(); c2.beginPath(); c2.moveTo(15 * turn, 52); c2.lineTo(45 * turn, 30); c2.lineTo(15 * turn, 8); c2.stroke(); });
+  }
+  if (d.kind === 'slalom' && G.stunt.gatesAt) { const gA = G.stunt.gatesAt[0], i = at(gA.s - 18); decal(i, 0, 5, 5, (c2, ww, hh) => { c2.translate(ww / 2, hh / 2); c2.scale(gA.c > 0 ? 1 : -1, -1); c2.strokeStyle = 'rgba(255,255,255,.85)'; c2.lineWidth = 16; c2.lineCap = 'round'; c2.beginPath(); c2.moveTo(0, -45); c2.quadraticCurveTo(0, 20, 50, 35); c2.stroke(); c2.beginPath(); c2.moveTo(30, 58); c2.lineTo(52, 35); c2.lineTo(25, 15); c2.stroke(); }); }
   // brána začátku a konce úseku (zelená a šachovnice)
   for (const [s, col] of [[d.s0, '#3fdc86'], [d.s1, '#ffffff']]) { const i = at(s); for (const sd of [-1, 1]) { const p = new T.Mesh(new T.CylinderGeometry(0.08, 0.08, 3, 6).translate(0, 1.5, 0), new T.MeshLambertMaterial({ color: col })); p.position.set(td.X[i] + td.NX[i] * sd * (HW + 1), td.Y[i], td.Z[i] + td.NZ[i] * sd * (HW + 1)); g.add(p); } }
   W.group.add(g); G.stuntGroup = g;
@@ -12303,7 +12479,10 @@ function stuntFinish() {
   G.phase = 'done'; G.finishAt = performance.now(); G.result = G.time;
   const all = { ...(saved.stunts || {}) }, prev = all[d.id] || {}, stars = stuntStars(d, S.score), better = stuntBetter(d, S.score, prev.best);
   const gain = Math.max(0, stars - (prev.stars || 0));
-  all[d.id] = { best: better ? S.score : prev.best, stars: Math.max(stars, prev.stars || 0) };
+  // žebříček: pět nejlepších pokusů s datem
+  const tries = (prev.tries || []).concat(S.score != null ? [{ v: S.score, at: Date.now() }] : []).sort((a, b) => (stuntBetter(d, a.v, b.v) ? -1 : 1)).slice(0, 5);
+  all[d.id] = { best: better ? S.score : prev.best, stars: Math.max(stars, prev.stars || 0), tries };
+  S.tryAt = tries.findIndex((t) => t.v === S.score);
   saved.stunts = all; if (gain) saved.money = (saved.money | 0) + gain * 150; persist();
   if (stuntTotal() >= 20) achUnlock('stunt');
   Sound.fanfare(stars === 3);
@@ -12320,6 +12499,8 @@ function stuntResults(d, v, stars, gain, record) {
   if (d.kind === 'slalom') html += `<div class="rrow"><span>Shozené kužely · minuté branky</span><b>${G.stunt.hit} · ${G.stunt.missed}</b></div>`;
   html += `<div class="rrow"><span>Tvůj nejlepší</span><b>${stuntFmt(d, saved.stunts[d.id].best)}${record ? ' · nový!' : ''}</b></div>`;
   if (gain) html += `<div class="rrow me"><span>Nové hvězdy</span><b>+${moneyStr(gain * 150)}</b></div>`;
+  { const tries = (saved.stunts[d.id].tries || []); if (tries.length > 1) { html += `<div class="rrow"><span><b>Tvé nejlepší pokusy</b></span><b></b></div>`;
+    tries.forEach((t, k) => { const dt0 = new Date(t.at); html += `<div class="rrow ${k === G.stunt.tryAt ? 'me' : ''}"><span>${k + 1}. · ${dt0.getDate()}. ${dt0.getMonth() + 1}. ${String(dt0.getHours()).padStart(2, '0')}:${String(dt0.getMinutes()).padStart(2, '0')}</span><b>${stuntFmt(d, t.v)}</b></div>`; }); } }
   html += `</div><div class="actions"><button class="btn" id="sAgain">Znovu</button><button class="btn ghost" id="sNext">Další výzva <small>${STUNT_KINDS[next.kind].n} · ${STAGES[next.idx].name}</small></button><button class="btn ghost" id="sList">Seznam výzev</button><button class="btn ghost" id="sMenu">Do menu</button></div>`;
   $('resultsCard').innerHTML = html; overlay.results.hidden = false; overlay.touch.hidden = true;
   $('sAgain').onclick = () => stuntStart(d); $('sNext').onclick = () => stuntStart(next);
@@ -12357,8 +12538,8 @@ const RX_RIVALS = [['Novák', 'bmw', 2], ['Kopecká', 'p911', 1], ['Svoboda', 'a
 const rxRel = (td, s) => ((((s - td.S[td.startIdx]) % td.length) + td.length) % td.length);
 function inJoker(td, s, lat) { const j = td.joker; if (!j) return false; const r = rxRel(td, s); return r > j.from - 8 && r < j.to + 8 && lat * j.side > HW - 0.5 && lat * j.side < HW + 10.5; }
 const rxGravel = (td, s) => !!td.mix && td.mix.some(([a, b]) => { const r = rxRel(td, s); return r >= a && r <= b; });
-function rxStart(pc0) {
-  const idx = STAGES.findIndex((x) => x.id === 'rx');
+function rxStart(pc0, id = 'rx') {
+  const idx = Math.max(0, STAGES.findIndex((x) => x.id === id));
   G.champ = null; G.weekly = null; G.stunt = null;
   const prevCar = pc0 || (CAR_TYPES[saved.car] && CAR_TYPES[saved.car].formula ? saved.car : null);
   const go = async () => {
@@ -12469,6 +12650,7 @@ function rxFinish() {
   R.final = { rows, pos, prize };
   if (prize) { saved.money = (saved.money | 0) + prize; persist(); }
   if (pos === 1) achUnlock('rx');
+  { const id = W.td.st.id, rb = { ...(saved.rxBest || {}) }; if (!rb[id] || pos < rb[id]) { rb[id] = pos; saved.rxBest = rb; persist(); } }
   Sound.fanfare(pos === 1);
   hud.center.innerHTML = `P${pos}<span class="sub">${fmt(G.result)}${R.joker ? '' : ' · bez jokeru +30 s'}</span>`; hud.center.className = 'hud-center';
   setTimeout(() => rxResults(), 2200);
@@ -12484,10 +12666,22 @@ function rxResults() {
   if (prize) html += `<div class="rrow me"><span>Odměna</span><b>+ ${moneyStr(prize)}</b></div>`;
   html += `</div><div class="actions"><button class="btn" id="xAgain">Další jízda</button><button class="btn ghost" id="xMenu">Do menu</button></div>`;
   $('resultsCard').innerHTML = html; overlay.results.hidden = false; overlay.touch.hidden = true;
-  $('xAgain').onclick = () => { overlay.results.hidden = true; const pc = G.rx.prevCar; G.rx.prevCar = null; rxClear(); rxStart(pc); };
+  $('xAgain').onclick = () => { overlay.results.hidden = true; const pc = G.rx.prevCar, id = W.td.st.id; G.rx.prevCar = null; rxClear(); rxStart(pc, id); };
   $('xMenu').onclick = () => { overlay.results.hidden = true; startDemo(); };
 }
-$('bRx').onclick = () => rxStart();
+// výběr rallycrossové trati (Sosnová, Vysočina) s nejlepším umístěním
+$('bRx').onclick = () => {
+  const list = $('rxList'); list.innerHTML = '';
+  for (const st of STAGES.filter((x) => x.rx)) {
+    const b = document.createElement('button'); b.className = 'btn ghost'; b.dataset.rx = st.id;
+    const best = (saved.rxBest || {})[st.id];
+    b.innerHTML = `<span class="t">${st.name.replace('Rallycross ', '')}</span> <small>${(tracks[STAGES.indexOf(st)].length / 1000).toFixed(2)} km · ${st.tod}${best ? ' · nejlépe ' + best + '. místo' : ''}</small>`;
+    b.onclick = () => { $('rxModal').hidden = true; rxStart(undefined, st.id); };
+    list.appendChild(b);
+  }
+  $('rxModal').hidden = false;
+};
+$('rxClose').onclick = () => { $('rxModal').hidden = true; };
 // ---------------------------------------------------------------- úspěchy a trofeje
 // Úspěchy se plní během hraní (dojetí etapy, medaile, počasí, skoky, smyky, kilometry, Velká cena, kariéra…).
 // Každý má odměnu: peníze, novou barvu laku (dílna), nový polep (dílna) nebo design helmy jezdce (síň trofejí).
@@ -12944,6 +13138,31 @@ function edCheck(P, loop) {
   for (let i = 4; i < n - 4; i += 4) { const a1 = Math.atan2(P[i][0] - P[i - 4][0], P[i][1] - P[i - 4][1]), a2 = Math.atan2(P[i + 4][0] - P[i][0], P[i + 4][1] - P[i][1]); let d = Math.abs(a2 - a1); if (d > Math.PI) d = 2 * Math.PI - d; if (d > 0.5) res.turns++; }
   return res;
 }
+// kde (a jestli) se na vlastním okruhu vejdou boxy: vrací stranu 1/-1, nebo 0
+function edPitSide(P) {
+  const n = P.length; if (n < 30) return 0;
+  const cum = [0]; for (let i = 1; i < n; i++) cum.push(cum[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+  const L = cum[n - 1] + Math.hypot(P[0][0] - P[n - 1][0], P[0][1] - P[n - 1][1]);
+  if (L < 1500) return 0;
+  const rel = (i) => { const r = cum[i]; return r > L / 2 ? r - L : r; };   // vzdálenost od startu (před startem záporná)
+  const inR = (i) => { const r = rel(i); return r > -300 && r < 215; };
+  const h0 = Math.atan2(P[1][0] - P[0][0], P[1][1] - P[0][1]);
+  for (let i = 0; i < n; i++) { if (!inR(i)) continue; const j = (i + 1) % n, h = Math.atan2(P[j][0] - P[i][0], P[j][1] - P[i][1]); let dh = Math.abs(h - h0); if (dh > Math.PI) dh = 2 * Math.PI - dh; if (dh > 0.22) return 0; }
+  const nx = Math.cos(h0), nz = -Math.sin(h0);   // kolmice ke směru jízdy
+  for (const side of [1, -1]) {
+    let ok = true;
+    for (let i = 0; i < n && ok; i++) {
+      if (!inR(i)) continue;
+      for (const off of [12, 22, 32]) {
+        const x = P[i][0] - nx * side * off, z = P[i][1] - nz * side * off;
+        for (let j = 0; j < n; j += 2) { const rj = rel(j); if (rj > -420 && rj < 335) continue; /* vlastní rovinka a její pokračování */ if ((P[j][0] - x) ** 2 + (P[j][1] - z) ** 2 < 26 * 26) { ok = false; break; } }
+        if (!ok) break;
+      }
+    }
+    if (ok) return side;
+  }
+  return 0;
+}
 // definice trati → objekt etapy podle vzoru krajiny
 function edStage(d) {
   const tpl = STAGES.find((x) => x.id === ED_SCENES[d.scene][1]) || STAGES[0], sf = ED_SURF[d.surf];
@@ -12968,6 +13187,9 @@ function edStage(d) {
     if (d.loop) Object.assign(st, GP_TOD.night.st); else Object.assign(st, { tod: 'Noc', night: true, sky: nk.sky, sun: nk.sun, hemi: nk.hemi, fog: nk.fog, exposure: nk.exposure, clouds: null });
   }
   if (chk.cross) st.bridge = { h: 8, flat: 30, ramp: 160 };
+  // okruh s rovnou cílovou rovinkou (asi 280 m před startem a 200 m za ním) dostane boxovou uličku s garážemi
+  // jako velké okruhy; strana boxů je ta, kde v okolí nevede jiný úsek trati
+  if (d.loop) { const pit = edPitSide(d.pts); if (pit) st.pit = { ...STAGES.find((x) => x.id === 'silverstone').pit, side: pit }; }
   STAGE_FAUNA[st.id] = STAGE_FAUNA[tpl.id] || {}; STAGE_BIRDS[st.id] = STAGE_BIRDS[tpl.id];
   return st;
 }
@@ -13025,6 +13247,19 @@ async function edShare(d) {
   try { await navigator.clipboard.writeText(text + ' ' + url); toast('Odkaz na trať je zkopírovaný', 2.5); } catch (e) { prompt('Zkopíruj odkaz:', url); }
 }
 // ---- kreslení
+// náhled výšek: trať se postaví stejně jako ve hře (kopce, most) a uloží se výšky po trati
+function edPreview() {
+  if (ED.pts.length < 4 || ED.drawing || ED.drag) return null;
+  const key = ED.pts.length + '|' + ED.pts[0] + '|' + ED.pts[ED.pts.length >> 1] + '|' + ED.loop + ED.hills + ED.scene;
+  if (ED.prev && ED.prev.key === key) return ED.prev;
+  if (!edCheck(ED.pts, ED.loop).ok) return (ED.prev = { key, none: true });
+  try {
+    const td = buildTrackData(edStage({ id: 'uprev', name: 'náhled', pts: ED.pts, loop: ED.loop, surf: ED.surf, scene: ED.scene, tod: 'day', hills: ED.hills }));
+    let lo = 1e9, hi = -1e9; for (let i = td.startIdx; i <= td.finishIdx; i++) { lo = Math.min(lo, td.Y[i]); hi = Math.max(hi, td.Y[i]); }
+    ED.prev = { key, td, lo, hi };
+  } catch (e) { ED.prev = { key, none: true }; }
+  return ED.prev;
+}
 function edDraw() {
   const cv = $('edCanvas'), g = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
@@ -13045,6 +13280,19 @@ function edDraw() {
     g.setLineDash([6, 8]); g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.2; g.stroke(); g.setLineDash([]);
     const [sx, sy] = toPx(P[0]); g.fillStyle = '#3fdc86'; g.beginPath(); g.arc(sx, sy, 8, 0, 7); g.fill(); g.fillStyle = '#06210f'; g.font = '900 10px Arial'; g.textAlign = 'center'; g.fillText('S', sx, sy + 3.5);
     if (!ED.loop || ED.drawing) { const [fx, fy] = toPx(P[P.length - 1]); for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) { g.fillStyle = (a + b) & 1 ? '#111' : '#fff'; g.fillRect(fx - 8 + a * 4, fy - 8 + b * 4, 4, 4); } }
+    // barva trati podle výšky (modrá dole, červená nahoře) a výškový profil dole
+    const pv = !ED.drawing && edPreview();
+    if (pv && pv.td) {
+      const td = pv.td, span = Math.max(1, pv.hi - pv.lo), col = (y) => { const t = (y - pv.lo) / span; return `hsl(${Math.round(220 - 220 * t)},85%,${55 - 8 * t}%)`; };
+      g.lineWidth = Math.max(2, 7 / sc);
+      for (let i = td.startIdx; i < td.finishIdx; i += 3) { const [x0, y0] = toPx([td.X[i], td.Z[i]]), [x1, y1] = toPx([td.X[Math.min(i + 3, td.finishIdx)], td.Z[Math.min(i + 3, td.finishIdx)]]); g.strokeStyle = col(td.Y[i]); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
+      const PH = 46, PW = Math.min(260, w - 16), px0 = w - PW - 8, py0 = 8;
+      g.fillStyle = 'rgba(8,12,20,.72)'; g.fillRect(px0, py0, PW, PH + 18);
+      g.beginPath(); for (let k = 0; k <= 60; k++) { const i = td.startIdx + Math.round((td.finishIdx - td.startIdx) * k / 60), x = px0 + 6 + (PW - 12) * k / 60, y = py0 + 6 + PH - 6 - (td.Y[i] - pv.lo) / span * (PH - 10); k ? g.lineTo(x, y) : g.moveTo(x, y); }
+      g.strokeStyle = '#ffd23f'; g.lineWidth = 2; g.stroke();
+      if (td.bridgeH) { g.fillStyle = 'rgba(255,196,25,.35)'; for (let k = 0; k <= 60; k++) { const i = td.startIdx + Math.round((td.finishIdx - td.startIdx) * k / 60); if (td.bridgeH[i] > 1) g.fillRect(px0 + 6 + (PW - 12) * k / 60 - 2, py0 + 4, 4, PH - 4); } }
+      g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '700 10px Arial'; g.textAlign = 'left'; g.fillText(`výšky: převýšení ${Math.round(pv.hi - pv.lo)} m${td.bridgeH ? ' · most' : ''}`, px0 + 6, py0 + PH + 13);
+    }
     if (!ED.drawing) { const c = edCheck(ED.pts, ED.loop); for (const q of c.crossPts || []) { const [x, y] = toPx(q); g.fillStyle = '#ffc419'; g.beginPath(); g.arc(x, y, 9, 0, 7); g.fill(); g.fillStyle = '#111'; g.font = '900 11px Arial'; g.fillText('⌒', x, y + 4); } }
     g.textAlign = 'left';
   }
@@ -13055,7 +13303,7 @@ function edInfo() {
   if (ED.pts.length < 2) { el.innerHTML = '<b>Nakresli trať prstem</b><small>tah začni u startu; když dotáhneš konec k začátku, vznikne okruh</small>'; el.className = 'ed-info'; $('edDrive').disabled = true; return; }
   const c = edCheck(ED.pts, ED.loop);
   el.className = 'ed-info ' + (c.ok ? 'ok' : 'bad');
-  el.innerHTML = `<b>${(c.L / 1000).toFixed(2)} km · ${c.turns} zatáček${c.cross ? ' · 1 most' : ''}</b><small>${c.ok ? (ED.loop ? 'okruh – jede se jedno kolo' : 'etapa ze startu do cíle') : c.msg}</small>`;
+  el.innerHTML = `<b>${(c.L / 1000).toFixed(2)} km · ${c.turns} zatáček${c.cross ? ' · 1 most' : ''}</b><small>${c.ok ? (ED.loop ? 'okruh – jede se jedno kolo' : 'etapa ze startu do cíle') + ' · tažením za trať ji upravíš' : c.msg}</small>`;
   $('edDrive').disabled = !c.ok; $('edSave').disabled = !c.ok; $('edShare').disabled = !c.ok;
 }
 function edSeg(id, opts, cur, fn) {
@@ -13099,23 +13347,37 @@ function edGo(d) {
     e.preventDefault(); cv.setPointerCapture(e.pointerId);
     const p = at(e);
     ED.undo.push({ raw: ED.raw.slice(), pts: ED.pts.slice(), loop: ED.loop }); if (ED.undo.length > 20) ED.undo.shift();
+    // klepnutí na hotovou trať (ne na její volný konec): úsek se dá tažením posunout, okolí se plynule posune s ním
+    if (ED.pts.length > 3) {
+      let bi = -1, bd = (16 * ED.scale) ** 2;
+      ED.pts.forEach((q, k) => { const d = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2; if (d < bd) { bd = d; bi = k; } });
+      const nearEnd = !ED.loop && bi >= ED.pts.length - 2;
+      if (bi >= 0 && !nearEnd) { ED.drag = { i: bi, p0: p, orig: ED.pts.map((q) => q.slice()) }; ED.id = null; edDraw(); return; }
+    }
     // tah u konce stávající trati ji prodlouží, jinak se kreslí nová
     const end = ED.raw[ED.raw.length - 1];
     if (!(end && !ED.loop && Math.hypot(end[0] - p[0], end[1] - p[1]) < 30 * ED.scale)) { ED.raw = [p]; ED.id = null; }
     ED.drawing = true; edDraw();
   });
-  cv.addEventListener('pointermove', (e) => { if (!ED.drawing) return; const p = at(e), q = ED.raw[ED.raw.length - 1]; if (Math.hypot(p[0] - q[0], p[1] - q[1]) > 3 * ED.scale) { ED.raw.push(p); edDraw(); } });
+  cv.addEventListener('pointermove', (e) => {
+    if (ED.drag) {   // posun úseku: váha podle vzdálenosti po trati (asi 70 m na každou stranu)
+      const p = at(e), dx = p[0] - ED.drag.p0[0], dz = p[1] - ED.drag.p0[1], n = ED.drag.orig.length;
+      ED.pts = ED.drag.orig.map((q, k) => { let d = Math.abs(k - ED.drag.i); if (ED.loop) d = Math.min(d, n - d); const wgt = Math.exp(-((d * 12 / 70) ** 2)); return [q[0] + dx * wgt, q[1] + dz * wgt]; });
+      edDraw(); return;
+    }
+    if (!ED.drawing) return; const p = at(e), q = ED.raw[ED.raw.length - 1]; if (Math.hypot(p[0] - q[0], p[1] - q[1]) > 3 * ED.scale) { ED.raw.push(p); edDraw(); } });
   const up = () => {
+    if (ED.drag) { ED.drag = null; ED.raw = ED.pts.slice(); ED.pts = edProcess(ED.raw, ED.loop); ED.prev = null; edUi(); edDraw(); return; }
     if (!ED.drawing) return; ED.drawing = false;
     const a = ED.raw[0], b = ED.raw[ED.raw.length - 1];
     if (ED.raw.length > 8 && edLen(ED.raw, false) > 500 && Math.hypot(a[0] - b[0], a[1] - b[1]) < 90) { ED.loop = true; ED.raw.pop(); }
-    ED.pts = edProcess(ED.raw, ED.loop); edUi(); edDraw();
+    ED.pts = edProcess(ED.raw, ED.loop); ED.prev = null; edUi(); edDraw();
   };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
   $('edUndo').onclick = () => { const u = ED.undo.pop(); if (u) { ED.raw = u.raw; ED.pts = u.pts; ED.loop = u.loop; edUi(); edDraw(); } };
   $('edClear').onclick = () => { ED.undo.push({ raw: ED.raw.slice(), pts: ED.pts.slice(), loop: ED.loop }); ED.raw = []; ED.pts = []; ED.id = null; ED.loop = false; edUi(); edDraw(); };
   $('edZoom').onclick = () => { const z = [2, 4, 7]; ED.scale = z[(z.indexOf(ED.scale) + 1) % z.length]; $('edZoom').textContent = `Měřítko ${ED.scale} m`; edDraw(); };
-  $('edHills').oninput = () => { ED.hills = +$('edHills').value; edUi(); };
+  $('edHills').oninput = () => { ED.hills = +$('edHills').value; edUi(); clearTimeout(ED.hT); ED.hT = setTimeout(edDraw, 250); };
   $('edName').oninput = () => { ED.name = $('edName').value; };
   $('edDrive').onclick = () => { const d = edDef(); ED.id = d.id; edGo(d); };
   $('edSave').onclick = () => { const d = edDef(); ED.id = d.id; edSaveDef(d); edRegister(d); edUi(); toast(`Uloženo: ${d.name}`, 1.6); };
@@ -14823,6 +15085,17 @@ function renderMenu() {
     `<div class="stat"><small>Zatáčky · skoky</small><b>${nTurns} · ${nJumps}</b></div>` +
     `<div class="stat"><small>Zlato pod</small><b>${fmt(medalTimes(td).gold)}</b></div>` +
     (REC.map[td.st.id] ? `<div class="stat rec"><small>Rekord trati · ${REC.map[td.st.id].name.replace(/[<>&]/g, '')}</small><b>${fmt(REC.map[td.st.id].t)}</b></div>` : '');
+  // můj čas a kolik chybí k další medaili
+  { const best = saved.best[td.st.id];
+    if (best != null) {
+      const m = medalTimes(td), md = medalFor(td, best), next = md === 'gold' ? null : md === 'silver' ? ['zlato', m.gold] : md === 'bronze' ? ['stříbro', m.silver] : ['bronz', m.bronze];
+      $('stageDetail').insertAdjacentHTML('beforeend', `<div class="stat mine"><small>Můj čas${md !== 'none' ? ` · <i class="medal m-${md}"></i>` : ''}</small><b>${fmt(best)}</b>${next ? `<small class="to-next">na ${next[0]} chybí ${(best - next[1]).toFixed(2)} s</small>` : '<small class="to-next">zlato máš</small>'}</div>`);
+    } }
+  // jet znovu poslední trať (jen když není vybraná právě ona)
+  { const lr = saved.lastRun, k = lr ? STAGES.findIndex((x) => x.id === lr.id) : -1, b = $('bAgainLast');
+    b.hidden = k < 0;
+    if (k >= 0) { const best = saved.best[lr.id]; b.querySelector('small').textContent = `${STAGES[k].name}${CAR_TYPES[lr.car] ? ' · ' + CAR_TYPES[lr.car].name : ''}${best != null ? ' · ' + fmt(best) : ''}`;
+      b.onclick = () => { G.champ = null; if (CAR_TYPES[lr.car] && saved.car !== lr.car) { saved.car = lr.car; persist(); ensureCarModel(CAR_TYPES[lr.car].model).then(() => setLivery(saved.livery)); } loadStage(k, startRace); }; } }
   $('bStartSub').textContent = td.st.name;
   $('bGpMenu').hidden = saved.car !== 'f1';
   const cl = $('carList');
@@ -15195,6 +15468,11 @@ function tick(now) {
   try { tickUpdate(dt); } catch (e) { tickErrors++; if (tickErrors < 4) console.error(e); }
   if (!(window.__rally && window.__rally.freezeCam)) updateCamera(G.paused ? 0 : dt);
   W.sky.position.copy(camera.position);
+  // mechanici v boxech: daleko od boxů se nekreslí, stíny jen zblízka
+  { const cw = W.pit && W.pit.crew; if (cw && cw.cx != null) { const d = Math.max(0, Math.hypot(camera.position.x - cw.cx, camera.position.z - cw.cz) - cw.r), vis = d < 260, sh = d < 90;
+    for (const m of cw.meshes) { m.visible = vis; m.castShadow = sh; } for (const m of cw.tools) { m.visible = vis; m.castShadow = sh; } } }
+  // bloky města za mlhou se nekreslí (ani do stínů)
+  if (W.cityChunks && W.cityChunks.length) { const far = (scene.fog ? scene.fog.far : 900) + 60; for (const m of W.cityChunks) { const bs = m.geometry.boundingSphere; m.visible = bs.center.distanceTo(camera.position) < far + bs.radius; } }
   windTime.value += dt;
   // směr ke slunci v souřadnicích kamery pro prosvítání listí; v noci skoro nic
   leafU.uSunView.value.copy(sun.position).sub(sun.target.position).normalize().transformDirection(camera.matrixWorldInverse);
@@ -15227,8 +15505,8 @@ function tickUpdate(dt) {
       car.rpm += ((user.throttle ? 6500 : 1000) - car.rpm) * Math.min(1, dt * 6);
       G.countdown -= dt;
       const n = Math.ceil(G.countdown - 0.6);
-      if (G.gp) {
-        // pět červených světel se rozsvítí jedno po druhém, když zhasnou, jede se
+      if (G.gp || G.rx) {
+        // pět červených světel se rozsvítí jedno po druhém, když zhasnou, jede se (Velká cena i rallycross)
         const lit = clamp(Math.floor((4.6 - G.countdown) / 0.62), 0, 5);
         if (lit !== G.lastBeep) {
           G.lastBeep = lit; if (lit) Sound.beep(440, 0.12);
@@ -15236,7 +15514,7 @@ function tickUpdate(dt) {
           setStartLights(lit);
         }
       } else if (n !== G.lastBeep && n >= 1 && n <= 3) { G.lastBeep = n; Sound.beep(520); hud.center.textContent = String(n); hud.center.className = 'hud-center'; W.clock.draw(String(n), '#ff3b30', 6 - n); }
-      if (G.countdown <= 0.6 && G.gp) { setStartLights(0); gpRadio('Jeď!'); }
+      if (G.countdown <= 0.6 && (G.gp || G.rx)) { setStartLights(0); if (G.gp) gpRadio('Jeď!'); }
       if (G.countdown <= 0.6) { G.phase = 'run'; if (G.net && G.net.at) G.time = clamp((Date.now() - G.net.at) / 1000, 0, 5); Tilt.calibrate(); Chat.say('start'); W.clock.draw('GO', '#3fdc86', 5); Sound.beep(1040, 0.4); hud.center.textContent = 'START'; hud.center.className = 'hud-center small'; setTimeout(() => { if (G.phase === 'run') hud.center.textContent = ''; }, 900); }
     } else if (G.phase === 'run') {
       inp = window.__rally && window.__rally.auto ? autopilot(window.__rally.auto) : readInput();
