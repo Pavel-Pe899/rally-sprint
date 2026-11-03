@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mvzw350t';
+window.__BUILD = 'mw0xpeuc';
 (function () {
   function check() {
     try {
@@ -842,8 +842,18 @@ window.__BUILD = 'mvzw350t';
   .badge { display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-weight: 800; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; padding: 4px 12px; border-radius: 99px; align-self: flex-start; }
   .badge.gold { background: #ffcf3a; color: #2a1d00; } .badge.silver { background: #c9d3de; color: #1a222c; } .badge.bronze { background: #d08a4e; color: #2a1406; } .badge.none { background: rgba(255, 255, 255, .08); color: var(--muted); }
 
-  #loading { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(6, 10, 18, .72); font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: .08em; }
+  #loading { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: rgba(6, 10, 18, .72); font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: .08em; }
   #loading div { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .load-track { position: relative; width: 240px; height: 130px; --lc: #ffc419; }
+  .lt-road { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* formule objíždí půlkruh: otáčí se jen rameno se středem dole uprostřed (transform jede i při zaneprázdněné stránce) */
+  .lt-arm { position: absolute; left: 120px; top: 122px; width: 0; height: 0; animation: ltDrive 1.9s cubic-bezier(.45, .05, .55, .95) infinite; will-change: transform, opacity; }
+  .lt-car { position: absolute; left: -12px; top: -129px; width: 24px; height: 54px; transform: rotate(90deg); transform-origin: 50% 50%; }
+  .lt-f1 { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .6)); }
+  @keyframes ltDrive { 0% { transform: rotate(-96deg); opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { transform: rotate(96deg); opacity: 0; } }
+  #loadingText { text-align: center; max-width: 86vw; }
+  #loadingText b { color: var(--accent); }
+  @media (prefers-reduced-motion: reduce) { .lt-arm { animation-duration: 4s; } }
   .spin { width: 44px; height: 44px; border-radius: 50%; border: 4px solid rgba(255, 255, 255, .15); border-top-color: var(--accent); animation: sp .8s linear infinite; }
   @keyframes sp { to { transform: rotate(360deg); } }
   #fatal { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 17px; line-height: 1.5; background: var(--ink); }
@@ -1080,7 +1090,13 @@ window.__BUILD = 'mvzw350t';
   <button id="phBack" aria-label="Zpět">Zpět</button>
 </div>
 
-<div id="loading" hidden><div><span class="spin"></span><span id="loadingText">Stavím trať…</span></div></div>
+<div id="loading"><div>
+  <div class="load-track" aria-hidden="true">
+    <svg class="lt-road" viewBox="0 0 240 130"><path d="M18 122a102 102 0 0 1 204 0" fill="none" stroke="#2b313b" stroke-width="22"/><path d="M18 122a102 102 0 0 1 204 0" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.6" stroke-dasharray="7 9"/><path d="M5 122a115 115 0 0 1 230 0" fill="none" stroke="#e10600" stroke-width="4" stroke-dasharray="8 8"/><path d="M5 122a115 115 0 0 1 230 0" fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="8 8" stroke-dashoffset="8"/><path d="M31 122a89 89 0 0 1 178 0" fill="none" stroke="#e10600" stroke-width="3" stroke-dasharray="8 8"/><path d="M31 122a89 89 0 0 1 178 0" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="8 8" stroke-dashoffset="8"/></svg>
+    <div class="lt-arm"><div class="lt-car"><svg class="lt-f1" viewBox="0 0 44 100" aria-hidden="true"><rect x="2" y="4" width="40" height="7" rx="2" fill="var(--lc)"/><rect x="0" y="16" width="9" height="16" rx="3" fill="#111"/><rect x="35" y="16" width="9" height="16" rx="3" fill="#111"/><path d="M18 6h8l3 22 5 6v40l-4 14h-16l-4-14v-40l5-6z" fill="var(--lc)"/><rect x="8" y="36" width="28" height="30" rx="7" fill="var(--lc)"/><ellipse cx="22" cy="44" rx="5" ry="8" fill="#0b0e14"/><path d="M15 40q7-9 14 0" stroke="#d9dde3" stroke-width="2.2" fill="none"/><rect x="-1" y="66" width="10" height="20" rx="3" fill="#111"/><rect x="35" y="66" width="10" height="20" rx="3" fill="#111"/><rect x="4" y="88" width="36" height="9" rx="2" fill="#111"/><rect x="6" y="90" width="32" height="4" fill="var(--lc)"/></svg></div></div>
+  </div>
+  <span id="loadingText">Načítám hru…</span>
+</div></div>
 
 <div id="pause" class="modal" hidden>
   <div class="card">
@@ -1213,7 +1229,7 @@ window.__BUILD = 'mvzw350t';
         <button class="tog touch-only" id="tTilt"><i></i>Zatáčení náklonem</button>
         <button class="tog touch-only" id="tTiltSens">Citlivost náklonu: <b id="tTiltSensVal"></b></button>
         <button class="tog touch-only" id="tTiltDz">Mrtvá zóna náklonu: <b id="tTiltDzVal"></b></button>
-        <button class="tog" id="tMirror">Zpětné zrcátko: <b id="tMirrorVal"></b></button>
+        <button class="tog" id="tMirror">Zrcátko v kokpitu: <b id="tMirrorVal"></b></button>
         <button class="tog" id="tTut">Návod k ovládání…</button>
         <button class="tog touch-only" id="tLayout">Rozložení tlačítek…</button>
     </div>
@@ -2328,7 +2344,7 @@ try {
   const ios0 = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: ios0 });
 } catch (e) {
-  document.body.insertAdjacentHTML('beforeend', '<div id="fatal">Tento prohlížeč neumí WebGL, takže 3D hru nespustí. Zkus Safari, Chrome nebo Firefox.</div>');
+  document.body.insertAdjacentHTML('beforeend', '<div id="fatal">Tento prohlížeč neumí WebGL, takže 3D hru nespustí. Zkus Safari, Chrome nebo Firefox.</div>'); { const l = document.getElementById('loading'); if (l) l.hidden = true; }
   return;
 }
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -8887,7 +8903,7 @@ function physics(dt, inp) {
   physics0(dt, inp);
   if (!(Number.isFinite(car.x) && Number.isFinite(car.z) && Number.isFinite(car.y) && Number.isFinite(car.vx) && Number.isFinite(car.vz) && Number.isFinite(car.h))) {
     for (let i = 0; i < PHYS_SAFE.length; i++) car[PHYS_SAFE[i]] = Number.isFinite(physKeep[i]) ? physKeep[i] : 0;
-    car.vx = car.vz = car.vy = car.vf = car.vr = car.omega = 0; car.beta = 0;
+    car.vx = car.vz = car.vy = car.vf = car.vr = car.omega = 0; car.beta = 0; G.nanFix = (G.nanFix || 0) + 1;
   }
 }
 function physics0(dt, inp) {
@@ -10544,7 +10560,9 @@ function warmUp(root) {
 }
 function loadStage(idx, then) {
   overlay.loading.hidden = false;
-  $('loadingText').textContent = `Stavím trať · ${STAGES[idx].name}`;
+  $('loadingText').innerHTML = `Načítám mapu <b>${String(STAGES[idx].name).replace(/[<>&]/g, '')}</b>`;
+  // formule na načítací obrazovce v barvě vybraného týmu
+  try { const tm = F1_TEAMS[f1Team()]; if (tm) document.querySelector('.load-track').style.setProperty('--lc', tm.body); } catch (e) { /* výchozí žlutá */ }
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (W && WX.cfg) wxEnd();
     if (W) { scene.remove(W.group); disposeGroup(W.group); }
@@ -12450,9 +12468,12 @@ function rdGlass() {
   const c3 = car3d; if (!c3 || !RD.glass || c3.body.userData.cracked) return;
   c3.root.updateMatrixWorld(true);
   const glass = []; c3.body.traverse((o) => { if (o.isMesh && /glass|window/i.test((o.material && o.material.name) || '') && o.visible) glass.push(o); });
-  const bb = new T.Box3().setFromObject(c3.body), ray = new T.Raycaster();
+  // rozměry jen ze skel a v souřadnicích karoserie (celá karoserie by zahrnula i kužely reflektorů daleko před autem)
+  const bb = new T.Box3(), inv = new T.Matrix4().copy(c3.body.matrixWorld).invert(), rel = new T.Matrix4(), ray = new T.Raycaster();
+  for (const o of glass) { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); bb.union(o.geometry.boundingBox.clone().applyMatrix4(rel.multiplyMatrices(inv, o.matrixWorld))); }
+  if (bb.isEmpty()) return;
   let h = null;
-  for (let z = bb.max.z * 0.2; z < bb.max.z && !h; z += 0.1) { ray.set(c3.body.localToWorld(new T.Vector3(0.3, bb.max.y + 1, z)), new T.Vector3(0, -1, 0)); const q = ray.intersectObjects(glass, false)[0]; if (q && q.face.normal.clone().transformDirection(q.object.matrixWorld).z > 0.25) h = q; }
+  for (let z = bb.max.z * 0.2; z < bb.max.z && !h; z += 0.1) { ray.set(c3.body.localToWorld(new T.Vector3(0.3, bb.max.y + 1, z)), new T.Vector3(0, -1, 0)); const q = ray.intersectObjects(glass, false)[0]; if (q && q.face.normal.clone().transformDirection(q.object.matrixWorld).transformDirection(inv).z > 0.25) h = q; }   // čelní sklo = normála dopředu vůči autu (ne vůči světu)
   if (!h) return;
   const tex = canvasTex(256, 256, (g, w, hh) => {
     g.clearRect(0, 0, w, hh); g.strokeStyle = 'rgba(235,240,245,.85)'; g.lineWidth = 1.4; const cx = w * 0.45, cy = hh * 0.5;
@@ -14922,7 +14943,8 @@ function netDbSnap(snap) {
 }
 function netDbFresh() {
   const now = performance.now();
-  NET.dbPeers = (NET.dbAll || []).filter((e) => e.obj.sameTab || (now - e.t < 20000 && Math.abs(Date.now() - (e.data.ts || 0)) < 120000)).map((e) => e.obj);
+  const stale = NET.pending || G.net ? 60000 : 20000;   // při startu a v závodě: telefon může při stavbě trati na chvíli ztichnout
+  NET.dbPeers = (NET.dbAll || []).filter((e) => e.obj.sameTab || (now - e.t < stale && Math.abs(Date.now() - (e.data.ts || 0)) < 120000)).map((e) => e.obj);
 }
 function netPresence(patch) {
   for (const [k, v] of Object.entries(patch)) { if (v === null) delete NET.my[k]; else NET.my[k] = v; }
@@ -15030,11 +15052,16 @@ function netAdopt(offer, mine) {
   gpEnd(); G.champ = null;
   duoTeam = offer.duo && F1_TEAMS[offer.team] ? offer.team : null;
   $('netModal').hidden = true; overlay.results.hidden = true;
-  const ack = () => { netPresence({ ack: offer.id, rid: null, fin: null, dsq: null, svc: null, ai: null, car: saved.car, team: f1Team() }); toast(mine ? 'Čekám, až si trať načtou ostatní…' : offer.duo ? 'Týmový závod! Jedete oba za jeden tým…' : offer.gp ? 'Velká cena! Připrav se…' : 'Závod! Připrav se…', 2); };
+  const ack = () => { if (NET.pending && NET.pending.id === offer.id) NET.pending.tAck = performance.now(); netPresence({ ack: offer.id, rid: null, fin: null, dsq: null, svc: null, ai: null, car: saved.car, team: f1Team() }); toast(mine ? 'Čekám, až si trať načtou ostatní…' : offer.duo ? 'Týmový závod! Jedete oba za jeden tým…' : offer.gp ? 'Velká cena! Připrav se…' : 'Závod! Připrav se…', 2); };
   const load = () => { if (G.sel !== offer.stage) loadStage(offer.stage, ack); else ack(); };
   // Velká cena se jede formulí (svého týmu)
-  if (offer.gp) { if (saved.car !== 'f1') { saved.car = 'f1'; persist(); } ensureCarModel('f1').then(() => { setLivery(saved.livery); load(); }); }
-  else load();
+  // model formule se stahuje souběžně se stavbou trati (dřív se čekalo na jedno, pak na druhé)
+  if (offer.gp) {
+    if (saved.car !== 'f1') { saved.car = 'f1'; persist(); }
+    let n = 2; const done = () => { if (--n === 0) { setLivery(saved.livery); ack(); } };
+    ensureCarModel('f1').then(done, done);
+    if (G.sel !== offer.stage) loadStage(offer.stage, done); else done();
+  } else load();
 }
 // zpráva tam a zpátky: soupeř vrací naši značku tx v poli ex; polovina doby = jak dlouho letí jedna zpráva
 function netEcho(ps) {
@@ -15089,7 +15116,12 @@ function netHostWait() {
   const meReady = G.sel === pend.stage && overlay.loading.hidden;
   // start za 4 s podle hodin telefonů (ty jdou podle internetu stejně): odpočet skončí všem naráz,
   // i když zpráva k někomu dorazí o chvilku později
-  if (meReady && (all || performance.now() - pend.t0 > 12000)) { const at = Date.now() + 4000; netPresence({ go: pend.id, at }); pend.at = at; netStart(pend); }
+  // kdo ještě načítá: ukáže se jménem (a čeká se až 60 s od chvíle, kdy má trať načtenou zakladatel)
+  if (meReady && !pend.tReady) pend.tReady = performance.now();
+  const slow = ps.filter((p) => p.presence.ack !== pend.id).map((p) => (p.presence.name || 'Hráč').slice(0, 12));
+  if (meReady && slow.length && !(performance.now() - (pend.toastT || 0) < 2500)) { pend.toastT = performance.now(); toast(`Čekám, až si trať načte: ${slow.join(', ')}…`, 2.6); }
+  const waitMax = ps.length ? 60000 : 15000;   // nikdo další v čekárně: nejvýš 15 s
+  if (meReady && (all || performance.now() - pend.tReady > waitMax)) { const at = Date.now() + 4000; netPresence({ go: pend.id, at }); pend.at = at; netStart(pend); }
 }
 function netStart(pend) {
   NET.pending = null;
@@ -16102,18 +16134,18 @@ function tick(now) {
     post.grade.uniforms.uTime.value = (performance.now() % 1000) * 0.37; { const sz = renderer.getDrawingBufferSize(tmpV2 || (tmpV2 = new T.Vector2())); post.grade.uniforms.uTexel.value.set(1 / sz.x, 1 / sz.y); }
     post.composer.render(dt);
   } else renderer.render(scene, camera);
-  if (mirOn) try { mirrorOverlay(); } catch (e) { tickErrors++; }
-  else if (MIR.cabMesh && MIR.cabMesh.userData.mirOn) mirrorCab(false);
+  if (!mirOn && MIR.cabMesh && MIR.cabMesh.userData.mirOn) mirrorCab(false);
   if (DIAG.on) diagProbe(rawDt);
   perfCheck(dt, now);
 }
 let tickErrors = 0;
 // ---------------------------------------------------------------- zpětné zrcátko
 // kamera nad autem dívající se dozadu kreslí do malé textury (každý 2. snímek, na telefonu každý 3.);
-// za autem se textura ukáže jako zrcátko nahoře uprostřed, v kokpitu přímo ve vnitřním zrcátku
+// textura se ukáže ve vnitřním zrcátku v kokpitu (za autem se zrcátko nekreslí)
 const MIR = { rt: null, cam: null, scene: null, ocam: null, quad: null, frame: 0, cabMesh: null, cabFor: null, cabMat: null };
 function mirrorWanted() {
-  return saved.mirror !== false && G.mode === 'race' && !G.replay && !G.photo && !G.paused && (G.phase === 'run' || G.phase === 'countdown') && !!car3d && !!W;
+  // jen v kokpitu (vnitřní zrcátko); za autem se nekreslí
+  return saved.mirror !== false && G.mode === 'race' && G.camMode === 2 && !G.replay && !G.photo && !G.paused && (G.phase === 'run' || G.phase === 'countdown') && !!car3d && !!W && !!cockpit.group;
 }
 function mirrorInit() {
   if (MIR.rt) return;
@@ -16137,6 +16169,7 @@ function mirrorRender() {
   const inCab = G.camMode === 2;
   if (cockpit.group !== MIR.cabFor) { MIR.cabFor = cockpit.group; MIR.cabMesh = null; if (cockpit.group) cockpit.group.traverse((o) => { if (o.userData.mirror) MIR.cabMesh = o; }); }
   mirrorCab(inCab);
+  if (!MIR.cabMesh) return;   // formule vnitřní zrcátko nemá
   if ((MIR.frame++ % (IS_TOUCH ? 3 : 2)) !== 0) return;
   const fx = Math.sin(car.h), fz = Math.cos(car.h);
   MIR.cam.position.set(car.x + fx * 0.4, car.y + 1.45, car.z + fz * 0.4);
@@ -16149,22 +16182,6 @@ function mirrorRender() {
   renderer.setRenderTarget(MIR.rt); renderer.render(scene, MIR.cam); renderer.setRenderTarget(prevRT);
   car3d.root.visible = vis; if (cockpit.group) cockpit.group.visible = cv; renderer.shadowMap.autoUpdate = sh;
   extra.forEach((o, i) => { o.visible = ev[i]; });
-}
-function mirrorOverlay() {
-  if (G.camMode === 2 && MIR.cabMesh) return;   // v kokpitu je obraz ve vnitřním zrcátku
-  const el = renderer.domElement, pr = renderer.getPixelRatio(), cw = el.width / pr, ch = el.height / pr;
-  // pod panely nahoře uprostřed (pokyn spolujezdce, pořadí ve Velké ceně), aby je zrcátko nepřekrylo
-  if (!(MIR.topT > 0)) {
-    MIR.topT = 20; let top = 8;
-    for (const id of ['hNote', 'hGp']) { const e = $(id); if (!e || e.hidden) continue; const r = e.getBoundingClientRect(); if (r.height > 0 && r.top < ch * 0.4 && r.left < cw / 2 + 150 && r.right > cw / 2 - 150) top = Math.max(top, r.bottom + 6); }
-    MIR.top = top;
-  }
-  MIR.topT--;
-  const w = Math.round(Math.min(300, cw * 0.26)), h = Math.round(w / 3.6), x = Math.round((cw - w) / 2), y = Math.round(ch - h - MIR.top);
-  const ac = renderer.autoClear; renderer.autoClear = false;
-  renderer.setViewport(x, y, w, h); renderer.setScissor(x, y, w, h); renderer.setScissorTest(true);
-  renderer.clearDepth(); renderer.render(MIR.scene, MIR.ocam);
-  renderer.setScissorTest(false); renderer.setViewport(0, 0, cw, ch); renderer.autoClear = ac;
 }
 // startovní světla: n rozsvícených sloupků (čočky + záře)
 function setStartLights(n) {
@@ -16257,9 +16274,12 @@ function tickUpdate(dt) {
     if (NET.db) netPump();
     if (P2P.open) p2pPump();
     if (NET.pending) {
-      if (NET.pending.mine) netHostWait();
-      else if (NET.pending.go && G.sel === NET.pending.stage && overlay.loading.hidden) netStart(NET.pending);
-      else if (performance.now() - NET.pending.t0 > 20000) { NET.pending = null; toast('Závod se nespustil · zkus to znovu', 2.5); }
+      const pd = NET.pending, now = performance.now();
+      // čekání na ostatní: stav se připomíná každé 2 s, jinak by ostatní telefony hráče po chvíli ticha vyřadily
+      if (!(now - (NET.pendBeat || 0) < 2000)) { NET.pendBeat = now; netPresence({ beat: Date.now() % 100000 }); netDbFresh(); netOnPeers(); }
+      if (pd.mine) netHostWait();
+      else if (pd.go && G.sel === pd.stage && overlay.loading.hidden) netStart(pd);
+      else if (now - (pd.tAck || pd.t0) > (pd.tAck ? 75000 : 150000)) { NET.pending = null; toast('Závod se nespustil · zkus to znovu', 2.5); }
     }
     updateRacingLine();
     updateCarVisual(dt, inp);
