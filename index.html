@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw0xpeuc';
+window.__BUILD = 'mw14gcw5';
 (function () {
   function check() {
     try {
@@ -8402,7 +8402,7 @@ scene.add(hemi, sun, sun.target);
 const pmrem = new T.PMREMGenerator(renderer);
 let envRT = null;
 
-const dust = new Dust(IS_TOUCH ? 450 : 700);
+const dust = new Dust(IS_TOUCH ? 450 : 700, { grow: 0.8 });   // prach a kouř od kol jen drobný (auto přes něj musí být vidět)
 scene.add(dust.points);
 const skids = new Skids(IS_TOUCH ? 1600 : 3000);
 scene.add(skids.mesh);
@@ -8410,13 +8410,13 @@ const stones = new Dust(260, { gravity: 18, grow: 0, fade: 1, drag: 0.5 });
 scene.add(stones.points);
 const STONE_COL = { gravel: '#4e4232', snow: '#f4f8ff', sand: '#b48a58', tarmac: '#2a2a2a' };
 // kouř z poškozeného motoru (stoupá, roste, tmavě šedý)
-const smoke = new Dust(IS_TOUCH ? 140 : 220, { gravity: -1.3, grow: 3.0, fade: 0.6, drag: 1.1 });
+const smoke = new Dust(IS_TOUCH ? 140 : 220, { gravity: -1.3, grow: 0.8, fade: 0.6, drag: 1.1 });
 smoke.setColor('#4a4a4c', 1);
 scene.add(smoke.points);
 const splash = new Dust(260, { gravity: 11, grow: 1.4, fade: 0.8, drag: 1.2 });
 splash.setColor('#c9c2b4', 1);
 scene.add(splash.points);
-const spray = new Dust(IS_TOUCH ? 320 : 650, { gravity: 0.15, grow: 2.2, fade: 0.14, drag: 1.5 }); // řídká a průhledná mlha, ať je za autem vidět
+const spray = new Dust(IS_TOUCH ? 320 : 650, { gravity: 0.15, grow: 0.8, fade: 0.14, drag: 1.5 }); // řídká a průhledná mlha, ať je za autem vidět
 spray.setColor('#cfd8e3', 1);
 scene.add(spray.points);
 let sprayAcc = 0;
@@ -9951,7 +9951,7 @@ function updateCarVisual(dt, inp) {
     else if (car.surf === 'off') rate = speed * (st.road === 'snow' || st.road === 'sand' ? 1.2 : 0.55);
     if (!st.loose && car.slip > 3.5) rate += car.slip * 5;
   }
-  emitAcc += rate * dt * Q().dust * (st.dustK || 1) * (WX.cfg ? 1 - 0.9 * WX.wet : 1);   // na mokru se nepráší
+  emitAcc += rate * 0.5 * dt * Q().dust * (st.dustK || 1) * (WX.cfg ? 1 - 0.9 * WX.wet : 1);   // na mokru se nepráší
   while (emitAcc >= 1) {
     emitAcc -= 1;
     const side = Math.random() < 0.5 ? -1 : 1;
@@ -9961,7 +9961,7 @@ function updateCarVisual(dt, inp) {
       car.vx * 0.35 + fx * back + (Math.random() - 0.5) * 3 + rx * car.vr * 0.2,
       0.6 + Math.random() * 1.6,
       car.vz * 0.35 + fz * back + (Math.random() - 0.5) * 3 + rz * car.vr * 0.2,
-      1.6 + Math.random() * 1.6 + speed * 0.03, 1.1 + Math.random() * 1.3);
+      0.35 + Math.random() * 0.35 + speed * 0.006, 0.6 + Math.random() * 0.6);
   }
   // mokrá trať: za autem se zvedá vodní tříšť
   if (WX.cfg && WX.wet > 0.2 && !flying && car.surf !== 'off' && speed > 12) {
@@ -9970,7 +9970,7 @@ function updateCarVisual(dt, inp) {
       sprayAcc -= 1;
       const side = Math.random() < 0.5 ? -1 : 1;
       spray.emit(car.x + rx * side * trk - fx * (rOff + 0.4), car.y + 0.25, car.z + rz * side * trk - fz * (rOff + 0.4),
-        car.vx * 0.15 - fx * 2 + (Math.random() - 0.5) * 2.5, 0.8 + Math.random() * 1.8, car.vz * 0.15 - fz * 2 + (Math.random() - 0.5) * 2.5, 1.2 + Math.random() * 1.2 + speed * 0.02, 0.6 + Math.random() * 0.6);
+        car.vx * 0.15 - fx * 2 + (Math.random() - 0.5) * 2.5, 0.8 + Math.random() * 1.8, car.vz * 0.15 - fz * 2 + (Math.random() - 0.5) * 2.5, 0.35 + Math.random() * 0.35 + speed * 0.005, 0.5 + Math.random() * 0.4);
     }
   }
   if (!flying && st.loose && car.surf !== 'off' && speed > 6 && (inp.throttle > 0 || car.slip > 2)) {
@@ -12388,8 +12388,8 @@ function dmgFx(dt) {
   const k = engineDmg();
   if (k > 0.4 && G.phase !== 'done') {
     const fx = Math.sin(car.h), fz = Math.cos(car.h), rear = car3d.formula || saved.car === 'p911', off = rear ? -1.6 : 1.5;
-    const n = (k - 0.35) * 24 * dt, cnt = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
-    for (let q = 0; q < cnt; q++) smoke.emit(car.x + fx * off + (Math.random() - 0.5) * 0.6, car.y + 0.9, car.z + fz * off + (Math.random() - 0.5) * 0.6, car.vx * 0.5 + (Math.random() - 0.5), 1.0 + Math.random() * 0.8, car.vz * 0.5 + (Math.random() - 0.5), 0.7 + k * 0.8, 1.3 + k);
+    const n = (k - 0.35) * 12 * dt, cnt = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+    for (let q = 0; q < cnt; q++) smoke.emit(car.x + fx * off + (Math.random() - 0.5) * 0.6, car.y + 0.9, car.z + fz * off + (Math.random() - 0.5) * 0.6, car.vx * 0.5 + (Math.random() - 0.5), 1.0 + Math.random() * 0.8, car.vz * 0.5 + (Math.random() - 0.5), 0.22 + k * 0.2, 0.9 + k * 0.5);
     smoke.setColor(k > 0.7 ? '#3a3a3c' : '#8e8e90', 1);
   }
   Sound.damage(k, car.rpm || 0, dt);
@@ -12935,7 +12935,7 @@ function rxTick(dt) {
       r.position.set(x, y, z); r.rotation.set(0, hd, 0, 'YXZ');
       a.c3.blob.position.set(x, y + 0.06, z); a.c3.blob.rotation.set(-Math.PI / 2, hd, 0, 'YXZ');
       a.spin += (a.v / 0.35) * dt; for (const w of a.c3.wheels) w.spin.rotation.x = a.spin;
-      if (run && a.v > 12 && rxGravel(td, td.S[i0]) && Math.random() < dt * 30) dust.emit(x - Math.sin(hd) * 1.6, y + 0.3, z - Math.cos(hd) * 1.6, (Math.random() - 0.5) * 3, 0.6 + Math.random(), (Math.random() - 0.5) * 3, 2 + Math.random() * 1.5, 1.2);
+      if (run && a.v > 12 && rxGravel(td, td.S[i0]) && Math.random() < dt * 30) dust.emit(x - Math.sin(hd) * 1.6, y + 0.3, z - Math.cos(hd) * 1.6, (Math.random() - 0.5) * 3, 0.6 + Math.random(), (Math.random() - 0.5) * 3, 0.4 + Math.random() * 0.3, 0.8);
     }
   }
   // pořadí a HUD
