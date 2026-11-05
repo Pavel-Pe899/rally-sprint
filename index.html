@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw3saozx';
+window.__BUILD = 'mw3v3v7q';
 (function () {
   function check() {
     try {
@@ -1280,6 +1280,7 @@ window.__BUILD = 'mw3saozx';
       Postava jezdce: X Bot z <a href="https://www.mixamo.com" target="_blank" rel="noopener">Adobe Mixamo</a> (z ukázek three.js).
       Tvary okruhů Miami, Monza a Silverstone: <a href="https://github.com/bacinger/f1-circuits" target="_blank" rel="noopener">bacinger/f1-circuits</a> (MIT).
       Upraveno: bez interiéru a log, zjednodušeno, vlastní lak. Jména týmů F1 jsou ochranné známky svých vlastníků; hra není spojená s výrobci aut ani s týmy.</p>
+    <p class="help" id="buildInfo" hidden></p>
     <div class="actions"><button class="btn" id="settingsClose">Hotovo</button></div>
   </div>
 </div>
@@ -2354,6 +2355,24 @@ try {
   return;
 }
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+// Ochrana proti neplatným číslům (NaN, nekonečno) v obraze. Jediný takový bod by efekt záře (bloom) rozmazal přes celou
+// obrazovku a na iPhonu/iPadu by na snímek zčernala (na počítači to grafika „vyléčí“, proto se to tam neukáže).
+// 1) půlvektor světla a pohledu se v osvětlení normalizuje bezpečně: když míří proti sobě, vyjde nula místo NaN
+{
+  const C = T.ShaderChunk;
+  C.common += '\nvec3 rsSafeNorm( vec3 v ) { return v * inversesqrt( max( dot( v, v ), 1e-12 ) ); }\n';
+  for (const k of Object.keys(C)) if (typeof C[k] === 'string' && C[k].includes('normalize( lightDir + viewDir )')) C[k] = C[k].split('normalize( lightDir + viewDir )').join('rsSafeNorm( lightDir + viewDir )');
+}
+// 2) do efektů po vykreslení vstupuje jen čistý obraz: neplatné číslo (poznané podle bitů, to překladač nevynechá) je nula,
+// jas je omezený na 64 (min/max navíc NaN na grafice Apple zahodí)
+const RS_CLEAN_GLSL = `
+vec4 rsClean( vec4 c ) {
+#if __VERSION__ >= 300
+  c = mix( c, vec4( 0.0 ), equal( floatBitsToUint( c ) & uvec4( 0x7f800000u ), uvec4( 0x7f800000u ) ) );
+#endif
+  return min( max( c, vec4( 0.0 ) ), vec4( 64.0 ) );
+}
+`;
 // Výškový opar: k obyčejné mlze přidá opar v dálce, hustší nad údolími pod kamerou. Krajina tak dostane hloubku.
 {
   const C = T.ShaderChunk;
@@ -3278,7 +3297,7 @@ function addShine(mat, key, { gloss = 1 } = {}) {
       #if NUM_DIR_LIGHTS > 0
       {
         vec3 shN = normalize(normal), shV = normalize(vViewPosition), shL = directionalLights[0].direction;
-        float shNH = max(dot(shN, normalize(shL + shV)), 0.0);
+        float shNH = max(dot(shN, rsSafeNorm(shL + shV)), 0.0);
         float shG = pow(shNH, 300.0) * 1.3 + pow(shNH, 40.0) * 0.22;
         totalEmissiveRadiance += directionalLights[0].color * shG * uShineK * ${SCENE_SHINE.has(key) ? 'uShineScene * ' : ''}${gloss.toFixed(3)};
       }
@@ -3337,7 +3356,7 @@ function terrainHook(rock, mow) {
     sh.vertexShader = 'varying vec3 vWN;\n' + sh.vertexShader.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n  vWN = normalize(mat3(modelMatrix) * objectNormal);');
     sh.fragmentShader = 'uniform vec3 uRock; uniform vec3 uMow; varying vec3 vWN;\n' + sh.fragmentShader.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   // jemné nerovnosti z normálové mapy v dálce slábnou, jinak se třpytí jako zrno
-  normal = normalize(mix(normal, normalize(vNormal), smoothstep(30.0, 110.0, length(vViewPosition))));`).replace('#include <map_fragment>', `
+  normal = rsSafeNorm(mix(normal, normalize(vNormal), smoothstep(30.0, 110.0, length(vViewPosition))));`).replace('#include <map_fragment>', `
   // textura trávy dvakrát (jiné měřítko a natočení) a místy přelitá jedna do druhé: zmizí opakující se vzor
   #ifdef USE_MAP
   vec4 tA = texture2D(map, vMapUv);
@@ -3394,7 +3413,7 @@ function roadOverlayHook(overlay) {
     sh.fragmentShader = 'uniform sampler2D uOverlay; uniform vec3 uLineCol; varying vec2 vRawUv;\n' + sh.fragmentShader.replace('#include <map_fragment>',
       '#include <map_fragment>\n  vec4 ov = texture2D(uOverlay, vRawUv);\n  diffuseColor.rgb = mix(uLineCol, diffuseColor.rgb * ov.rgb * 2.0, ov.a);')
       // drobné nerovnosti asfaltu v dálce slábnou, aby se cesta netřpytila
-      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n  normal = normalize(mix(normal, normalize(vNormal), smoothstep(20.0, 70.0, length(vViewPosition))));');
+      .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n  normal = rsSafeNorm(mix(normal, normalize(vNormal), smoothstep(20.0, 70.0, length(vViewPosition))));');
   };
 }
 
@@ -13310,7 +13329,13 @@ for (const b of document.querySelectorAll('#trophyTabs [data-tab]')) b.onclick =
 $('trophyClose').onclick = () => { $('trophyModal').hidden = true; renderMenu(); };
 $('bTrophy').onclick = () => openTrophies();
 // okno Nastavení: přepínače (zvuk, řízení, asistenti, rally, grafika) přesunuté z lobby, aby bylo přehlednější
-$('bSettings').onclick = () => { renderMenu(); $('settingsModal').hidden = false; $('settingsModal').querySelector('.card').scrollTop = 0; };
+$('bSettings').onclick = () => { renderMenu(); buildInfo(); $('settingsModal').hidden = false; $('settingsModal').querySelector('.card').scrollTop = 0; };
+// verze hry (číslo sestavení z GitHub Pages = čas sestavení): podle ní se dá ověřit, že běží nejnovější verze
+function buildInfo() {
+  const el = $('buildInfo'), b = window.__BUILD; if (!el || !b) return;
+  const d = new Date(parseInt(b, 36));
+  el.textContent = `Verze hry: ${d.toLocaleDateString('cs-CZ')} ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })} (${b})`; el.hidden = false;
+}
 $('settingsClose').onclick = () => { $('settingsModal').hidden = true; renderMenu(); };
 // ---------------------------------------------------------------- výzva týdne a žebříček
 // Každý týden (ISO týden, pondělí–neděle) má všude stejné zadání odvozené z čísla týdne: etapa, auto, počasí a
@@ -15865,6 +15890,7 @@ let lastSize = '', resizeCount = 0, ctxLost = 0, lastFps = 60;
 renderer.domElement.addEventListener('webglcontextlost', () => { ctxLost++; });
 function resize() {
   const w = window.innerWidth, h = window.innerHeight, key = `${w}x${h}@${renderer.getPixelRatio()}`;
+  if (!(w > 0 && h > 0)) { resizeReq = true; return; }   // iOS při otočení na okamžik hlásí nulovou výšku: poměr stran by byl nekonečný
   if (key === lastSize) return;
   lastSize = key; resizeCount++; tower.room = 0;
   renderer.setSize(w, h, false);
@@ -15891,17 +15917,19 @@ const GRADE_SHADER = {
   fragmentShader: `
     uniform sampler2D tDiffuse; uniform float uSat; uniform float uContrast; uniform vec3 uTint; uniform float uBlur; uniform vec2 uSun; uniform float uShaft; uniform float uTime; uniform vec2 uTexel;
     varying vec2 vUv;
+    ${RS_CLEAN_GLSL}
+    vec4 txc(vec2 u) { return rsClean(texture2D(tDiffuse, u)); }
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
       vec2 dir = vUv - 0.5;
       float rr = length(dir * vec2(1.25, 1.0));
       // jemná chromatická vada objektivu k okrajům (červená a modrá se mírně rozcházejí)
       vec2 ca = dir * (0.0016 * rr * rr);
-      vec3 c = vec3(texture2D(tDiffuse, vUv + ca).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - ca).b);
+      vec3 c = vec3(txc(vUv + ca).r, txc(vUv).g, txc(vUv - ca).b);
       if (uBlur > 0.001) {
         float k = uBlur * smoothstep(0.12, 0.6, length(dir));
         vec3 acc = c;
-        for (int i = 1; i < 6; i++) acc += texture2D(tDiffuse, vUv - dir * k * (float(i) / 6.0)).rgb;
+        for (int i = 1; i < 6; i++) acc += txc(vUv - dir * k * (float(i) / 6.0)).rgb;
         c = acc / 6.0;
       }
       // sluneční paprsky (crepuscular rays): jasné body se rozmažou po směru ke slunci; vidět jen při pohledu proti slunci
@@ -15911,14 +15939,14 @@ const GRADE_SHADER = {
         vec2 sp = vUv + sd / 16.0 * 6.0 * jit; float sw = 1.0; vec3 acc = vec3(0.0);
         for (int i = 0; i < 16; i++) {
           sp += sd / 16.0 * 6.0;
-          vec3 s = texture2D(tDiffuse, sp).rgb;
+          vec3 s = txc(sp).rgb;
           float sl = dot(s, vec3(0.2126, 0.7152, 0.0722));
           acc += s * smoothstep(0.7, 1.4, sl) * sw; sw *= 0.93;
         }
         c += acc * (uShaft * 0.075) * vec3(1.0, 0.93, 0.8);
       }
       // doostření: odečte rozmazání okolních bodů (drobné detaily, pletivo a písmo jsou ostřejší)
-      vec3 bl = (texture2D(tDiffuse, vUv + vec2(uTexel.x, 0.0)).rgb + texture2D(tDiffuse, vUv - vec2(uTexel.x, 0.0)).rgb + texture2D(tDiffuse, vUv + vec2(0.0, uTexel.y)).rgb + texture2D(tDiffuse, vUv - vec2(0.0, uTexel.y)).rgb) * 0.25;
+      vec3 bl = (txc(vUv + vec2(uTexel.x, 0.0)).rgb + txc(vUv - vec2(uTexel.x, 0.0)).rgb + txc(vUv + vec2(0.0, uTexel.y)).rgb + txc(vUv - vec2(0.0, uTexel.y)).rgb) * 0.25;
       c += clamp(c - bl, -0.1, 0.1) * 0.22;   // jen jemně: silné doostření zvýrazňovalo mihotání listí a trávy
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
       c = mix(vec3(l), c, uSat);
@@ -15931,7 +15959,7 @@ const GRADE_SHADER = {
       // vinětace jako u objektivu a jemné filmové zrno
       c *= 1.0 - 0.26 * smoothstep(0.36, 0.95, rr);
       c += (hash(vUv * vec2(1920.0, 1080.0)) - 0.5) * 0.012 * smoothstep(0.015, 0.2, lm);   // zrno se nemění snímek od snímku (na telefonu působilo jako problikávání)   // zrno jen na osvětlených místech (čistě černý snímek zůstane černý)
-      gl_FragColor = vec4(c, 1.0);
+      gl_FragColor = rsClean(vec4(c, 1.0));
     }`,
 };
 const GRADE = {
@@ -15957,6 +15985,10 @@ function setupPost() {
     const composer = new P.EffectComposer(renderer, rt);
     composer.addPass(new P.RenderPass(scene, camera));
     const bloom = new P.UnrealBloomPass(new T.Vector2(size.x / 2, size.y / 2), 0.35, 0.5, 2.0);
+    // záře bere jen čistý obraz (jinak jediný neplatný bod rozmazala přes celou obrazovku = černý snímek na iPhonu)
+    { const hp = bloom.materialHighPassFilter, src = 'vec4 texel = texture2D( tDiffuse, vUv );';
+      if (!hp.fragmentShader.includes(src)) throw new Error('bloom: nečekaný shader');
+      hp.fragmentShader = RS_CLEAN_GLSL + hp.fragmentShader.replace(src, 'vec4 texel = rsClean( texture2D( tDiffuse, vUv ) );'); hp.needsUpdate = true; post0Clean = true; }
     // záře je stejně rozmazaná, na slabším nastavení se počítá v menším rozlišení (čtvrtina místo poloviny)
     if (cfg.bloomDiv) { const ss = bloom.setSize.bind(bloom), f = 2 / cfg.bloomDiv; bloom.setSize = (w, h) => ss(Math.max(2, Math.round(w * f)), Math.max(2, Math.round(h * f))); }
     composer.addPass(bloom);
@@ -16158,6 +16190,7 @@ function tick(now) {
   leafU.uSunCol.value.copy(sun.color).multiplyScalar(W && W.td.st.night ? 0.1 : Math.min(1, sun.intensity / 3));
   try { updateGlare(); updateTreeLod(); if (W.specLod) W.specLod(camera.position.x, camera.position.z); updateTerrainLod(); } catch (e) { tickErrors++; }
   applyPendingResize();
+  camGuard();
   if (PODIUM.on) { try { podiumTick(dt); } catch (e) { tickErrors++; } renderer.render(PODIUM.scene, PODIUM.cam); if (DIAG.on) diagProbe(rawDt); return; }
   const mirOn = mirrorWanted();
   if (mirOn) try { mirrorRender(); } catch (e) { tickErrors++; }
@@ -16170,7 +16203,30 @@ function tick(now) {
   if (DIAG.on) diagProbe(rawDt);
   perfCheck(dt, now);
 }
-let tickErrors = 0;
+let tickErrors = 0, post0Clean = false;
+// pojistka hodnot, které působí na celý obraz (expozice, světla, mlha, sluneční paprsky): neplatná hodnota by na snímek
+// zčernala celou obrazovku – zůstane poslední platná
+const sceneGood = { exp: 1, sun: 3, hemi: 1, near: 50, far: 600 };
+function sceneGuard() {
+  const fix = (ok, set) => { if (!ok) { set(); camBad.n++; } };
+  if (Number.isFinite(renderer.toneMappingExposure)) sceneGood.exp = renderer.toneMappingExposure; else fix(false, () => { renderer.toneMappingExposure = sceneGood.exp; });
+  if (Number.isFinite(sun.intensity)) sceneGood.sun = sun.intensity; else fix(false, () => { sun.intensity = sceneGood.sun; });
+  if (Number.isFinite(hemi.intensity)) sceneGood.hemi = hemi.intensity; else fix(false, () => { hemi.intensity = sceneGood.hemi; });
+  const f = scene.fog;
+  if (f && f.isFog) { if (Number.isFinite(f.near) && Number.isFinite(f.far)) { sceneGood.near = f.near; sceneGood.far = f.far; } else fix(false, () => { f.near = sceneGood.near; f.far = sceneGood.far; }); }
+  if (post) { const u = post.grade.uniforms; if (!Number.isFinite(u.uShaft.value + u.uSun.value.x + u.uSun.value.y + u.uBlur.value)) { u.uShaft.value = 0; u.uBlur.value = 0; u.uSun.value.set(0.5, 0.5); camBad.n++; } }
+}
+// pojistka kamery: neplatná poloha, natočení nebo poměr stran by na snímek vykreslily černou obrazovku – vrátí se poslední platný stav
+const camGood = { p: new T.Vector3(0, 5, -10), q: new T.Quaternion(), fov: 60, aspect: 16 / 9, ok: false }, camBad = { n: 0 };
+function camGuard() {
+  const c = camera, p = c.position, q = c.quaternion;
+  const fine = Number.isFinite(p.x + p.y + p.z + q.x + q.y + q.z + q.w + c.fov + c.aspect + c.near + c.far) && c.aspect > 0 && c.near > 0;
+  sceneGuard();
+  if (fine) { camGood.p.copy(p); camGood.q.copy(q); camGood.fov = c.fov; camGood.aspect = c.aspect; camGood.ok = true; return; }
+  camBad.n++; camS.init = false;   // vyhlazování kamery se příště nastaví znovu
+  p.copy(camGood.p); q.copy(camGood.q); c.fov = camGood.fov; c.aspect = camGood.aspect; if (!(c.near > 0)) c.near = 0.1;
+  c.updateProjectionMatrix(); c.updateMatrixWorld(true);
+}
 // ---------------------------------------------------------------- zpětné zrcátko
 // kamera nad autem dívající se dozadu kreslí do malé textury (každý 2. snímek, na telefonu každý 3.);
 // textura se ukáže ve vnitřním zrcátku v kokpitu (za autem se zrcátko nekreslí)
@@ -16358,7 +16414,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
