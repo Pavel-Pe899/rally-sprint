@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw14gcw5';
+window.__BUILD = 'mw3saozx';
 (function () {
   function check() {
     try {
@@ -77,9 +77,15 @@ window.__BUILD = 'mw14gcw5';
   #glassFog { position: fixed; inset: 0; pointer-events: none; opacity: 0; display: none;
     background: radial-gradient(ellipse 60% 75% at 50% 62%, rgba(225, 233, 242, 0) var(--clr, 0%), rgba(225, 233, 242, .55) calc(var(--clr, 0%) + 22%), rgba(235, 240, 246, .78) 100%);
     -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 64%); mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 64%);
-    backdrop-filter: blur(var(--fb, 0px)); -webkit-backdrop-filter: blur(var(--fb, 0px)); }
-  #glare { position: fixed; left: -50vmax; top: -50vmax; width: 100vmax; height: 100vmax; pointer-events: none; opacity: 0; mix-blend-mode: screen; will-change: transform, opacity;
-    background: radial-gradient(closest-side, rgba(255, 236, 200, .55) 0%, rgba(255, 200, 140, .18) 40%, rgba(255, 180, 120, 0) 100%); }
+  }
+  /* na telefonu a tabletu nic přes plátno nerozmazává ani neprolíná: Safari by to muselo z 3D obrazu počítat každý snímek
+     a občas místo scény na snímek ukázalo černou plochu; o kousek tmavší pozadí vypadá skoro stejně */
+  @media (pointer: coarse) {
+    *, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    .modal { background: rgba(4, 8, 16, .72); }
+  }
+  /* odlesk slunce se kreslí ve 3D scéně: prvek přes plátno s prolínáním (mix-blend-mode) dělal na iPhonu a iPadu černé záblesky */
+  #glare { display: none; }
   #vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse 75% 70% at 50% 55%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .32) 100%); }
 
   /* ---------- MENU ---------- */
@@ -655,7 +661,7 @@ window.__BUILD = 'mw14gcw5';
   @media (max-height: 450px) { .hud-gp { gap: 8px; padding: 4px 10px; } .gp-pos b { font-size: 28px; } .gp-tyre { width: 92px; } .gp-pit { font-size: 15px; padding: 3px 8px; } }
   @media (max-width: 600px) { .hud-gp { top: calc(118px + env(safe-area-inset-top, 0px)); gap: 8px; padding: 4px 10px; } .gp-pos b { font-size: 28px; } .gp-tyre { width: 92px; } }
   /* déšť: ztmavení a studený nádech okrajů obrazu */
-  .rain-fx { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(40, 58, 82, 0) 40%, rgba(24, 34, 52, .55) 100%); mix-blend-mode: multiply; }
+  .rain-fx { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(40, 58, 82, 0) 40%, rgba(24, 34, 52, .42) 100%); }
   /* výběr pneumatik před zajetím do boxů */
   .gp-tyrepick { position: absolute; left: 50%; top: calc(86px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(520px, calc(100% - 24px)); padding: 10px 12px 12px; border-radius: 20px; background: radial-gradient(120% 120% at 50% 0%, #2a2e36 0%, #1a1d23 60%, #0e1014 100%); border: 4px solid #050608; box-shadow: 0 0 0 3px rgba(225, 6, 0, .35), 0 18px 40px rgba(0, 0, 0, .6); pointer-events: auto; font-family: var(--display); z-index: 6; }
   .gp-tyrepick[hidden] { display: none; }
@@ -15786,9 +15792,7 @@ $('tQuality').onclick = () => {
 };
 function applyQuality() {
   setupPost();
-  pixelRatio = Math.min(window.devicePixelRatio || 1, Q().pr); prDrops = 0;
-  renderer.setPixelRatio(pixelRatio);
-  resize();
+  prPending = Math.min(window.devicePixelRatio || 1, Q().pr); prDrops = 0;   // rozlišení se změní až před vykreslením
   const sh = Q().shadow;
   renderer.shadowMap.enabled = sh > 0;
   sun.castShadow = sh > 0;
@@ -15868,7 +15872,14 @@ function resize() {
   camera.updateProjectionMatrix();
   if (post) { post.composer.setPixelRatio(renderer.getPixelRatio()); post.composer.setSize(w, h); }
 }
-window.addEventListener('resize', resize);
+// Změna velikosti plátna ho smaže (na černo). Udělá se proto až v příštím snímku těsně před vykreslením, nikdy mimo něj
+// (dřív v události „resize“ nebo po vykreslení – Safari pak na snímek ukázal černé plátno).
+let resizeReq = false, prPending = 0;
+window.addEventListener('resize', () => { resizeReq = true; });
+function applyPendingResize() {
+  if (prPending) { pixelRatio = prPending; prPending = 0; renderer.setPixelRatio(pixelRatio); resizeReq = true; }
+  if (resizeReq) { resizeReq = false; resize(); }
+}
 resize();
 
 // ---------------------------------------------------------------- filmový obraz
@@ -15965,13 +15976,34 @@ function applyGrade(st) {
 }
 
 // ---------------------------------------------------------------- oslnění sluncem
-const glareEl = $('glare');
+// Odlesk slunce: sprite ve scéně (sčítá se se světlem jako dřív prolínání „screen“), vždy před kamerou ve směru slunce.
+// Dřív to byl prvek stránky s mix-blend-mode přes plátno WebGL – Safari na iPhonu/iPadu při jeho zapnutí a vypnutí
+// občas na jeden snímek ukázal místo scény černou plochu.
+const GLARE_D = 30;
+const glareSprite = new T.Sprite(new T.SpriteMaterial({
+  map: canvasTex(256, 256, (g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    gr.addColorStop(0, 'rgba(255,236,200,0.55)'); gr.addColorStop(0.4, 'rgba(255,200,140,0.18)'); gr.addColorStop(1, 'rgba(255,180,120,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  }),
+  blending: T.AdditiveBlending, transparent: true, depthTest: false, depthWrite: false, fog: false, toneMapped: false, opacity: 0,
+}));
+glareSprite.renderOrder = 999; glareSprite.frustumCulled = false; glareSprite.visible = false;
+scene.add(glareSprite);
+const glareEl = { style: {} };   // starý prvek stránky se už nepoužívá
 const sunV = new T.Vector3(), camDir = new T.Vector3();
 // Záře je hotový kruhový přechod, který se jen posouvá (transform) a mění průhlednost: to zvládne skladatel
 // obrazu bez nového kreslení. Přepisování přechodu každý snímek nutilo prohlížeč překreslit celou obrazovku.
-const glareSet = (o, tr) => {
-  if (cache.glareO !== o) { cache.glareO = o; glareEl.style.opacity = o; }
-  if (tr && cache.glareT !== tr) { cache.glareT = tr; glareEl.style.transform = tr; }
+const glareSet = (o) => {
+  const v = +o * 0.75;   // sčítání je o kousek jasnější než „screen“
+  glareSprite.material.opacity = v; glareSprite.visible = v > 0.005;
+  if (glareSprite.visible) {
+    // velikost jako dřív: čtverec o straně delšího rozměru obrazovky
+    const vmax = Math.max(window.innerWidth, window.innerHeight), hWorld = 2 * GLARE_D * Math.tan((camera.fov * Math.PI) / 360);
+    const sc = (vmax / window.innerHeight) * hWorld;
+    glareSprite.scale.set(sc, sc, 1);
+    glareSprite.position.copy(sunV).multiplyScalar(GLARE_D).add(camera.position);
+  }
 };
 // LED pásy tribun: pruhy barev týmů s šipkami; textura se posouvá, takže pás „běží“
 const ledTexes = [];
@@ -16007,7 +16039,7 @@ function glassTick(dt) {
     if (inCab && G.glassFog > 0.5 && !G.fogSaid && G.phase === 'run') { G.fogSaid = 1; toast('🌫️ Sklo je zamlžené · ventilace ho odmlží', 2.4); }
   }
   const fg = inCab && G.glassFog ? G.glassFog : 0;
-  if (fg > 0.01) { fogEl.style.display = 'block'; fogEl.style.opacity = Math.min(1, fg * 1.15).toFixed(3); fogEl.style.setProperty('--clr', `${Math.round((1 - fg) * 85)}%`); fogEl.style.setProperty('--fb', IS_TOUCH ? '0px' : `${(fg * 4).toFixed(1)}px`); }
+  if (fg > 0.01) { fogEl.style.display = 'block'; fogEl.style.opacity = Math.min(1, fg * 1.15).toFixed(3); fogEl.style.setProperty('--clr', `${Math.round((1 - fg) * 85)}%`);  }
   else if (fogEl.style.display !== 'none') fogEl.style.display = 'none';
   // kapky na objektivu (jen kamera za autem)
   const want = race && !inCab && !G.paused && rain > 0.05 && !(W.td.st.tunnel && Sound.inTunnel);
@@ -16048,8 +16080,7 @@ function updateGlare() {
   // paprsky jen při vysokém slunci: u nízkého (západ) by rozmazaly lesk auta do řady kopií za ním
   const low = sunV.y < 0.4;
   if (post) { post.grade.uniforms.uSun.value.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5); post.grade.uniforms.uShaft.value = low ? 0 : smooth(0.5, 0.95, facing) * shineK.value; }
-  const x = Math.round((p.x * 0.5 + 0.5) * window.innerWidth), y = Math.round((-p.y * 0.5 + 0.5) * window.innerHeight);
-  glareSet((smooth(0.55, 0.95, facing) * (low ? 0.4 : 0.6)).toFixed(2), `translate3d(${x}px, ${y}px, 0)`);
+  glareSet((smooth(0.55, 0.95, facing) * (low ? 0.4 : 0.6)).toFixed(2));
 }
 
 // ---------------------------------------------------------------- úrovně detailu
@@ -16126,6 +16157,7 @@ function tick(now) {
   leafU.uSunView.value.copy(sun.position).sub(sun.target.position).normalize().transformDirection(camera.matrixWorldInverse);
   leafU.uSunCol.value.copy(sun.color).multiplyScalar(W && W.td.st.night ? 0.1 : Math.min(1, sun.intensity / 3));
   try { updateGlare(); updateTreeLod(); if (W.specLod) W.specLod(camera.position.x, camera.position.z); updateTerrainLod(); } catch (e) { tickErrors++; }
+  applyPendingResize();
   if (PODIUM.on) { try { podiumTick(dt); } catch (e) { tickErrors++; } renderer.render(PODIUM.scene, PODIUM.cam); if (DIAG.on) diagProbe(rawDt); return; }
   const mirOn = mirrorWanted();
   if (mirOn) try { mirrorRender(); } catch (e) { tickErrors++; }
@@ -16177,7 +16209,7 @@ function mirrorRender() {
   MIR.cam.updateMatrixWorld();
   const vis = car3d.root.visible, cv = cockpit.group ? cockpit.group.visible : false, sh = renderer.shadowMap.autoUpdate;
   car3d.root.visible = false; if (cockpit.group) cockpit.group.visible = false; renderer.shadowMap.autoUpdate = false;
-  const extra = [car3d.beams, car3d.pod, car3d.blob, car3d.glow].filter((o) => o && o.isObject3D), ev = extra.map((o) => o.visible); extra.forEach((o) => { o.visible = false; });
+  const extra = [car3d.beams, car3d.pod, car3d.blob, car3d.glow, glareSprite].filter((o) => o && o.isObject3D), ev = extra.map((o) => o.visible); extra.forEach((o) => { o.visible = false; });
   const prevRT = renderer.getRenderTarget();
   renderer.setRenderTarget(MIR.rt); renderer.render(scene, MIR.cam); renderer.setRenderTarget(prevRT);
   car3d.root.visible = vis; if (cockpit.group) cockpit.group.visible = cv; renderer.shadowMap.autoUpdate = sh;
@@ -16299,7 +16331,7 @@ function perfCheck(dt, now) {
     const fps = perfN / perfT; lastFps = fps;
     if (fps < 40 && pixelRatio > 1 && (G.phase !== 'run' || fps < 28) && prDrops < 2 && now - prDropAt > 15000) {
       const pr = Math.max(1, Math.floor(pixelRatio * Math.sqrt(fps / 55) * 10) / 10);
-      if (pixelRatio - pr >= 0.1) { pixelRatio = pr; prDrops++; prDropAt = now; renderer.setPixelRatio(pixelRatio); resize(); }
+      if (pixelRatio - pr >= 0.1) { prPending = pr; prDrops++; prDropAt = now; }   // provede se v příštím snímku před vykreslením
     }
     perfT = 0; perfN = 0;
   }
