@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw3v3v7q';
+window.__BUILD = 'mw43huoj';
 (function () {
   function check() {
     try {
@@ -1674,8 +1674,25 @@ const MONACO_PATH = [[-328.5, 190.9], [-328.5, 157.2], [-327.1, 131.4], [-324.2,
 const SUZUKA_PATH = [[684.5, 138.3], [805.4, 283.9], [946.8, 457.2], [959.8, 475.5], [967.0, 494.6], [970.7, 511.9], [970.4, 528.8], [968.3, 541.8], [951.8, 592.8], [944.0, 606.1], [932.6, 616.2], [923.0, 621.6], [905.8, 625.9], [890.1, 625.3], [872.9, 619.5], [856.8, 606.9], [840.5, 582.2], [757.1, 454.1], [741.3, 440.6], [727.7, 436.3], [707.2, 432.8], [664.0, 432.4], [642.3, 426.2], [627.0, 415.4], [615.4, 401.3], [610.0, 387.5], [590.6, 313.8], [582.4, 294.9], [569.5, 278.6], [554.4, 267.6], [535.5, 258.8], [516.1, 255.1], [465.9, 254.3], [442.7, 249.9], [426.9, 242.3], [410.5, 229.6], [398.4, 212.0], [391.0, 194.0], [387.7, 177.0], [387.8, 160.8], [390.9, 147.0], [415.6, 79.7], [419.3, 66.0], [419.9, 48.0], [417.3, 36.1], [410.8, 18.9], [401.2, 4.2], [382.6, -8.9], [360.1, -21.1], [333.4, -34.6], [309.9, -44.0], [292.4, -48.9], [267.7, -53.0], [239.8, -53.5], [217.9, -52.6], [199.5, -47.7], [184.7, -41.3], [161.5, -31.5], [137.2, -17.8], [109.2, 5.1], [87.3, 28.3], [-4.7, 139.9], [-9.5, 146.3], [-24.1, 149.8], [-158.6, 161.9], [-167.2, 160.8], [-176.4, 154.5], [-180.2, 144.0], [-181.8, 135.1], [-202.2, 51.1], [-229.5, -106.7], [-234.7, -135.7], [-236.0, -150.3], [-234.5, -165.5], [-231.6, -181.1], [-225.4, -197.3], [-218.4, -213.5], [-196.7, -263.2], [-194.4, -270.9], [-196.0, -277.9], [-200.1, -284.3], [-207.2, -289.1], [-215.3, -291.7], [-223.1, -291.1], [-232.0, -285.1], [-239.4, -274.5], [-271.1, -219.8], [-296.8, -178.6], [-313.6, -154.1], [-327.4, -138.0], [-339.4, -127.8], [-359.9, -111.6], [-381.5, -100.0], [-404.1, -93.2], [-443.5, -87.5], [-480.8, -85.9], [-508.9, -88.0], [-542.4, -95.3], [-579.0, -105.7], [-620.1, -121.0], [-645.9, -133.0], [-668.7, -146.7], [-689.6, -162.3], [-711.8, -182.2], [-734.7, -207.6], [-749.8, -229.7], [-763.4, -253.9], [-797.0, -343.2], [-814.9, -382.3], [-824.0, -398.0], [-836.4, -409.6], [-852.7, -416.9], [-872.1, -420.6], [-895.3, -420.0], [-916.9, -416.9], [-937.9, -412.2], [-958.4, -403.8], [-975.2, -391.0], [-985.3, -374.8], [-989.3, -358.9], [-988.1, -338.9], [-983.5, -324.0], [-976.9, -309.0], [-965.5, -296.5], [-942.9, -275.3], [-914.8, -251.9], [-887.2, -227.8], [-852.3, -201.3], [-812.4, -174.1], [-771.5, -148.6], [-725.8, -126.8], [-685.0, -105.9], [-643.0, -89.9], [-574.9, -66.3], [-500.0, -37.1], [-409.2, -5.3], [-319.2, 23.1], [-256.9, 44.7], [-176.4, 75.4], [-158.0, 80.1], [-139.7, 80.7], [-120.3, 77.0], [-101.4, 71.8], [-67.4, 58.7], [-36.1, 43.0], [-9.8, 26.8], [17.3, 5.7], [68.1, -41.9], [137.7, -106.8], [157.0, -122.8], [170.8, -132.5], [183.4, -140.8], [192.3, -146.1], [197.2, -146.6], [203.6, -143.9], [219.2, -129.9], [230.5, -120.5], [239.8, -117.8], [248.4, -119.5], [258.6, -126.2], [275.4, -141.5], [294.3, -155.0], [315.3, -163.9], [341.1, -166.1], [365.0, -164.8], [390.4, -159.6], [415.7, -149.7], [437.3, -139.3], [464.3, -121.0], [488.5, -98.5], [513.4, -70.7]];
 // rallycross Sosnová: krátký okruh vymyšlený pro hru (start na asfaltu, šotolinové úseky, joker po vnější straně)
 // druhá rallycrossová trať: táhlé oblouky, vracák a dlouhá šotolinová pasáž
-const RX2_PATH = [[0, 0], [90, 0], [160, 10], [200, 40], [210, 85], [185, 120], [140, 130], [100, 115], [70, 135], [60, 175], [80, 215], [70, 255], [30, 270], [-20, 262], [-60, 235], [-80, 195], [-110, 170], [-150, 160], [-180, 130], [-185, 85], [-160, 45], [-120, 20], [-60, 5]];
-const RX_PATH = [[0, 0], [80, 0], [150, 2], [195, -12], [222, -42], [224, -80], [204, -110], [165, -125], [118, -120], [80, -132], [52, -160], [36, -200], [4, -226], [-40, -232], [-84, -218], [-112, -186], [-118, -146], [-104, -110], [-118, -74], [-150, -50], [-168, -14], [-156, 20], [-120, 34], [-76, 26], [-40, 10]];
+// Rallycross: tratě podle skutečných okruhů mistrovství světa (Höljes, Lydden Hill, Montalegre: kolo 1,0–1,3 km,
+// 11–12 zatáček, vracáky, krátké rovinky). Šotoliny je tu 80 % (jen start a cílová rovinka jsou asfalt).
+// Trať se skládá z rovinek (číslo = metry) a oblouků ([úhel ° (+ vlevo), poloměr m]), uzavřená do 0,3 m.
+function rxTurtle(seq, step = 5) {
+  const pts = [[0, 0]]; let x = 0, z = 0, h = 0;
+  for (const g of seq) {
+    if (typeof g === 'number') { const n = Math.max(1, Math.round(g / step)); for (let k = 1; k <= n; k++) pts.push([x + Math.cos(h) * g * k / n, z + Math.sin(h) * g * k / n]); x += Math.cos(h) * g; z += Math.sin(h) * g; }
+    else {
+      const sg = Math.sign(g[0]), a = Math.abs(g[0]) * Math.PI / 180, R = g[1], cx = x - Math.sin(h) * R * sg, cz = z + Math.cos(h) * R * sg, n = Math.max(2, Math.round(a * R / step));
+      for (let k = 1; k <= n; k++) { const hh = h + sg * a * k / n; pts.push([cx + Math.sin(hh) * R * sg, cz - Math.cos(hh) * R * sg]); }
+      h += sg * a; [x, z] = pts[pts.length - 1];
+    }
+  }
+  pts.pop();   // poslední bod = start
+  return pts.map(([a, b]) => [+a.toFixed(2), +(-b).toFixed(2)]);
+}
+const RX_PATH = rxTurtle([83.9, [61.8, 27.5], 13.9, [113, 22.1], 22.2, [-91.7, 25.8], 16.5, [-43.8, 31.1], 16.2, [-85.4, 19.6], 45.8, [159.9, 17.9], 44, [67.5, 38.5], 34, [-62.9, 27.5], 28.9, [44, 37.9], 45.1, [109.8, 18.1], 143.1, [-103.7, 23.6], 39.7, [191.5, 40], 94.6, 25]);
+const RX2_PATH = rxTurtle([83.8, [154.8, 13.3], 39.1, [-80.1, 24.4], 39.2, [94.8, 18.6], 42.8, [-70, 25.1], 41.4, [172.7, 17.3], 25.7, [-58.1, 32.4], 145, [53.5, 31], 16.5, [115.4, 23.8], 13.2, [-55.5, 37.2], 35.2, [155.9, 14.4], 34.8, [-175.2, 17.1], 52.8, [51.9, 24.3], 25]);
+const RX3_PATH = rxTurtle([96.2, [91.3, 17.5], 44.3, [-54.1, 34.6], 15.9, [64, 36.6], 105.4, [179.5, 17.6], 39.4, [-83.4, 24.1], 21.5, [39.4, 38.5], 24.3, [-119.9, 25.6], 61.7, [166.7, 17.8], 33.5, [-69.7, 26.3], 16.1, [162.3, 13.1], 17.9, [-117.9, 20.4], 38.1, [101.8, 17.3], 25]);
 // závod do vrchu: serpentiny přes svah (svah stoupá ve směru +z), na konci každé traverzy vracák o poloměru ~16 m
 function hillPath(seed) {
   const r = mulberry32(seed), P = [];
@@ -1864,10 +1881,10 @@ const STAGES = [
     clouds: ['#ffffff', 0.25], grass: null,
   },
   {
-    id: 'rx', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Sosnová', region: 'Rallycross · asfalt a šotolina, joker', surface: 'Asfalt + šotolina', road: 'tarmac', tod: 'Odpoledne',
-    circuit: true, rx: true, path: RX_PATH, hw: 6.5, kerbs: true, gpName: 'RALLYCROSS', country: 'SOSNOVÁ',
-    mix: [[250, 470], [640, 860]], joker: { from: 480, to: 610 },
-    len: 1096, seed: 811, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
+    id: 'rx', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Sosnová', region: 'Rallycross · 12 zatáček, 80 % šotolina, joker', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Odpoledne',
+    circuit: true, rx: true, path: RX_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'SOSNOVÁ',
+    mix: [[90, 1076]], joker: { from: 662, to: 718 },
+    len: 1186, seed: 811, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#3b7ccc', hor: '#dfe8ee', bottom: '#b8c3bb' }, sun: { dir: [0.4, 0.7, 0.55], color: '#fff3e0', int: 3.3 },
     hemi: { sky: '#dce9f8', ground: '#5d7440', int: 1.15 }, fog: [200, 900], exposure: 1.0,
@@ -1878,10 +1895,10 @@ const STAGES = [
     clouds: ['#ffffff', 0.35], grass: ['#4f7f2a', '#98bd55', 0.35],
   },
   {
-    id: 'rx2', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Vysočina', region: 'Rallycross · asfalt a šotolina, joker', surface: 'Asfalt + šotolina', road: 'tarmac', tod: 'Ráno',
-    circuit: true, rx: true, path: RX2_PATH, hw: 6.5, kerbs: true, gpName: 'RALLYCROSS', country: 'VYSOČINA',
-    mix: [[200, 420], [690, 900]], joker: { from: 440, to: 580 },
-    len: 1110, seed: 827, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
+    id: 'rx2', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Vysočina', region: 'Rallycross · 12 zatáček, 4 vracáky, 80 % šotolina', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Ráno',
+    circuit: true, rx: true, path: RX2_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'VYSOČINA',
+    mix: [[90, 927]], joker: { from: 670, to: 735 },
+    len: 1037, seed: 827, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
     hemi: { sky: '#dce9f8', ground: '#5d7440', int: 1.15 }, fog: [200, 900], exposure: 1.0,
@@ -1921,6 +1938,20 @@ const STAGES = [
     trees: [['spruce', 0.55], ['pine', 0.3], ['birch', 0.15]], density: 1.1, rocks: 0.6,
     mountains: { color: '#7d93ab', snow: true }, props: { posts: 'white', bales: false, spectators: true },
     clouds: ['#ffffff', 0.45], grass: ['#4f7a29', '#93b752', 0.6], flowers: ['#ffffff', '#ffd21c'],
+  },
+  {
+    id: 'rx3', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Švédsko', region: 'Rallycross · lesní trať jako Höljes, 12 zatáček, 80 % šotolina', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Podvečer',
+    circuit: true, rx: true, path: RX3_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'ŠVÉDSKO',
+    mix: [[100, 895]], joker: { from: 205, to: 268 },
+    len: 1005, seed: 839, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
+    grip: 1.12, offGrip: 0.6, loose: false,
+    sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
+    hemi: { sky: '#dce9f8', ground: '#5d7440', int: 1.15 }, fog: [200, 900], exposure: 1.0,
+    ground: { a: '#628c36', b: '#527c2e', dirt: '#8e7a58', rock: '#a59f92', beach: '#d9cfa8' },
+    shoulder: { inner: '#a08a68', outer: '#4f8a2e' }, dust: '#b8a17f',
+    trees: [['spruce', 0.6], ['pine', 0.3], ['birch', 0.1]], density: 1.25, rocks: 0,
+    mountains: { color: '#8aa0a8', snow: false }, props: { posts: 'none', bales: false, spectators: true },
+    clouds: ['#ffffff', 0.35], grass: ['#6a7f2a', '#b5b25a', 0.35],
   },
 ];
 
@@ -4750,11 +4781,12 @@ function buildWorld(td) {
       for (let k = -h; k <= h; k += 2) { const d = td.HD[i + k] - td.HD[i]; if (Math.abs(Math.atan2(Math.sin(d), Math.cos(d))) > 0.14) return false; } return true; };
     const placed = [];
     // hlavní tribuna u startu; na vlastním okruhu jen tak dlouhá, jak dlouhá je tam rovinka (a nesmí zasahovat do trati)
-    if (!st.custom) stand(5, -(td.pit ? td.pit.side : 1), 168, 16, mainOpt);
+    // (rallycross: krátká startovní rovinka a úseky blízko u sebe, takže stejně jako na vlastním okruhu s kontrolou)
+    if (!st.custom && !st.rx) stand(5, -(td.pit ? td.pit.side : 1), 168, 16, mainOpt);
     else { const L0 = [168, 132, 96, 64].find((l) => straightAt(5, l)); if (L0) { stand(5, -(td.pit ? td.pit.side : 1), L0, 16, { ...mainOpt, check: true }); placed.push(5); } }
     for (const nt of td.notes) if (nt.kind === 'turn' && nt.lvl <= 3 && nt.s - td.S[td.startIdx] > 300) {
       let sAt = nt.s - td.S[td.startIdx] + 10;
-      if (st.custom) { sAt = null; for (let back = 40; back <= 160; back += 10) if (straightAt(nt.s - td.S[td.startIdx] - back, 60)) { sAt = nt.s - td.S[td.startIdx] - back; break; } }
+      if (st.custom || st.rx) { sAt = null; for (let back = 40; back <= 160; back += 10) if (straightAt(nt.s - td.S[td.startIdx] - back, 60)) { sAt = nt.s - td.S[td.startIdx] - back; break; } }
       if (sAt == null || placed.some((q) => Math.abs(q - sAt) < 90)) continue;
       placed.push(sAt);
       stand(sAt, nt.dir === 'L' ? 1 : -1, 60, 10, { flags: nt.lvl <= 2 });
@@ -5566,7 +5598,8 @@ function buildWorld(td) {
   }
   // ---- rallycross: šotolina přes asfalt v šotolinových úsecích, pruh jokeru po vnější straně, pneumatiky oddělující joker, cedule
   if (td.mix || td.joker) {
-    const gMat = new T.MeshLambertMaterial({ map: roadTexture('gravel', st.seed + 5), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 });
+    // oboustranný: pruh se staví zleva doprava, takže měl rub nahoru a šotolina (i joker) nebyla vidět
+    const gMat = new T.MeshLambertMaterial({ map: roadTexture('gravel', st.seed + 5), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: T.DoubleSide });
     addCloudShadow(gMat, 'rx-gravel');
     const strip = (test, latA, latB, lift) => {
       const pos = [], uv = [], idx = []; let prev = -1;
@@ -8753,7 +8786,12 @@ const HANDLING = {
   arcade: { name: 'Arkádové', lat: 1.55, rear: 1.12, driveRear: 0.7, tc: 0.6, damp: 4.5, counter: 0.8, stab: 0.24, stabK: 1.8, brake: 1.25, off: 0.92, shoulder: 1 },
   sim: { name: 'Simulace', lat: 1.22, rear: 1.07, driveRear: 0.72, tc: 1, damp: 2.2, counter: 0.55, stab: 0.35, stabK: 1, brake: 1, off: 0, shoulder: 0.86 },
 };
-const HP = () => HANDLING[saved.handling] || HANDLING.arcade;
+// Rallycross: menší auta (Fabia, Focus) jedou skoro pořád bokem, i pod plynem. Zadek drží méně, bez kontroly
+// trakce (plyn ho vytočí), stabilizace nechá drift do ~35° a jemné „držení driftu“ (jako v Drift Battle: cílový úhel
+// z volantu a plynu, zadek se k němu přitahuje) zabrání roztočení. Platí jen v rallycrossovém závodě.
+HANDLING.rx = { name: 'Rallycross', lat: 1.32, rear: 0.93, driveRear: 0.8, tc: 0, damp: 2.3, counter: 1.0, stab: 0.52, stabK: 1.45, brake: 1.2, off: 0.9, shoulder: 1 };
+const rxDriftOn = () => !!(G.rx && G.mode === 'race' && W && W.td.st.rx && !carType().formula);
+const HP = () => (rxDriftOn() ? HANDLING.rx : HANDLING[saved.handling] || HANDLING.arcade);
 // přilnavost povrchu pro daný režim (krajnice a terén mimo cestu jsou v arkádě mírnější)
 function surfaceMu(st, surf) {
   const h = HP();
@@ -8847,7 +8885,7 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   const nosOn = !!inp.nos && c.nos > 0 && inp.throttle > 0 && u > 1;
   let nos = c.nos;
   let drive = 0;
-  if (inp.throttle > 0 && u > -0.5) drive = m * 12.5 * cs.power * Math.max(0, 1 - Math.pow(clamp(u, 0, vtop + 3) / vtop, 1.6)) * inp.throttle;
+  if (inp.throttle > 0 && u > -0.5) drive = m * 12.5 * cs.power * (rxDriftOn() ? 1.3 : 1) * Math.max(0, 1 - Math.pow(clamp(u, 0, vtop + 3) / vtop, 1.6)) * inp.throttle;   // rallycross: silnější auta (~600 k)
   if (nosOn) { drive += m * NOS_ACC; nos = Math.max(0, nos - dt); }
   if (cs.formula && inp.brake > 0 && u > 8 && !nosOn) nos = Math.min(nosTank(), nos + KERS_REGEN * inp.brake * dt); // KERS: brzdění dobíjí
   if (inp.throttle > 0 && u < -0.5) drive = m * 16; // brzdění plynem při couvání
@@ -8904,6 +8942,24 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   // stabilizace: drift do ~20° nechá být, nad tím ho čím dál víc srovnává (mírný drift ano, hodiny ne);
   // s ruční brzdou slabší, aby šly vracáky
   const b2 = Math.atan2(v, Math.max(1, Math.abs(u)));
+  // rallycross: držení driftu – směr podle toho, kam auto zatáčí, velikost podle volantu a plynu (na asfaltu menší);
+  // při protivolantu se drift drží mírný (řidič ho chytá)
+  if (rxDriftOn() && u > 7) {
+    const gk = tire === TIRE.tarmac ? 0.6 : 1, sI = c.steer, gas = inp.throttle > 0.15 || inp.hb;
+    const turn = Math.abs(wR) > 0.18 ? Math.sign(wR) : Math.abs(sI) > 0.06 ? Math.sign(sI) : 0;
+    // puštěný volant: auto se srovná (i když už skoro nezatáčí a jen klouže bokem)
+    if (Math.abs(sI) <= 0.08 && Math.abs(b2) > 0.08) wR += (b2 - Math.sign(b2) * 0.04) * 9 * gk * dt;
+    else if (turn) {
+      const into = Math.abs(sI) > 0.08 && Math.sign(sI) === turn, free = Math.abs(sI) <= 0.08;
+      // pod plynem a s volantem do zatáčky: drift 10–27° podle volantu; puštěný volant auto srovná, protivolant drift zmírní;
+      // bez plynu jen pojistka proti hodinám
+      let mag = !gas ? 0.12 : free ? 0.06 : into ? (0.12 + 0.33 * Math.min(1, Math.abs(sI) * 1.2)) * (0.35 + 0.65 * Math.max(inp.throttle, inp.hb ? 0.8 : 0)) : 0.16;
+      mag *= gk;
+      const bT = -turn * mag, over = Math.abs(b2) > mag + 0.08;
+      if (gas || over) wR += -(bT - b2) * (over ? (free ? 10 : 8) : 5.5) * gk * dt;
+    }
+  }
+
   // formule na slicích: smyk nad ~4° (se sjetými pneumatikami nad ~10°) se rychle srovná
   const bx = Math.abs(b2) - (slick ? 0.07 + 0.1 * worn + 0.6 * blown : h.stab + 0.12 * worn);
   if (bx > 0 && u > 4) wR += Math.sign(b2) * (bx * 5 + bx * bx * 12) * (slick ? 4 : h.stabK) * (inp.hb ? 0.3 : 1) * (1 - 0.4 * worn - 0.5 * blown) * dt;
@@ -9956,6 +10012,7 @@ function updateCarVisual(dt, inp) {
     else f.scale.setScalar(0.7 + Math.random() * 0.6);
   }
 
+  { const sc = G.rx ? RX_SCALE : 1; if (car3d.root.scale.x !== sc) { car3d.root.scale.setScalar(sc); car3d.blob.scale.setScalar(sc); } }   // rallycross: menší auto
   const gy = car.air ? groundAtXZ(car.x, car.z) : car.y;
   car3d.blob.position.set(car.x, gy + 0.06, car.z);
   car3d.blob.rotation.set(-Math.PI / 2 + car.pitch * 0, car.h, 0, 'YXZ');
@@ -11016,7 +11073,7 @@ function buildRubberLine(td) {
       const lat = clamp(off[i] + LATS[c], -(HW - 0.1), HW - 0.1);
       pos.push(X[i] + NX[i] * lat, Y[i] + 0.046, Z[i] + NZ[i] * lat);
       uv.push(US[c], S[i] / 24);
-      col.push(1, 1, 1, AL[c] * sm * 0.62);
+      col.push(1, 1, 1, AL[c] * sm * 0.62 * (td.mix && rxGravel(td, td.S[i]) ? 0 : 1));   // na šotolině rallycrossu guma není
     }
     if (row) { const b = (row - 1) * 5; for (let c = 0; c < 4; c++) idx.push(b + c, b + c + 5, b + c + 1, b + c + 1, b + c + 5, b + c + 6); }
     row++;
@@ -12841,7 +12898,10 @@ $('stuntClose').onclick = () => { $('stuntModal').hidden = true; };
 // nevynechá, má čas v pořádku, kdo ho nejede, dostane +30 s. Soupeři jedou svou rychlostí podle přilnavosti
 // úseku, předjíždějí bokem a odstrkují se. Odměna 1 500 / 900 / 500 $ za první tři místa.
 const RX_LAPS = 4, RX_PRIZE = [1500, 900, 500];
-const RX_RIVALS = [['Novák', 'bmw', 2], ['Kopecká', 'p911', 1], ['Svoboda', 'audi', 7], ['Dvořák', 'g63', 4], ['Holubová', 'bmw', 9], ['Procházka', 'audi', 5]];
+// rallycrossová auta jsou menší (jako Škoda Fabia nebo Ford Focus): soupeři jen v menších autech a všechna auta
+// se v rallycrossu kreslí o desetinu menší
+const RX_RIVALS = [['Novák', 'bmw', 2], ['Kopecká', 'p911', 1], ['Svoboda', 'bmw', 7], ['Dvořák', 'p911', 4], ['Holubová', 'bmw', 9], ['Procházka', 'p911', 5]];
+const RX_SCALE = 0.88;
 const rxRel = (td, s) => ((((s - td.S[td.startIdx]) % td.length) + td.length) % td.length);
 function inJoker(td, s, lat) { const j = td.joker; if (!j) return false; const r = rxRel(td, s); return r > j.from - 8 && r < j.to + 8 && lat * j.side > HW - 0.5 && lat * j.side < HW + 10.5; }
 const rxGravel = (td, s) => !!td.mix && td.mix.some(([a, b]) => { const r = rxRel(td, s); return r >= a && r <= b; });
@@ -12900,6 +12960,7 @@ function rxStart(pc0, id = 'rx', opts = {}) {
         if (!G.rx || !G.rx.ai.includes(a)) return;
         const c = buildModelCar({ ...LIVERIES[liv % 10] }, CAR_TYPES[model]);
         c.beams.visible = false; c.pod.visible = false; if (c.flame) c.flame.visible = false;
+        c.root.scale.setScalar(RX_SCALE); c.blob.scale.setScalar(RX_SCALE);
         scene.add(c.root, c.blob); a.c3 = c;
       });
     }
@@ -12955,12 +13016,15 @@ function rxTick(dt) {
       a.v *= 0.985; if (!a.bump || G.time - a.bump > 0.6) { a.bump = G.time; Sound.thump(0.35, 'wall'); car.shake = Math.min(1, car.shake + 0.25); }
     }
     if (a.c3) {
-      const r = a.c3.root, hd = td.HD[i0] + clamp((a.latPrev != null ? (a.lat - a.latPrev) / Math.max(dt, 1e-3) : 0) / Math.max(5, a.v), -0.4, 0.4);
+      // soupeři jedou v zatáčkách bokem (zadek ven, nos do zatáčky), na šotolině víc než na asfaltu
+      const slideT = run ? clamp(td.K[i0] * a.v * 0.8, -0.55, 0.55) * (rxGravel(td, td.S[i0]) ? 1 : 0.55) : 0;
+      a.slide = (a.slide || 0) + (slideT - (a.slide || 0)) * Math.min(1, dt * 3.2);
+      const r = a.c3.root, hd = td.HD[i0] + a.slide + clamp((a.latPrev != null ? (a.lat - a.latPrev) / Math.max(dt, 1e-3) : 0) / Math.max(5, a.v), -0.4, 0.4);
       a.latPrev = a.lat;
       r.position.set(x, y, z); r.rotation.set(0, hd, 0, 'YXZ');
       a.c3.blob.position.set(x, y + 0.06, z); a.c3.blob.rotation.set(-Math.PI / 2, hd, 0, 'YXZ');
       a.spin += (a.v / 0.35) * dt; for (const w of a.c3.wheels) w.spin.rotation.x = a.spin;
-      if (run && a.v > 12 && rxGravel(td, td.S[i0]) && Math.random() < dt * 30) dust.emit(x - Math.sin(hd) * 1.6, y + 0.3, z - Math.cos(hd) * 1.6, (Math.random() - 0.5) * 3, 0.6 + Math.random(), (Math.random() - 0.5) * 3, 0.4 + Math.random() * 0.3, 0.8);
+      if (run && a.v > 12 && rxGravel(td, td.S[i0]) && Math.random() < dt * (30 + 40 * Math.abs(a.slide))) dust.emit(x - Math.sin(hd) * 1.6, y + 0.3, z - Math.cos(hd) * 1.6, (Math.random() - 0.5) * 3, 0.6 + Math.random(), (Math.random() - 0.5) * 3, 0.4 + Math.random() * 0.3, 0.8);
     }
   }
   // pořadí a HUD
