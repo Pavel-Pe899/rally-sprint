@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw5dm4y4';
+window.__BUILD = 'mw5f706f';
 (function () {
   function check() {
     try {
@@ -13940,9 +13940,13 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
 function rxAiPose(td, a) {
   const lap = td.length, dd = (((a.d % lap) + lap) % lap), fi = dd / td.ds, i0 = clamp(td.startIdx + Math.floor(fi), 0, td.n - 2), f = fi - Math.floor(fi);
   a.i0 = i0; a.f = f;
-  a.x = lerp(td.X[i0], td.X[i0 + 1], f) + td.NX[i0] * a.lat; a.z = lerp(td.Z[i0], td.Z[i0 + 1], f) + td.NZ[i0] * a.lat;
-  // pohyb do boku (k +N) natáčí auto k +N = směrem k menšímu úhlu (dopředu je (sin h, cos h), N = (−cos h, sin h))
-  a.hd = td.HD[i0] + (a.slide || 0) - Math.atan2(a.vl || 0, Math.max(4, a.v)) + (a.yaw || 0);
+  // plynule mezi body trati (po 2 m): normála a směr se interpolují, jinak auto v zatáčce při každém bodu poskočí
+  let nx = lerp(td.NX[i0], td.NX[i0 + 1], f), nz = lerp(td.NZ[i0], td.NZ[i0 + 1], f); const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+  a.x = lerp(td.X[i0], td.X[i0 + 1], f) + nx * a.lat; a.z = lerp(td.Z[i0], td.Z[i0 + 1], f) + nz * a.lat;
+  // pohyb do boku (k +N) natáčí auto k +N = směrem k menšímu úhlu (dopředu je (sin h, cos h), N = (−cos h, sin h));
+  // boční rychlost se vztahuje k rychlosti v místě auta (na vnější straně zatáčky je dráha delší)
+  const hd0 = td.HD[i0] + wrapAngle(td.HD[i0 + 1] - td.HD[i0]) * f, kl = Math.max(0.3, 1 + lerp(td.K[i0], td.K[i0 + 1], f) * a.lat);
+  a.hd = hd0 + (a.slide || 0) - Math.atan2(a.vl || 0, Math.max(4, a.v) * kl) + (a.yaw || 0);
 }
 // nejbližší body dvou úseček (osy aut) – Ericson, Real-Time Collision Detection
 function rxSegClosest(ax, az, bx, bz, cx, cz, dx, dz) {
@@ -14107,16 +14111,33 @@ function rxGlowSet(c, braking, on = true) {
   g.head.m.opacity = on ? 0.55 : 0; g.tail.m.opacity = on ? (braking ? 0.95 : 0.3) : 0;
   for (const sp of g.head.out.concat(g.tail.out)) sp.visible = on;
 }
+// znaménkové zakřivení ideální stopy (dráha bodů X + N·stopa), vyhlazené; podle něj se soupeř natáčí do smyku
+function rxLineK(td) {
+  if (td.rxLineK) return td.rxLineK;
+  const n = td.n, L = rxRacingLine(td), H = new Float32Array(n), K = new Float32Array(n), out = new Float32Array(n);
+  for (let i = 0; i < n - 1; i++) { const x0 = td.X[i] + td.NX[i] * L[i], z0 = td.Z[i] + td.NZ[i] * L[i], x1 = td.X[i + 1] + td.NX[i + 1] * L[i + 1], z1 = td.Z[i + 1] + td.NZ[i + 1] * L[i + 1]; H[i] = Math.atan2(x1 - x0, z1 - z0); K[i] = Math.hypot(x1 - x0, z1 - z0); }
+  H[n - 1] = H[n - 2]; K[n - 1] = K[n - 2];
+  const kr = new Float32Array(n);
+  for (let i = 1; i < n - 1; i++) kr[i] = wrapAngle(H[i] - H[i - 1]) / Math.max(0.3, (K[i] + K[i - 1]) / 2);
+  for (let i = 0; i < n; i++) { let sk = 0, c = 0; for (let q = -3; q <= 3; q++) { const j = i + q; if (j >= 0 && j < n) { sk += kr[j]; c++; } } out[i] = sk / c; }
+  return (td.rxLineK = out);
+}
 function rxAiVisual(td, a, dt, run) {
   if (!a.c3) return;
   const i0 = a.i0, gr = rxGravel(td, td.S[i0]);
   // smyk v zatáčce (zadek ven, nos do zatáčky), na šotolině víc než na asfaltu; v jokeru podle zakřivení jeho stopy
   // (ne podle hlavní trati – jinak by auto na odbočce do jokeru „driftovalo“ do ostrůvku), a to kus před autem: v šikaně
   // se auto přehodí z jednoho smyku do druhého včas a zadkem nesmýkne ke klínu, který právě objíždí
-  let kk = td.K[i0], rate = 3.2;
+  // mimo joker podle zakřivení ideální stopy (ne středu trati) kus před autem: auto se do zatáčky natočí včas a na
+  // výjezdu, kde se stopa narovná, se srovná – na rovince nejede bokem
+  const LK = rxLineK(td);
+  let kk = LK[clamp(i0 + Math.round(Math.max(0, a.v) * 0.25 / td.ds), 0, td.n - 1)], rate = 4;
   const JK = a.jz && td.rxJoker && td.rxJoker.KS;
   if (JK) { const k = Math.round((rxRel(td, td.S[i0] + a.f * td.ds) + Math.max(0, a.v) * 0.3 - td.rxJoker.kr0) / 0.5); kk = JK[clamp(k, 0, JK.length - 1)]; rate = 5; }
-  const slideT = run && a.spinT <= 0 ? clamp(kk * a.v * 0.8, -0.55, 0.55) * (gr ? 1 : 0.55) : 0;
+  // smyk až nad mezí přilnavosti: boční zrychlení stopy nad ~5 m/s² (mírné přejetí stopy na rovince auto nenatočí,
+  // ostrá zatáčka ano, až ~30°)
+  const aLat = kk * Math.max(0, a.v) * Math.max(0, a.v);
+  const slideT = run && a.spinT <= 0 ? Math.sign(aLat) * clamp((Math.abs(aLat) - 5) * 0.085, 0, 0.55) * (gr ? 1 : 0.55) : 0;
   a.slide = (a.slide || 0) + (slideT - (a.slide || 0)) * Math.min(1, dt * rate);
   rxAiPose(td, a);
   const y = groundAt(a.x, a.z, { i: i0, s: td.S[i0], lat: a.lat, y: lerp(td.Y[i0], td.Y[i0 + 1], a.f) });
@@ -14125,7 +14146,7 @@ function rxAiVisual(td, a, dt, run) {
   a.c3.blob.position.set(a.x, y + 0.06, a.z); a.c3.blob.rotation.set(-Math.PI / 2, hd, 0, 'YXZ');
   a.spin += (a.v / 0.33) * dt;
   // přední kola: rejd podle zatáčky, v driftu protismyk
-  const steer = clamp(-(Math.atan(2.5 * td.K[i0]) - (a.slide + (a.yaw || 0)) * 0.9) * 1.15, -0.55, 0.55);
+  const steer = clamp(-(Math.atan(2.5 * kk) - (a.slide + (a.yaw || 0)) * 0.9) * 1.15, -0.55, 0.55);
   for (const w of a.c3.wheels) { w.spin.rotation.x = a.spin; if (w.front) w.pivot.rotation.y = steer; }
   if (a.c3.dirtU) { if (run && gr) a.dirtD = (a.dirtD || 0) + Math.max(0, a.v) * dt; a.c3.dirtU.uDirt.value = rxDirtOf(a.dirtD || 0); }
   if (a.c3.glow) { if (a.vPrev != null && a.vPrev - a.v > dt * 2.5) a.brkT = 0.3; else a.brkT = Math.max(0, (a.brkT || 0) - dt); a.vPrev = a.v; rxGlowSet(a.c3, a.brkT > 0); }
