@@ -30,6 +30,10 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   - [„2020 Audi RS5 Coupé“](https://sketchfab.com/3d-models/2020-audi-rs5-coupe-db82f980fc0d408fbbde8deff36a82bd)
     od Ddiaz Design, [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/): upravený model
     `web/assets/cars/audi.json` se šíří pod stejnou licencí (z gitlab.com/kukmara-tech/car-configurator)
+  - [„Skoda Fabia R5 Rally Car“](https://sketchfab.com/3d-models/skoda-fabia-r5-rally-car-fe062f0fd05e43a6a32a88a1aa39ef14)
+    od SenturyUK, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (z github.com/cherchimarc-pixel/speciale-deco,
+    kde je model s autorem a licencí uvnitř souboru); `tools/prep-fabia.mjs` rozdělil kola na samostatné díly,
+    auto vycentroval a zjednodušil geometrii; vlastní lak. Škoda a Fabia jsou ochranné známky Škoda Auto a.s.
   - změny: odstraněný interiér, motor, podvozek, značky a loga (kde byla samostatným dílem), zjednodušená geometrie,
     menší textury, vlastní lak a rallyové doplňky. Porsche, McLaren, Mercedes-Benz, Audi, Formule 1 a jména týmů
     (Ferrari, Mercedes, Red Bull, Aston Martin, Alpine, McLaren, Williams, Racing Bulls, Haas, Sauber) a názvy sponzorů na vozech jsou ochranné známky svých vlastníků;

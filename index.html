@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw4lgl3j';
+window.__BUILD = 'mw4muppz';
 (function () {
   function check() {
     try {
@@ -1286,10 +1286,23 @@ window.__BUILD = 'mw4lgl3j';
 </div>
 
 <div id="rxModal" class="modal" hidden>
-  <div class="card">
-    <h2>Rallycross <em>4 kola · 5 aut · joker</em></h2>
-    <div class="actions" id="rxList"></div>
-    <div class="actions"><button class="btn ghost" id="rxClose">Zpět</button></div>
+  <div class="card team-card">
+    <h2>Rallycross <em>5 aut · joker</em></h2>
+    <p class="help">Okruh z asfaltu a šotoliny proti čtyřem soupeřům. Jednou za závod musíš projet joker (delší objížďku vedle trati), jinak dostaneš +30 s. Auta jezdí bokem: pod plynem drift, volantem do zatáčky.</p>
+    <p class="label">Trať</p>
+    <div class="tracks" id="rxList"></div>
+    <p class="label">Soupeři</p>
+    <div class="tracks" id="rxDiffList"></div>
+    <p class="label">Počet kol</p>
+    <div class="tracks" id="rxLapsList"></div>
+    <p class="label">Kvalifikace</p>
+    <div class="tracks two" id="rxQualiList"></div>
+    <p class="label">Auto</p>
+    <div class="tracks two" id="rxCarList"></div>
+    <div class="actions">
+      <button class="btn" id="rxGo">Odstartovat <small id="rxGoSub"></small></button>
+      <button class="btn ghost" id="rxClose">Zpět</button>
+    </div>
   </div>
 </div>
 <div id="tutModal" class="modal" hidden>
@@ -12915,7 +12928,40 @@ $('stuntClose').onclick = () => { $('stuntModal').hidden = true; };
 // závod se musí projet joker: delší objízdný pruh po vnější straně zatáčky, oddělený pneumatikami. Kdo joker
 // nevynechá, má čas v pořádku, kdo ho nejede, dostane +30 s. Soupeři jedou svou rychlostí podle přilnavosti
 // úseku, předjíždějí bokem a odstrkují se. Odměna 1 500 / 900 / 500 $ za první tři místa.
-const RX_LAPS = 4, RX_PRIZE = [1500, 900, 500];
+let RX_LAPS = 4;
+const RX_PRIZE = [1500, 900, 500];
+// obtížnost soupeřů v rallycrossu: pace = násobek ideální rychlosti trati (Fabia hráče zvládne zhruba 1,3×),
+// mist = šance na chybu v zatáčce (vyjetí do široka), react = reakce na startu (s)
+const RX_DIFF = {
+  easy: { name: 'Pomalí', desc: 'klidné tempo, často chybují', pace: [1.04, 1.1], mist: 0.07, react: [0.45, 0.8] },
+  normal: { name: 'Rychlí', desc: 'jedou jako dobrý jezdec, občas chybují', pace: [1.14, 1.2], mist: 0.03, react: [0.25, 0.5] },
+  hard: { name: 'Velmi rychlí', desc: 'na hraně, skoro bez chyb', pace: [1.27, 1.32], mist: 0.01, react: [0.12, 0.3] },
+};
+const rxDiff = () => (RX_DIFF[saved.rxDiff] ? saved.rxDiff : 'normal');
+const RX_LAPS_OPT = [3, 4, 6];
+const rxLapsSet = () => (RX_LAPS_OPT.includes(saved.rxLaps) ? saved.rxLaps : 4);
+// zrychlení a cílová rychlost soupeře (stejný model v závodě i pro čas kvalifikace)
+const rxAcc = (v, gr) => (v < 12 ? 7.2 : v < 22 ? 5.4 : 3.8) * (gr ? 0.92 : 1);
+function rxVt(td, i, v, pace) {
+  let vt = 1e9; const ahead = Math.round((v * 1.4 + 12) / td.ds);
+  for (let k = i; k < i + ahead && k < td.n; k++) vt = Math.min(vt, td.V[k]);
+  return Math.min(46, vt * pace);
+}
+// stopa soupeřů: v zatáčce k vnitřnímu okraji (vrchol), mezi zatáčkami plynule zpět; kladné = strana +N
+function rxRacingLine(td) {
+  if (td.rxLine) return td.rxLine;
+  const n = td.n, raw = new Float32Array(n), out = new Float32Array(n), w = Math.max(1, Math.round(6 / td.ds));
+  for (let i = w; i < n - w; i++) {
+    // střed oblouku leží na straně, kam se trať stáčí: poloha středu tětivy vůči bodu
+    const mx = (td.X[i - w] + td.X[i + w]) / 2 - td.X[i], mz = (td.Z[i - w] + td.Z[i + w]) / 2 - td.Z[i];
+    const side = Math.sign(mx * td.NX[i] + mz * td.NZ[i]);
+    raw[i] = side * clamp(Math.abs(td.K[i]) * 30, 0, 1) * (HW - 1.5);
+  }
+  // vyhlazení a posun dopředu (k vnitřku se auto stáčí už před vrcholem)
+  const sw = Math.max(1, Math.round(9 / td.ds)), lead = Math.round(4 / td.ds);
+  for (let i = 0; i < n; i++) { let a = 0, c = 0; for (let k = i - sw + lead; k <= i + sw + lead; k++) if (k >= 0 && k < n) { a += raw[k]; c++; } out[i] = c ? a / c : 0; }
+  return (td.rxLine = out);
+}
 // rallycrossová auta jsou menší (jako Škoda Fabia nebo Ford Focus): soupeři jen v menších autech a všechna auta
 // se v rallycrossu kreslí o desetinu menší
 // soupeři v rallycrossu jedou v malých hatchbaccích (Fabia v různých barvách)
@@ -12929,9 +12975,8 @@ const rxGravel = (td, s) => !!td.mix && td.mix.some(([a, b]) => { const r = rxRe
 function rxSimLap(td, skill) {
   const lap = td.length, dt = 1 / 30; let v = 0, d = 0, t = 0;
   while (d < lap && t < 600) {
-    const i = clamp(td.startIdx + Math.round(d / td.ds), 0, td.n - 1), ahead = Math.round((v * 1.5 + 14) / td.ds);
-    let vt = 1e9; for (let k = i; k < i + ahead && k < td.n; k++) vt = Math.min(vt, td.V[k]); vt *= skill;
-    v += clamp(vt - v, -9.5 * dt, (v < 20 ? 6.5 : 4.2) * dt * (rxGravel(td, td.S[i]) ? 0.85 : 1)); d += Math.max(0, v) * dt; t += dt;
+    const i = clamp(td.startIdx + Math.round(d / td.ds), 0, td.n - 1);
+    v += clamp(rxVt(td, i, v, skill) - v, -10 * dt, rxAcc(v, rxGravel(td, td.S[i])) * dt); d += Math.max(0, v) * dt; t += dt;
   }
   return t;
 }
@@ -12950,21 +12995,27 @@ function rxGate(td) {
 function rxStart(pc0, id = 'rx', opts = {}) {
   const idx = Math.max(0, STAGES.findIndex((x) => x.id === id));
   G.champ = null; G.weekly = null; G.stunt = null;
-  const prevCar = pc0 || (CAR_TYPES[saved.car] && CAR_TYPES[saved.car].formula ? saved.car : null);
+  // auto: Fabia jako soupeři (výchozí), nebo vlastní auto z garáže (formule se nahradí BMW)
+  const wantFab = saved.rxCar !== 'own', fml = !!(CAR_TYPES[saved.car] && CAR_TYPES[saved.car].formula);
+  const target = wantFab ? 'fabia' : fml ? 'bmw' : saved.car;
+  const prevCar = pc0 || (saved.car !== target ? saved.car : null);
+  RX_LAPS = opts.laps || rxLapsSet();
   const go = async () => {
-    if (prevCar && CAR_TYPES[saved.car].formula) { saved.car = 'bmw'; await ensureCarModel('bmw'); setLivery(saved.livery); }
+    if (saved.car !== target) { saved.car = target; await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
     const rr = mulberry32((Date.now() & 0xffff) + 3), pick = opts.pick || RX_RIVALS.slice().sort(() => rr() - 0.5).slice(0, 4);
-    const skills = opts.skills || pick.map((_, k) => 0.9 + rr() * 0.075 + k * 0.004);
+    const diff = opts.diff || rxDiff(), D = RX_DIFF[diff];
+    const skills = opts.skills || pick.map(() => lerp(D.pace[0], D.pace[1], rr()));
+    rxRacingLine(W.td);
     // kvalifikace: jedno měřené kolo bez soupeřů a bez jokeru, podle času se postaví startovní rošt finále
     if (!opts.final) {
-      G.rx = { quali: true, lap: 0, lapStart: 0, joker: true, prevCar, ai: [], pos: 5, done: false, lapsT: [], pick, skills, id };
+      G.rx = { quali: true, lap: 0, lapStart: 0, joker: true, prevCar, ai: [], pos: 5, done: false, lapsT: [], pick, skills, id, diff };
       startRace();
       const td = W.td, i = clamp(td.startIdx + Math.round(-6 / td.ds), 0, td.n - 1); placeCar(i);
       hud.stage.textContent = 'Rallycross · kvalifikace (1 kolo)';
       toast('Kvalifikace: jedno měřené kolo · čas určí místo na startu finále', 3);
       return;
     }
-    G.rx = { lap: 0, lapStart: 0, joker: false, prevCar, ai: [], pos: 5, done: false, lapsT: [], id };
+    G.rx = { lap: 0, lapStart: 0, joker: false, prevCar, ai: [], pos: 5, done: false, lapsT: [], id, diff };
     startRace();
     const td = W.td, lap = td.length, grid = [[-6, -3.6], [-6, 0], [-6, 3.6], [-16, -1.8], [-16, 1.8]];
     // pořadí na roštu podle kvalifikace (bez ní náhodně)
@@ -12974,7 +13025,8 @@ function rxStart(pc0, id = 'rx', opts = {}) {
     { const [back, lat] = grid[me], i = clamp(td.startIdx + Math.round(back / td.ds), 0, td.n - 1); placeCar(i); car.x += td.NX[i] * lat; car.z += td.NZ[i] * lat; car.lat = lat; }
     for (let k = 0; k < 4; k++) {
       const [name, model, liv] = pick[k], [back, lat] = grid[ord[k]];
-      const a = { name, model, d: back, lat, lat0: lat, v: 0, skill: skills[k], jokerLap: 1 + ((rr() * (RX_LAPS - 1)) | 0), joker: false, finishT: null, c3: null, spin: 0, off: 0 };
+      const a = { name, model, d: back, lat, lat0: lat, v: 0, skill: skills[k], jokerLap: 1 + ((rr() * (RX_LAPS - 1)) | 0), joker: false, finishT: null, c3: null, spin: 0, off: 0,
+        react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1 };
       G.rx.ai.push(a);
       ensureCarModel(CAR_TYPES[model].model).then(() => {
         if (!G.rx || !G.rx.ai.includes(a)) return;
@@ -13007,20 +13059,37 @@ function rxTick(dt) {
   for (const a of R.ai) {
     if (run && a.finishT == null) {
       const i = clamp(td.startIdx + Math.round((((a.d % lap) + lap) % lap) / td.ds), 0, td.n - 1), alap = Math.floor(a.d / lap);
-      let vt = 1e9; const ahead = Math.round((a.v * 1.5 + 14) / td.ds);
-      for (let k = i; k < i + ahead && k < td.n; k++) vt = Math.min(vt, td.V[k]);
-      vt *= a.skill;
+      const gr = rxGravel(td, td.S[i]), line = td.rxLine ? td.rxLine[i] : 0;
+      let vt = rxVt(td, i, a.v, a.skill);
       const r = rxRel(td, td.S[i]);
       const takeJ = j && !a.joker && alap >= a.jokerLap - 1 && alap <= RX_LAPS - 1;
-      let latT = a.lat0 * 0.5;
-      if (j && takeJ && r > j.from - 40 && r < j.to + 10) { latT = j.side * (HW + 4.5); vt *= 0.86; if (r > j.mid - 5 && r < j.mid + 5) a.joker = true; }
-      // auto před sebou: předjetí bokem, jinak zpomalit
-      for (const b of R.ai) { if (b === a) continue; const gap = b.d - a.d; if (gap > 0 && gap < 9 && Math.abs(b.lat - a.lat) < 2.6) { if (a.v > b.v + 0.5 && !(takeJ && r > j.from - 40)) latT = b.lat > 0 ? b.lat - 3.4 : b.lat + 3.4; else vt = Math.min(vt, b.v); } }
-      { const gap = myP - a.d; if (gap > 0 && gap < 9 && Math.abs(car.lat - a.lat) < 2.6) latT = car.lat > 0 ? car.lat - 3.4 : car.lat + 3.4; }
-      latT = clamp(latT, -HW + 1.2, j && takeJ ? HW + 6 : HW - 1.2);
-      a.v += clamp(vt - a.v, -9.5 * dt, (a.v < 20 ? 6.5 : 4.2) * dt * (rxGravel(td, td.S[i]) ? 0.85 : 1));
+      // stopa: z místa na roštu plynule na ideální stopu (vnitřek zatáček)
+      const fromGrid = clamp(a.d / 120, 0, 1);
+      let latT = lerp(a.lat0, line + a.lat0 * 0.12, fromGrid);
+      if (j && takeJ && r > j.from - 40 && r < j.to + 10) { latT = j.side * (HW + 4.5); vt *= 0.9; if (r > j.mid - 5 && r < j.mid + 5) a.joker = true; }
+      // chyba: v nové zatáčce občas vyjede do široka a ztratí rychlost
+      const kAbs = Math.abs(td.K[i]);
+      if (kAbs > 0.03) { const cid = Math.round(td.S[i] / 25); if (cid !== a.corner) { a.corner = cid; if (alap >= 0 && Math.random() < a.mist) a.err = 1.4 + Math.random(); } }
+      if (a.err > 0) { a.err -= dt; vt *= 0.8; latT = -Math.sign(line || 1) * (HW - 1.3); }
+      // provoz: rychlejší auto objede pomalejšího z volnější strany, jinak drží jeho rychlost
+      const block = (bl, bv, gap) => {
+        if (gap <= 0 || gap > 11) return;
+        const side = Math.abs(bl - a.lat);
+        if (a.v > bv + 0.3 && !(takeJ && r > j.from - 40)) {
+          const pass = bl > 0 ? bl - 3.3 : bl + 3.3;
+          if (Math.abs(pass) < HW - 0.8) latT = pass;
+          if (side < 2.3 && gap < 6) vt = Math.min(vt, bv + 0.6);
+        } else if (side < 2.4) vt = Math.min(vt, bv + (gap > 6 ? 1 : -0.3));
+      };
+      for (const b of R.ai) if (b !== a) block(b.lat, b.v, b.d - a.d);
+      { const myV = Math.max(0, car.vf || 0); block(car.lat, myV, myP - a.d); }
+      latT = clamp(latT, -HW + 1.1, j && takeJ ? HW + 6 : HW - 1.1);
+      if (a.react > 0) { a.react -= dt; vt = 0; }
+      a.v += clamp(vt - a.v, -10 * dt, rxAcc(a.v, gr) * dt);
       a.d += Math.max(0, a.v) * dt;
-      a.lat += clamp(latT - a.lat, -2.4 * dt, 2.4 * dt);
+      a.lat += clamp(latT - a.lat, -3.2 * dt, 3.2 * dt);
+      // soupeři se navzájem nepřekrývají
+      for (const b of R.ai) { if (b === a) continue; const dd2 = b.d - a.d, dl2 = b.lat - a.lat; if (Math.abs(dd2) < 4.3 && Math.abs(dl2) < 2.1) { const pu = (2.1 - Math.abs(dl2)) * 0.5; a.lat -= Math.sign(dl2 || 1) * pu * 0.5; b.lat += Math.sign(dl2 || 1) * pu * 0.5; if (dd2 > 0 && dd2 < 4.3) a.v = Math.min(a.v, b.v + 0.2); } }
       if (a.d >= RX_LAPS * lap) { a.finishT = G.time + (a.joker ? 0 : 30); }
     }
     // poloha a srážka s hráčem
@@ -13083,9 +13152,9 @@ function rxQuali(myT) {
     if (!G.rx || !G.rx.quali || G.mode !== 'race') return;
     let html = `<h2>Kvalifikace <em>${pos === 1 ? 'pole position!' : 'start z ' + pos + '. místa'}</em></h2><div class="rows compact">`;
     rows.forEach((r, k) => { html += `<div class="rrow ${r.me ? 'me' : ''}"><span>${k + 1}. ${String(r.name).replace(/[<>&]/g, '')} <small>${r.car}</small></span><b>${fmt(r.t)}</b></div>`; });
-    html += `</div><div class="actions"><button class="btn" id="xFinal">Na start finále <small>${RX_LAPS} kola · joker</small></button><button class="btn ghost" id="xMenu">Do menu</button></div>`;
+    html += `</div><div class="actions"><button class="btn" id="xFinal">Na start finále <small>${RX_LAPS} ${RX_LAPS > 4 ? 'kol' : 'kola'} · joker</small></button><button class="btn ghost" id="xMenu">Do menu</button></div>`;
     $('resultsCard').innerHTML = html; overlay.results.hidden = false; overlay.touch.hidden = true;
-    $('xFinal').onclick = () => { overlay.results.hidden = true; const pc = R.prevCar, id = R.id, pick = R.pick, skills = R.skills; R.prevCar = null; rxClear(); rxStart(pc, id, { final: true, pick, skills, order }); };
+    $('xFinal').onclick = () => { overlay.results.hidden = true; const pc = R.prevCar, id = R.id, pick = R.pick, skills = R.skills; R.prevCar = null; rxClear(); rxStart(pc, id, { final: true, pick, skills, order, diff: R.diff }); };
     $('xMenu').onclick = () => { overlay.results.hidden = true; startDemo(); };
   }, 1400);
   return true;
@@ -13117,21 +13186,42 @@ function rxResults() {
   if (prize) html += `<div class="rrow me"><span>Odměna</span><b>+ ${moneyStr(prize)}</b></div>`;
   html += `</div><div class="actions"><button class="btn" id="xAgain">Další jízda</button><button class="btn ghost" id="xMenu">Do menu</button></div>`;
   $('resultsCard').innerHTML = html; overlay.results.hidden = false; overlay.touch.hidden = true;
-  $('xAgain').onclick = () => { overlay.results.hidden = true; const pc = G.rx.prevCar, id = W.td.st.id; G.rx.prevCar = null; rxClear(); rxStart(pc, id); };
+  $('xAgain').onclick = () => { overlay.results.hidden = true; const pc = G.rx.prevCar, id = W.td.st.id; G.rx.prevCar = null; rxClear(); rxGo(pc, id); };
   $('xMenu').onclick = () => { overlay.results.hidden = true; startDemo(); };
 }
-// výběr rallycrossové trati (Sosnová, Vysočina) s nejlepším umístěním
-$('bRx').onclick = () => {
-  const list = $('rxList'); list.innerHTML = '';
-  for (const st of STAGES.filter((x) => x.rx)) {
-    const b = document.createElement('button'); b.className = 'btn ghost'; b.dataset.rx = st.id;
+// spuštění podle nastavení: s kvalifikací, nebo rovnou finále ze zadní řady
+function rxGo(pc, id) {
+  if (saved.rxQuali === false) rxStart(pc, id, { final: true, order: [0, 1, 2, 3, 'me'] });
+  else rxStart(pc, id);
+}
+const rxTrack = () => { const ids = STAGES.filter((x) => x.rx).map((x) => x.id); return ids.includes(saved.rxTrack) ? saved.rxTrack : ids[0]; };
+// menu rallycrossu (podobně jako Velká cena): trať, soupeři, počet kol, kvalifikace, auto
+function openRx() {
+  const pick = (el, items, cur, set) => {
+    el.innerHTML = '';
+    for (const [key, nm, ds, extra] of items) {
+      const b = document.createElement('button'); b.className = 'tpick'; b.setAttribute('aria-pressed', String(cur === key));
+      b.innerHTML = '<b></b><small></small>'; b.querySelector('b').textContent = nm; b.querySelector('small').textContent = ds;
+      if (extra) extra(b);
+      b.onclick = () => { set(key); persist(); openRx(); };
+      el.appendChild(b);
+    }
+  };
+  pick($('rxList'), STAGES.filter((x) => x.rx).map((st) => {
     const best = (saved.rxBest || {})[st.id];
-    b.innerHTML = `<span class="t">${st.name.replace('Rallycross ', '')}</span> <small>${(tracks[STAGES.indexOf(st)].length / 1000).toFixed(2)} km · ${st.tod}${best ? ' · nejlépe ' + best + '. místo' : ''}</small>`;
-    b.onclick = () => { $('rxModal').hidden = true; rxStart(undefined, st.id); };
-    list.appendChild(b);
-  }
+    return [st.id, st.name.replace('Rallycross ', ''), `${(tracks[STAGES.indexOf(st)].length / 1000).toFixed(2)} km${best ? ' · nejlépe ' + best + '.' : ''}`, (b) => { b.dataset.rx = st.id; }];
+  }), rxTrack(), (k) => { saved.rxTrack = k; });
+  pick($('rxDiffList'), Object.entries(RX_DIFF).map(([k, d]) => [k, d.name, d.desc]), rxDiff(), (k) => { saved.rxDiff = k; });
+  pick($('rxLapsList'), RX_LAPS_OPT.map((n) => [n, `${n} kola`.replace('6 kola', '6 kol'), n === 3 ? 'krátký závod' : n === 4 ? 'jako mistrovství světa' : 'dlouhý souboj']), rxLapsSet(), (k) => { saved.rxLaps = k; });
+  pick($('rxQualiList'), [[true, 'S kvalifikací', '1 měřené kolo určí start'], [false, 'Bez kvalifikace', 'startuješ ze zadní řady']], saved.rxQuali !== false, (k) => { saved.rxQuali = k; });
+  const own = CAR_TYPES[saved.car] && !CAR_TYPES[saved.car].formula && saved.car !== 'fabia' ? CAR_TYPES[saved.car].name : 'BMW M3 E30';
+  pick($('rxCarList'), [['fabia', 'Škoda Fabia R5', 'stejné auto jako soupeři'], ['own', own, 'tvoje auto z garáže']], saved.rxCar === 'own' ? 'own' : 'fabia', (k) => { saved.rxCar = k; });
+  const st = STAGES.find((x) => x.id === rxTrack());
+  $('rxGoSub').textContent = `${st.name.replace('Rallycross ', '')} · ${rxLapsSet()} kola · soupeři ${RX_DIFF[rxDiff()].name.toLowerCase()}`.replace('6 kola', '6 kol');
   $('rxModal').hidden = false;
-};
+}
+$('bRx').onclick = () => openRx();
+$('rxGo').onclick = () => { $('rxModal').hidden = true; rxGo(undefined, rxTrack()); };
 $('rxClose').onclick = () => { $('rxModal').hidden = true; };
 // ---------------------------------------------------------------- úspěchy a trofeje
 // Úspěchy se plní během hraní (dojetí etapy, medaile, počasí, skoky, smyky, kilometry, Velká cena, kariéra…).
@@ -16498,7 +16588,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
