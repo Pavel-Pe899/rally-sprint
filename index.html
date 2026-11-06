@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw5f706f';
+window.__BUILD = 'mw5gt27x';
 (function () {
   function check() {
     try {
@@ -952,6 +952,101 @@ window.__BUILD = 'mw5f706f';
   #hud::after { content: ''; position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 260px; height: 8px; pointer-events: none;
     background: linear-gradient(90deg, transparent 0 40%, rgba(225, 6, 0, .85) 40% 100%) 0 100% / 100% 3px no-repeat, repeating-linear-gradient(115deg, transparent 0 6px, rgba(225, 6, 0, .9) 6px 10px) 100% 0 / 60px 8px no-repeat; }
   /* ---------- rallycross: garáž přes celou obrazovku, jen na ležato (telefon na výšku: celé se otočí o 90°) ---------- */
+  /* ---- lobby z dlaždic (kategorie) ---- */
+  #menu[data-view="hub"] .sheet { display: none; }
+  #menu:not([data-view="hub"]) .hub { display: none; }
+  #menu .sheet .brand { display: none; }
+  .hub { pointer-events: auto; position: absolute; inset: 0; display: flex; flex-direction: column; gap: clamp(6px, 1.6vh, 14px); font-family: var(--display);
+    padding: calc(8px + env(safe-area-inset-top, 0px)) max(14px, calc(8px + env(safe-area-inset-right, 0px))) calc(8px + env(safe-area-inset-bottom, 0px)) max(14px, calc(8px + env(safe-area-inset-left, 0px)));
+    background: radial-gradient(90% 70% at 70% 10%, rgba(255, 196, 25, .07), rgba(0, 0, 0, 0) 60%), linear-gradient(180deg, rgba(14, 16, 21, .9), rgba(10, 11, 15, .94)); overflow-y: auto; box-sizing: border-box; }
+  .hub-top { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; border-bottom: 3px solid #f2f2f2; flex: none; }
+  .hub-me { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .hub-helm { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg, #ffc419, #ff7a1a); color: #14161b; flex: none; font-weight: 900; font-size: 24px; font-style: italic; box-shadow: 0 0 0 3px #fff; }
+  .hub-helm svg { width: 30px; height: 30px; }
+  .hub-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; background: #fff; color: #111; padding: 2px 8px 3px; }
+  .hub-id b { font-size: 17px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .hub-lvl { display: flex; align-items: center; gap: 6px; }
+  .hub-lvl i { width: 110px; height: 8px; background: #d9dce1; display: block; }
+  .hub-lvl u { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb300, #ffd84a); }
+  .hub-lvl em { font-style: normal; font-weight: 900; font-size: 13px; color: #fff; background: #1e7cf2; padding: 0 6px; }
+  .hub-flag { width: 34px; height: 24px; flex: none; border: 2px solid #fff; background: linear-gradient(180deg, #fff 0 50%, #d7141a 50%); position: relative; overflow: hidden; }
+  .hub-flag::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 55%; background: #11457e; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+  #menu .hub-logo { margin: 0 auto; font-size: clamp(20px, 3.4vw, 34px); line-height: 1; transform: skewX(-9deg); white-space: nowrap; font-weight: 900; }
+  #menu .hub-logo em { color: #ffc419; font-style: normal; }
+  .hub-res { display: flex; align-items: center; gap: clamp(8px, 1.6vw, 18px); background: rgba(255, 255, 255, .06); padding: 5px 12px; border-radius: 6px; font-size: clamp(15px, 2vw, 21px); white-space: nowrap; }
+  .hub-res b { font-weight: 700; } .hub-res .medal { vertical-align: -3px; }
+  .hr-money i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #20c4e8; color: #062330; font-style: normal; font-weight: 900; font-size: 14px; margin-right: 5px; vertical-align: 1px; }
+  .hub-grid { flex: 1 0 auto; min-height: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: minmax(92px, 1.3fr) minmax(80px, 1fr); gap: clamp(8px, 1.4vw, 16px); padding: 0 clamp(0px, 3vw, 60px); }
+  .tile { position: relative; overflow: hidden; border: 4px solid #f4f4f4; padding: 0; margin: 0; background: #1c1f26; cursor: pointer; color: #fff; font-family: var(--display); text-align: left; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); transition: transform .12s, border-color .12s; grid-column: span 3; min-height: 0; -webkit-tap-highlight-color: transparent; }
+  .tile.big { grid-column: span 4; }
+  .tile:hover { transform: translateY(-2px); border-color: #fff; } .tile:active { transform: scale(.985); }
+  .tile:focus-visible { outline: 3px solid #ffc419; outline-offset: 2px; }
+  .tile-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tile-top { position: absolute; top: 8%; right: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; background: rgba(8, 9, 12, .72); padding: 4px 10px 5px 14px; clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%); }
+  .tile-top b { font-size: clamp(12px, 1.7vw, 22px); letter-spacing: .06em; color: var(--lc2); font-weight: 600; }
+  .tile-top em { font-style: normal; font-size: clamp(10px, 1.3vw, 15px); color: #fff; opacity: .9; }
+  .tile:not(.big) .tile-top b { display: none; }
+  .tile-lbl { position: absolute; left: 3%; bottom: 7%; display: flex; align-items: center; gap: 10px; padding: 3px 18px 3px 10px; min-width: 60%; box-sizing: border-box; color: #0b0c10; font-weight: 600; font-size: clamp(15px, 2.6vw, 34px); letter-spacing: .03em; background: linear-gradient(90deg, var(--lc), var(--lc2)); line-height: 1.2; }
+  .tile:not(.big) .tile-lbl { font-size: clamp(13px, 2vw, 26px); min-width: 0; right: 3%; }
+  .tile-lbl svg { width: 1.05em; height: 1.05em; flex: none; }
+  .hub-bot { flex: none; display: flex; justify-content: center; align-items: center; gap: 12px; }
+  .hub-ic { width: clamp(46px, 7vh, 64px); height: clamp(46px, 7vh, 64px); display: grid; place-items: center; background: #f4f4f4; border: 0; color: #0b0c10; cursor: pointer; position: relative; padding: 0; }
+  .hub-ic svg { width: 58%; height: 58%; }
+  .hub-ic small { display: none; }
+  .hub-ic:hover { background: #ffc419; }
+  .hub-again { display: flex; align-items: center; gap: 8px; border: 2px solid #f4f4f4; background: rgba(0, 0, 0, .35); color: #fff; font-family: var(--display); font-size: 16px; padding: 6px 12px; cursor: pointer; max-width: 46vw; }
+  .hub-again .t { display: flex; align-items: center; gap: 6px; font-weight: 800; } .hub-again svg { width: 18px; height: 18px; }
+  .hub-again small { opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-head { display: flex; align-items: center; gap: 10px; flex: none; }
+  .cat-back { width: 44px; height: 40px; border: 0; background: linear-gradient(90deg, #ff6b6b, #ff3fa4); color: #fff; font-size: 30px; font-weight: 900; line-height: 1; cursor: pointer; padding: 0 0 4px; }
+  .cat-head h2 { margin: 0; background: #fff; color: #0b0c10; font-family: var(--display); font-size: 26px; font-weight: 900; padding: 2px 16px; letter-spacing: .03em; font-style: italic; }
+  .cat-head small { color: #c9ced6; font-size: 13px; }
+  @media (max-height: 450px) { .hub-top { padding-bottom: 4px; } .hub-helm { width: 34px; height: 34px; } .hub-id b { font-size: 14px; } .hub-lvl i { width: 80px; } .tile { border-width: 3px; } .hub-ic small { display: none; } }
+  @media (max-width: 700px) and (orientation: portrait) {
+    .hub-grid { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-auto-rows: minmax(120px, 26vw); padding: 0; }
+    .tile, .tile.big { grid-column: span 1; } .tile.big:first-child { grid-column: span 2; }
+    #menu .hub-logo { display: none; } .hub-flag { display: none; } .hub-res { margin-left: auto; padding: 4px 8px; }
+  }
+  /* ---- garáž: auto v 3D, kolem dokola tažením, tuning a lak se projeví hned ---- */
+  .gar { position: fixed; inset: 0; z-index: 20; font-family: var(--display); color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .gar[hidden] { display: none; }
+  .gar-top { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); top: calc(8px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 12px; }
+  .gar-back { width: 52px; height: 44px; border: 0; background: linear-gradient(90deg, #ff6b6b, #ff3fa4); color: #fff; font-size: 34px; font-weight: 900; line-height: 1; cursor: pointer; padding: 0 0 5px; }
+  .gar-top h2 { margin: 0; background: #fff; color: #0b0c10; font-size: 28px; font-weight: 900; padding: 2px 20px; font-style: italic; letter-spacing: .04em; }
+  .gar-money { margin-left: auto; background: rgba(0, 0, 0, .55); padding: 5px 12px; border-radius: 6px; font-size: 20px; }
+  .gar-money i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #20c4e8; color: #062330; font-style: normal; font-weight: 900; font-size: 14px; margin-right: 6px; vertical-align: 1px; }
+  .gar-cars { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right: calc(min(400px, 40vw) + 30px); display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+  .gar-car { flex: none; border: 3px solid rgba(255, 255, 255, .7); background: rgba(10, 12, 16, .75); color: #fff; font-family: var(--display); padding: 5px 12px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 1px; }
+  .gar-car b { font-size: 15px; font-weight: 800; white-space: nowrap; } .gar-car small { font-size: 11px; opacity: .75; white-space: nowrap; }
+  .gar-car[aria-pressed="true"] { border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .3), rgba(10, 12, 16, .85)); }
+  .gar-car .on { color: #3fdc86; }
+  .gar-hint { position: absolute; left: 50%; transform: translateX(calc(-50% - min(200px, 20vw))); top: calc(62px + env(safe-area-inset-top, 0px)); font-size: 13px; color: rgba(255, 255, 255, .7); text-shadow: 0 1px 3px #000; white-space: nowrap; pointer-events: none; }
+  .gar-panel { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(400px, 40vw); display: flex; flex-direction: column; gap: 8px; background: rgba(12, 14, 19, .86); border: 2px solid rgba(255, 255, 255, .14); padding: 10px 12px; box-sizing: border-box; touch-action: pan-y; }
+  .gar-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+  .gar-head h3 { margin: 0; font-size: 24px; font-weight: 900; font-style: italic; } .gar-head small { flex-basis: 100%; color: #c9ced6; font-size: 13px; }
+  .gar-up { background: linear-gradient(90deg, #29c77a, #7dff9e); color: #062b16; font-weight: 900; font-size: 13px; padding: 1px 8px; }
+  .gar-stats { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; align-items: center; font-size: 13px; }
+  .gar-stats i { height: 9px; background: rgba(255, 255, 255, .14); display: block; } .gar-stats u { display: block; height: 100%; background: linear-gradient(90deg, #ff4f8b, #ffb36b); transition: width .4s; }
+  .gar-tabs { display: flex; gap: 6px; } .gar-tabs button { flex: 1; border: 2px solid rgba(255, 255, 255, .5); background: transparent; color: #fff; font-family: var(--display); font-size: 15px; font-weight: 800; padding: 5px 0; cursor: pointer; }
+  .gar-tabs button[aria-pressed="true"] { background: #fff; color: #0b0c10; border-color: #fff; }
+  .gar-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; overscroll-behavior: contain; }
+  .gar-it { display: grid; grid-template-columns: 30px 1fr auto; gap: 2px 10px; align-items: center; background: rgba(255, 255, 255, .06); padding: 6px 8px; border-left: 4px solid transparent; }
+  .gar-it.max { border-left-color: #3fdc86; } .gar-it .ic { font-size: 20px; text-align: center; grid-row: span 2; }
+  .gar-it b { font-size: 15px; } .gar-it small { grid-column: 2; font-size: 12px; color: #c9ced6; }
+  .gar-it .lv { color: #ffc419; letter-spacing: 1px; font-size: 13px; } .gar-it .lv u { text-decoration: none; opacity: .3; }
+  .gar-it button { grid-row: span 2; grid-column: 3; border: 0; background: linear-gradient(90deg, #ff7a59, #ff3fa4); color: #fff; font-family: var(--display); font-weight: 800; font-size: 13px; padding: 7px 10px; cursor: pointer; max-width: 150px; line-height: 1.15; }
+  .gar-it button:disabled { background: #3a3f48; color: #9aa1ab; cursor: default; }
+  .gar-sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+  .gar-sw button { border: 3px solid transparent; background: rgba(255, 255, 255, .06); color: #fff; font-family: var(--display); font-size: 12px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .gar-sw button i { width: 100%; height: 30px; display: block; } .gar-sw button[aria-pressed="true"] { border-color: #ffc419; } .gar-sw button.locked { opacity: .5; }
+  .gar-pick { flex: none; font-size: 18px; padding: 8px; }
+  @media (max-height: 560px) { .gar-head small { display: none; } .gar-stats { grid-template-columns: auto 1fr auto 1fr; gap: 2px 8px; font-size: 11px; } .gar-stats i { height: 7px; } }
+  @media (max-height: 450px) { .gar-top h2 { font-size: 22px; } .gar-back { height: 38px; } .gar-panel { top: calc(54px + env(safe-area-inset-top, 0px)); padding: 8px 10px; gap: 6px; } .gar-head h3 { font-size: 19px; } .gar-stats { font-size: 11px; } .gar-hint { top: calc(54px + env(safe-area-inset-top, 0px)); } .gar-pick { font-size: 16px; padding: 7px; } }
+  @media (orientation: portrait) {
+    .gar-panel { left: 10px; right: 10px; width: auto; top: auto; height: 52%; }
+    .gar-cars { right: 10px; bottom: calc(52% + 16px); }
+    .gar-hint { transform: translateX(-50%); }
+  }
   .rxg { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
   /* filmový úvod před finále rallycrossu: černé pruhy nahoře a dole, titulky v dolním pruhu */
   .cine { position: fixed; inset: 0; z-index: 7; cursor: pointer; font-family: var(--display); -webkit-tap-highlight-color: transparent; }
@@ -1121,14 +1216,38 @@ window.__BUILD = 'mw5f706f';
   </div>
 </div>
 
-<div id="menu">
+<div id="menu" data-view="hub">
+  <div class="hub" id="hub">
+    <div class="hub-top">
+      <div class="hub-me"><span class="hub-helm" id="hubAva" aria-hidden="true">H</span>
+        <span class="hub-id"><b id="hubName"></b><span class="hub-lvl"><i><u id="hubLvlBar"></u></i><em id="hubLvl">1</em></span></span>
+        <span class="hub-flag" aria-hidden="true"></span></div>
+      <span class="hub-logo logo">RALLY <em>SPRINT</em></span>
+      <div class="hub-res"><span title="Úspěchy">🏆 <b id="hubTro"></b></span><span title="Zlaté medaile"><i class="medal m-gold"></i> <b id="hubGold"></b></span><span class="hr-money" title="Peníze"><i>$</i><b id="hubMoney"></b></span></div>
+    </div>
+    <div class="hub-grid">
+      <button class="tile big" id="hubRally" style="--lc:#ff8a1f;--lc2:#ffc419"><canvas class="tile-art"></canvas><span class="tile-top"><b>ETAPY</b><em id="hubRallyN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>RALLY</span></button>
+      <button class="tile big" id="hubF1" style="--lc:#e10600;--lc2:#ff5a3c"><canvas class="tile-art"></canvas><span class="tile-top"><b>VELKÁ CENA</b><em id="hubF1N"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-4h5l2-3h4l1 3h3v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3z" fill="currentColor"/></svg>FORMULE</span></button>
+      <button class="tile big" id="bRx" style="--lc:#11b4e6;--lc2:#40e0ff"><canvas class="tile-art"></canvas><span class="tile-top"><b>POHÁR</b><em id="hubRxN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 10l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3zm4.5-5L6.3 13h11.4l-1.2-3z" fill="currentColor"/></svg>RALLYCROSS</span></button>
+      <button class="tile" id="hubGarage" style="--lc:#29c77a;--lc2:#7dff9e"><canvas class="tile-art"></canvas><span class="tile-top"><b>VYLEPŠENÍ</b><em id="hubGarN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>GARÁŽ</span></button>
+      <button class="tile" id="hubCirc" style="--lc:#8a5cff;--lc2:#c08bff"><canvas class="tile-art"></canvas><span class="tile-top"><b>OKRUHY</b><em id="hubCircN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 0 1 6.7 5h-3.2a3.7 3.7 0 0 0-7 0H5.3A7 7 0 0 1 12 5z" fill="currentColor"/></svg>OKRUHY</span></button>
+      <button class="tile" id="bNet" style="--lc:#ffd200;--lc2:#ffe766"><canvas class="tile-art"></canvas><span class="tile-top"><b>2 HRÁČI</b><em>každý na svém telefonu</em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11l-3-3 1.4-1.4L19 8l-5.6 5.4L12 12l3-3H4zm16 10H9l3 3-1.4 1.4L5 16l5.6-5.4L12 12l-3 3h11z" fill="currentColor"/></svg>PROTI SOBĚ</span></button>
+      <button class="tile" id="bStunts" style="--lc:#ff3fa4;--lc2:#ff8ad0"><canvas class="tile-art"></canvas><span class="tile-top"><b>VÝZVY</b><em id="hubStuntN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM6 22l3-9-3 1-2-2 6-4h4l4 3-2 2-2-1-1 4 3 6h-3l-2-4-2 4z" fill="currentColor"/></svg>KASKADÉRSKÉ</span></button>
+    </div>
+    <div class="hub-bot">
+      <button class="hub-ic" id="bTrophy" aria-label="Trofeje a profil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg><small id="bTrophySub"></small></button>
+      <button class="hub-ic" id="bEditor" aria-label="Editor tratí"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.3V21h3.7L17.8 9.9l-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z" fill="currentColor"/></svg><small>editor</small></button>
+      <button class="hub-ic" id="bSettings" aria-label="Nastavení"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg><small>nastavení</small></button>
+      <button class="hub-again" id="bAgainLast" hidden><span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.2A6 6 0 1 0 12 6v3L7.5 5 12 1z" fill="currentColor"/></svg>Jet znovu</span> <small></small></button>
+    </div>
+  </div>
   <div class="sheet">
+    <div class="cat-head"><button class="cat-back" id="catBack" aria-label="Zpět do lobby">‹</button><h2 id="catTitle">RALLY</h2><small id="catSub"></small></div>
     <div class="brand">
       <h1 class="logo"><span id="logoA">RALLY</span><br><em>SPRINT</em></h1>
       <p class="tagline" id="tagline">Šest rychlostních zkoušek, přes 33 km šotoliny, sněhu, asfaltu, písku a rudé keňské savany. Spolujezdec hlásí každou zatáčku.</p>
     </div>
-    <button class="btn ghost again-top" id="bAgainLast" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.2A6 6 0 1 0 12 6v3L7.5 5 12 1z" fill="currentColor"/></svg>Jet znovu</span> <small></small></button>
-    <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Dílna</span> <small>díly formule</small></button>
+    <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Garáž</span> <small>tuning, lak a polepy · auto ve 3D</small></button>
     <p class="label" id="lblStages">Rychlostní zkoušky</p>
     <div class="stages" id="stageList"></div>
     <div class="detail" id="stageDetail"></div>
@@ -1136,19 +1255,9 @@ window.__BUILD = 'mw5f706f';
       <button class="btn gp" id="bGpMenu" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>Velká cena F1</span> <small>7 okruhů · 3 kola · výběr týmu</small></button>
       <div class="row2">
         <button class="btn ghost" id="bChamp"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg>Mistrovství</span> <small>všech 6 etap za sebou</small></button>
-        <button class="btn ghost" id="bNet"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11l-3-3 1.4-1.4L19 8l-5.6 5.4L12 12l3-3H4zm16 10H9l3 3-1.4 1.4L5 16l5.6-5.4L12 12l-3 3h11z" fill="currentColor"/></svg>Proti sobě</span> <small>2 hráči, každý na svém telefonu</small></button>
-      </div>
-      <button class="btn ghost" id="bRx"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 10l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3zm4.5-5L6.3 13h11.4l-1.2-3z" fill="currentColor"/></svg>Rallycross</span> <small>garáž · pohár · 5 aut · joker</small></button>
-      <div class="row2">
-        <button class="btn ghost" id="bEditor"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.3V21h3.7L17.8 9.9l-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z" fill="currentColor"/></svg>Editor tratí</span> <small>nakresli si vlastní trať</small></button>
-        <button class="btn ghost" id="bStunts"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM6 22l3-9-3 1-2-2 6-4h4l4 3-2 2-2-1-1 4 3 6h-3l-2-4-2 4z" fill="currentColor"/></svg>Kaskadérské výzvy</span> <small>skok, drift, slalom, zastavení</small></button>
-      </div>
-      <div class="row2">
-        <button class="btn ghost" id="bTrophy"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.1 6.6.8-4.9 4.6 1.3 6.5L12 16.8 6.1 20l1.3-6.5L2.5 8.9l6.6-.8z" fill="currentColor"/></svg>Trofeje</span> <small id="bTrophySub">úspěchy, odměny a profil</small></button>
         <button class="btn ghost" id="bWeekly" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm-2 8h14v10H5zm2 2v3h3v-3z" fill="currentColor"/></svg>Výzva týdne</span> <small id="bWeeklySub"></small></button>
       </div>
     </div>
-    <button class="btn ghost settings-btn" id="bSettings"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg>Nastavení</span> <small>zvuk, řízení, asistenti, rally, grafika</small></button>
     <div class="actions start-bar">
       <button class="btn" id="bStart"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Odstartovat</span> <small id="bStartSub"></small></button>
     </div>
@@ -1156,6 +1265,22 @@ window.__BUILD = 'mw5f706f';
       <p class="label" id="lblCars">Auto</p>
       <div class="cars" id="carList"></div>
     </div>
+  </div>
+</div>
+
+<div id="garage" class="gar" hidden>
+  <div class="gar-top">
+    <button class="gar-back" id="garBack" aria-label="Zpět do lobby">‹</button><h2>GARÁŽ</h2>
+    <span class="gar-money"><i>$</i><b id="garMoney"></b></span>
+  </div>
+  <div class="gar-cars" id="garCars"></div>
+  <div class="gar-hint" id="garHint">táhni = kolem auta dokola · kolečko nebo dva prsty = blíž / dál</div>
+  <div class="gar-panel" id="garPanel">
+    <div class="gar-head"><h3 id="garName"></h3><span class="gar-up" id="garUp"></span><small id="garDesc"></small></div>
+    <div class="gar-stats" id="garStats"></div>
+    <div class="gar-tabs" id="garTabs"><button data-t="tune" aria-pressed="true">Tuning</button><button data-t="paint" aria-pressed="false">Lak</button><button data-t="decal" aria-pressed="false">Polepy</button></div>
+    <div class="gar-list" id="garList"></div>
+    <button class="btn gar-pick" id="garPick">Jet s tímhle autem</button>
   </div>
 </div>
 
@@ -14363,7 +14488,7 @@ function rxgLayout() {
 }
 window.addEventListener('resize', () => { if (RXG.on) rxgLayout(); });
 // 3D garáž: tmavá dílna, otočné podium se žlutým světelným kruhem, stěna s nápisem, pneumatiky a skříň s nářadím
-function rxgScene() {
+function rxgScene(badge = 'RX') {
   const sc = new T.Scene();
   sc.background = new T.Color('#07090d'); sc.environment = studioEnv(); sc.fog = new T.Fog('#07090d', 15, 38);
   sc.add(new T.HemisphereLight('#cfd8ea', '#16181d', 0.5));
@@ -14385,7 +14510,7 @@ function rxgScene() {
     g.fillStyle = '#30343c'; g.fillRect(0, 0, w, h);
     for (let r = 250; r > 20; r -= 9) { g.strokeStyle = r % 18 < 9 ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.22)'; g.lineWidth = 3; g.beginPath(); g.arc(w / 2, h / 2, r, 0, Math.PI * 2); g.stroke(); }
     g.fillStyle = 'rgba(255,196,25,.85)'; g.font = 'italic 900 64px "Saira Condensed", Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    for (let k = 0; k < 4; k++) { g.save(); g.translate(w / 2, h / 2); g.rotate(k * Math.PI / 2); g.fillText('RX', 0, -196); g.restore(); }
+    for (let k = 0; k < 4; k++) { g.save(); g.translate(w / 2, h / 2); g.rotate(k * Math.PI / 2); g.fillText(badge, 0, -196); g.restore(); }
   });
   const turn = new T.Group(); sc.add(turn); RXG.turn = turn;
   const top = new T.Mesh(new T.CylinderGeometry(3.3, 3.3, 0.16, 72), [new T.MeshStandardMaterial({ color: '#23262c', metalness: 0.8, roughness: 0.35 }), new T.MeshStandardMaterial({ map: disc, metalness: 0.7, roughness: 0.4 }), new T.MeshStandardMaterial({ color: '#23262c' })]);
@@ -14404,7 +14529,7 @@ function rxgScene() {
     g.font = 'italic 900 104px "Saira Condensed", Arial, sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'right';
     g.fillStyle = 'rgba(255,255,255,.88)'; g.fillText('RALLY SPRINT', w * 0.5 + 150, 300);
     g.fillStyle = '#ffc419'; g.beginPath(); g.moveTo(w * 0.5 + 196, 242); g.lineTo(w * 0.5 + 352, 242); g.lineTo(w * 0.5 + 330, 358); g.lineTo(w * 0.5 + 174, 358); g.closePath(); g.fill();
-    g.fillStyle = '#111317'; g.textAlign = 'center'; g.fillText('RX', w * 0.5 + 263, 302);
+    g.fillStyle = '#111317'; g.textAlign = 'center'; g.fillText(badge, w * 0.5 + 263, 302);
   });
   const wall = new T.Mesh(new T.PlaneGeometry(32, 8), new T.MeshStandardMaterial({ map: wt, emissive: '#ffffff', emissiveMap: wt, emissiveIntensity: 0.55, roughness: 0.7 }));
   wall.position.set(0, 4, -9); sc.add(wall);
@@ -14446,6 +14571,7 @@ function rxgSetCar(id) {
   }).catch((e) => console.error('rxg car', e));
 }
 function rxgTick(dt) {
+  if (RXG.mode === 'garage') { garTick(dt); return; }
   const cam = RXG.cam; RXG.t += dt;
   // podium se pomalu točí; tažením prstem / myší ho jde otočit (po puštění se rozjede zpátky do pomalé otáčky)
   if (!RXG.drag) { RXG.spin += (0.35 - RXG.spin) * Math.min(1, dt * 1.5); RXG.turn.rotation.y += RXG.spin * dt; }
@@ -14521,8 +14647,8 @@ function rxgPage(p) {
   RXG.page = p; rxgRender();
 }
 function rxgClose(toMenu = true) {
-  if (!RXG.on && $('rxModal').hidden) return;
-  RXG.on = false; RXG.drag = null; $('rxModal').hidden = true; RXG.tok++;
+  if (!RXG.on && $('rxModal').hidden && $('garage').hidden) return;
+  RXG.on = false; RXG.drag = null; $('rxModal').hidden = true; $('garage').hidden = true; RXG.mode = null; RXG.tok++;
   if (RXG.car) { RXG.turn.remove(RXG.car.root); rxgFreeCar(RXG.car.root); }
   if (RXG.scene) { disposeGroup(RXG.scene); RXG.scene = null; }
   RXG.car = null; RXG.carId = null;
@@ -14531,7 +14657,8 @@ function rxgClose(toMenu = true) {
 // otevření garáže (z hlavního menu, po závodě i po ukončení jízdy)
 function openRx(page = 'hub') {
   G.rxCup = null;
-  RXG.page = page; RXG.view = Math.max(0, RX_CARS().indexOf(rxCarId())); RXG.spin = 0.35;
+  if (RXG.mode === 'garage') rxgClose(false);
+  RXG.mode = 'rx'; RXG.page = page; RXG.view = Math.max(0, RX_CARS().indexOf(rxCarId())); RXG.spin = 0.35;
   overlay.menu.hidden = true; overlay.hud.hidden = true; overlay.touch.hidden = true;
   $('rxModal').hidden = false; rxgLayout();
   if (!RXG.scene) rxgScene();
@@ -15916,13 +16043,13 @@ $('bShopAll').onclick = () => {
 $('bShopX').onclick = () => $('bShopClose').click();
 $('bShopClose').onclick = () => {
   $('shopModal').hidden = true; shopPrev.queue.length = 0;   // nedokreslené náhledy se zahodí (za jízdy by brzdily hru)
-  if (RXG.on) { RXG.carId = null; rxgSetCar(RXG.page === 'cars' ? RX_CARS()[RXG.view] : rxCarId()); rxgRender(); }   // garáž rallycrossu: nové úpravy a barva
+  if (RXG.on && RXG.mode === 'rx') { RXG.carId = null; rxgSetCar(RXG.page === 'cars' ? RX_CARS()[RXG.view] : rxCarId()); rxgRender(); }   // garáž rallycrossu: nové úpravy a barva
 };
 $('bShop').onclick = () => openShop();
 $('bSetup').onclick = () => openSetup();
 $('bGpSetup').onclick = () => openSetup('f1', STAGES.find((x) => x.id === gpTrackId()));
 $('setupClose').onclick = () => { $('setupModal').hidden = true; };
-$('bShopTop').onclick = () => { saved.shopSel = saved.car; openShop(); };
+$('bShopTop').onclick = () => openGarage(saved.car);
 // výběr týmu (druhé klepnutí na formuli v menu)
 function openTeams() {
   const list = $('teamList');
@@ -15999,7 +16126,6 @@ function openTeams() {
   $('bGp').firstChild.textContent = GP_TRACKS[gpTrackId()] + ' ';
   $('bGp').querySelector('small').textContent = `3 kola · povinná zastávka v boxech${best}`;
   $('bShop').querySelector('small').textContent = `kup díly za vyhrané peníze · máš ${moneyStr(saved.money | 0)}`;
-  $('bShopTop').querySelector('small').textContent = `díly formule · máš ${moneyStr(saved.money | 0)}`;
   $('teamModal').hidden = false;
   showHero('teamHero');
 }
@@ -17201,19 +17327,284 @@ function recSubmit(st, t) {
   REC.db.doc('records/' + st.id).set(rec).catch(() => { if (REC.map[st.id] === rec) { if (cur) REC.map[st.id] = cur; else delete REC.map[st.id]; } });
   return true;
 }
+// ---------------------------------------------------------------- lobby z dlaždic a garáž
+// Lobby: velké dlaždice Rally / Formule / Rallycross, menší Garáž / Okruhy / Proti sobě / Kaskadérské výzvy, nahoře hráč
+// (úroveň podle úspěchů), trofeje, zlaté medaile a peníze. Rally a Okruhy otevřou panel s tratěmi a auty své kategorie,
+// Formule výběr týmu a Velkou cenu, Rallycross svou garáž. Obrázky dlaždic se kreslí z modelů aut (renderCarShot).
+const HUB = { view: 'hub', q: [], busy: false };
+const menuInCat = (st, cat) => (cat === 'circ' ? !!st.circuit && !st.rx : !st.circuit);
+function menuView(v) {
+  HUB.view = v; overlay.menu.dataset.view = v;
+  renderMenu();
+  if (v !== 'hub') { const sh = overlay.menu.querySelector('.sheet'); if (sh) sh.scrollTop = 0; }
+}
+const roadCarId = () => (CAR_TYPES[saved.car] && !CAR_TYPES[saved.car].formula ? saved.car : CAR_TYPES[saved.roadCar] && !CAR_TYPES[saved.roadCar].formula ? saved.roadCar : 'bmw');
+function useCar(id) {
+  if (saved.car === id) return;
+  const ct = CAR_TYPES[id]; saved.car = id; if (!ct.formula) saved.roadCar = id; persist(); UIS.rev(!!ct.formula);
+  ensureCarModel(ct.model).then(() => { if (saved.car === id) setLivery(saved.livery); });
+}
+function menuCat(cat) {
+  UIS.click('main');
+  useCar(roadCarId());   // formule do rally a na okruhy nejezdí
+  menuView(cat);
+  const ok = (st) => menuInCat(st, cat);
+  if (!ok(STAGES[G.sel])) {
+    let k = STAGES.findIndex((x) => x.id === saved[cat + 'Sel'] && ok(x));
+    if (k < 0) k = STAGES.findIndex(ok);
+    if (k >= 0) loadStage(k, startDemo);
+  }
+}
+function hubF1() {
+  UIS.click('main');
+  if (saved.car !== 'f1') { if (CAR_TYPES[saved.car]) saved.roadCar = roadCarId(); useCar('f1'); }
+  const k = STAGES.findIndex((x) => x.id === gpTrackId());
+  if (k >= 0 && k !== G.sel) loadStage(k, () => { startDemo(); openTeams(); }); else openTeams();
+}
+function hubRender() {
+  const n = achCount();
+  $('hubName').textContent = netName(); $('hubAva').textContent = netName().slice(0, 1).toUpperCase();
+  $('hubLvl').textContent = 1 + Math.floor(n / 4); $('hubLvlBar').style.width = ((n % 4) * 25) + '%';
+  $('hubTro').textContent = `${n}/${ACH.length}`; $('hubGold').textContent = `${achGolds()}/${RALLY_STAGES().length}`;
+  $('hubMoney').textContent = moneyStr(saved.money | 0).replace(/ \$$/, '');
+  $('hubRallyN').textContent = `${STAGES.filter((x) => !x.circuit).length} etap · zlato ${achGolds()}/${RALLY_STAGES().length}`;
+  $('hubF1N').textContent = `${Object.keys(GP_TRACKS).length} okruhů · ${F1_TEAMS[f1Team()].name}`;
+  const d = rxDiff(), N = RX_CUP().length; $('hubRxN').textContent = `★ ${rxCupTotal(d)}/${N * 3} · ${N} tratě`;
+  $('hubGarN').textContent = `${achShop()} dílů · ${Object.keys(CAR_TYPES).length} aut`;
+  $('hubCircN').textContent = `${STAGES.filter((x) => x.circuit && !x.rx).length} okruhů`;
+  $('hubStuntN').textContent = 'skok · drift · slalom · zastavení';
+  hubArt();
+}
+// pozadí dlaždic (vlastní kresba) a auto z modelu hry; auto se dokreslí, až je model načtený
+const HUB_ART = { hubRally: ['rally', roadCarId], hubF1: ['f1', () => 'f1'], bRx: ['rx', () => rxCarId()], hubGarage: ['garage', () => (CAR_TYPES[saved.car] ? saved.car : 'bmw')], hubCirc: ['circ', () => (roadCarId() === 'p911' ? 'bmw' : 'p911')], bNet: ['net', null], bStunts: ['stunt', null] };
+function hubBg(g, kind, w, h) {
+  const lin = (stops, x0 = 0, y0 = 0, x1 = 0, y1 = h) => { const gr = g.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => gr.addColorStop(o, c)); return gr; };
+  const rad = (x, y, r, c0, c1) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r); };
+  const rnd = mulberry32(kind.length * 977 + w);
+  const hills = (y, amp, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += w / 12) g.lineTo(x, y - amp * (0.4 + 0.6 * Math.abs(Math.sin(x / w * 7 + rnd() * 0.6)))); g.lineTo(w, h); g.fill(); };
+  if (kind === 'rally') {
+    g.fillStyle = lin([[0, '#f7c27a'], [0.45, '#e98a3c'], [0.62, '#8a4c25'], [1, '#3a2416']]); g.fillRect(0, 0, w, h);
+    hills(h * 0.58, h * 0.12, 'rgba(60,34,20,.75)');
+    for (let k = 0; k < 9; k++) rad(w * (0.15 + rnd() * 0.5), h * (0.55 + rnd() * 0.35), h * (0.18 + rnd() * 0.22), 'rgba(236,200,150,.45)', 'rgba(236,200,150,0)');
+  } else if (kind === 'f1') {
+    g.fillStyle = lin([[0, '#0b1636'], [0.55, '#3a0f2a'], [1, '#12060a']]); g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(255,80,60,.35)'; for (let k = 0; k < 26; k++) { const y = rnd() * h, x = rnd() * w; g.lineWidth = 1 + rnd() * 2; g.beginPath(); g.moveTo(x, y); g.lineTo(x - w * (0.2 + rnd() * 0.3), y); g.stroke(); }
+    for (let x = 0; x < w; x += 22) { g.fillStyle = (x / 22) % 2 ? '#e10600' : '#f4f4f4'; g.fillRect(x, h * 0.86, 22, h * 0.05); }
+    rad(w * 0.72, h * 0.35, h * 0.6, 'rgba(255,60,40,.35)', 'rgba(255,60,40,0)');
+  } else if (kind === 'rx') {
+    g.fillStyle = lin([[0, '#9fc4da'], [0.5, '#d8e4ea'], [0.56, '#6b5a47'], [1, '#2e241b']]); g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(40,46,54,.6)'; g.lineWidth = 1; for (let x = 0; x < w; x += 9) { g.beginPath(); g.moveTo(x, h * 0.36); g.lineTo(x, h * 0.55); g.stroke(); }
+    g.fillStyle = 'rgba(30,34,40,.7)'; g.fillRect(0, h * 0.35, w, 3);
+    for (let k = 0; k < 14; k++) rad(w * rnd(), h * (0.6 + rnd() * 0.4), h * (0.06 + rnd() * 0.12), 'rgba(40,28,18,.6)', 'rgba(40,28,18,0)');
+  } else if (kind === 'garage') {
+    g.fillStyle = lin([[0, '#20242c'], [0.6, '#14161b'], [1, '#0b0c10']]); g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(255,255,255,.04)'; for (let x = 0; x < w; x += w / 6) g.fillRect(x, 0, 3, h * 0.6);
+    g.fillStyle = 'rgba(255,240,200,.10)'; g.beginPath(); g.moveTo(w * 0.42, 0); g.lineTo(w * 0.62, 0); g.lineTo(w * 0.95, h); g.lineTo(w * 0.15, h); g.fill();
+    rad(w * 0.55, h * 0.85, w * 0.4, 'rgba(255,196,25,.22)', 'rgba(255,196,25,0)');
+  } else if (kind === 'circ') {
+    g.fillStyle = lin([[0, '#2a1d4f'], [0.5, '#6b3b7a'], [0.6, '#3a3d45'], [1, '#1d1f24']]); g.fillRect(0, 0, w, h);
+    g.save(); g.translate(0, h * 0.82); g.rotate(-0.06); for (let x = -40; x < w + 40; x += 26) { g.fillStyle = (x / 26) % 2 ? '#e10600' : '#f4f4f4'; g.fillRect(x, 0, 26, h * 0.06); } g.restore();
+    rad(w * 0.25, h * 0.3, h * 0.5, 'rgba(255,170,90,.3)', 'rgba(255,170,90,0)');
+  } else if (kind === 'net') {
+    g.fillStyle = '#16181d'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#ffd200'; g.beginPath(); g.moveTo(w * 0.58, 0); g.lineTo(w, 0); g.lineTo(w, h); g.lineTo(w * 0.42, h); g.fill();
+    g.font = `italic 900 ${Math.round(h * 0.56)}px "Saira Condensed", Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#ffffff'; g.fillText('V', w * 0.43, h * 0.46); g.fillStyle = '#16181d'; g.fillText('S', w * 0.6, h * 0.46);
+  } else if (kind === 'stunt') {
+    g.fillStyle = lin([[0, '#3b0f4a'], [0.6, '#b0306f'], [1, '#2a0d1e']]); g.fillRect(0, 0, w, h);
+    g.fillStyle = '#16090f'; g.beginPath(); g.moveTo(w * 0.05, h); g.lineTo(w * 0.45, h * 0.62); g.lineTo(w * 0.48, h * 0.62); g.lineTo(w * 0.48, h); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,.5)'; g.setLineDash([6, 8]); g.lineWidth = 2; g.beginPath(); g.moveTo(w * 0.48, h * 0.6); g.quadraticCurveTo(w * 0.7, h * 0.02, w * 0.95, h * 0.55); g.stroke(); g.setLineDash([]);
+    for (let k = 0; k < 20; k++) { g.fillStyle = `rgba(255,255,255,${0.2 + rnd() * 0.5})`; g.fillRect(rnd() * w, rnd() * h * 0.5, 2, 2); }
+  }
+  g.fillStyle = lin([[0, 'rgba(0,0,0,0)'], [0.65, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,.45)']]); g.fillRect(0, 0, w, h);
+}
+function hubArt() {
+  if (overlay.menu.hidden || HUB.view !== 'hub') return;
+  for (const [id, [kind, carF]] of Object.entries(HUB_ART)) {
+    const el = $(id), cv = el && el.querySelector('.tile-art'); if (!cv || !el.clientWidth) continue;
+    const r = Math.min(1.5, window.devicePixelRatio || 1), w = Math.round(el.clientWidth * r), h = Math.round(el.clientHeight * r), car = carF && carF();
+    const key = [kind, w, h, car || '', car ? JSON.stringify(shopLevels(car)) + decalOf(car) + saved.livery + f1Team() : ''].join('|');
+    if (cv.dataset.key === key) continue;
+    cv.dataset.key = key; cv.width = w; cv.height = h;
+    hubBg(cv.getContext('2d'), kind, w, h);
+    if (car) HUB.q.push({ cv, key, car });
+  }
+  hubPump();
+}
+function hubPump() {
+  if (HUB.busy || !HUB.q.length) return;
+  const job = HUB.q.shift();
+  if (job.cv.dataset.key !== job.key) { hubPump(); return; }
+  HUB.busy = true;
+  const ct = CAR_TYPES[job.car];
+  ensureCarModel(ct.model).then(() => {
+    if (job.cv.dataset.key !== job.key) return;
+    if (overlay.menu.hidden || G.mode !== 'menu') { job.cv.dataset.key = ''; return; }   // za jízdy se nekreslí
+    const shot = renderCarShot(job.car, { ...shopLevels(job.car), decal: ct.formula ? undefined : decalOf(job.car) }, 'icon', 560, 350), g = job.cv.getContext('2d');
+    const W2 = job.cv.width, H2 = job.cv.height, s2 = Math.min(H2 * 1.12 / shot.height, W2 * 0.95 / shot.width), dw = shot.width * s2, dh = shot.height * s2;
+    g.drawImage(shot, W2 - dw * 0.98, H2 - dh * 0.97, dw, dh);
+  }).catch((e) => console.error('hub art', e)).finally(() => { HUB.busy = false; setTimeout(hubPump, 50); });
+}
+window.addEventListener('resize', () => { if (!overlay.menu.hidden && HUB.view === 'hub') setTimeout(hubArt, 120); });
+$('hubRally').onclick = () => menuCat('rally');
+$('hubCirc').onclick = () => menuCat('circ');
+$('hubF1').onclick = () => hubF1();
+$('hubGarage').onclick = () => openGarage();
+$('catBack').onclick = () => { UIS.click('back'); menuView('hub'); };
+document.addEventListener('keydown', (e) => {
+  if (e.code !== 'Escape' || G.mode !== 'menu' || overlay.menu.hidden || HUB.view === 'hub') return;
+  if ([...document.querySelectorAll('.modal')].some((m) => !m.hidden)) return;
+  menuView('hub');
+});
+
+// Garáž: všechna auta na otočném podiu (scéna garáže rallycrossu), kamera jde tažením kolem auta dokola a nahoru/dolů,
+// kolečkem nebo dvěma prsty blíž a dál. Tuning, lak a polepy se koupí/nasadí a auto se hned přestaví; kamera se
+// natočí k dílu, který se změnil (kola z boku, spoiler zezadu…).
+const GAR = { tab: 'tune', id: null, orb: null };
+const GAR_FOCUS = { wheels: 1.5, brakes: 1.5, tyres: 1.5, susp: 1.7, aero: 2.55, exhaust: 2.9, front: 0.5, lights: 0.35, engine: 0.65, rwing: 2.55, fwing: 0.45, floor: 1.6 };
+function openGarage(id) {
+  UIS.click('main');
+  if (RXG.on) rxgClose(false);
+  GAR.id = CAR_TYPES[id] ? id : CAR_TYPES[saved.car] ? saved.car : 'bmw';
+  overlay.menu.hidden = true; overlay.hud.hidden = true; overlay.touch.hidden = true;
+  if (!RXG.scene) rxgScene('RS');
+  RXG.mode = 'garage'; RXG.on = true; RXG.rot = false; RXG.drag = null; RXG.turn.rotation.y = 0;
+  GAR.orb = { yaw: 0.8, pitch: 0.2, z: 1, idle: performance.now(), tYaw: null };
+  $('garage').hidden = false;
+  RXG.carId = null; rxgSetCar(GAR.id);
+  garRender();
+}
+function garTick(dt) {
+  const cam = RXG.cam, O = GAR.orb, now = performance.now();
+  if (O.tYaw != null) { const d = wrapAngle(O.tYaw - O.yaw); O.yaw += d * Math.min(1, dt * 3.5); if (Math.abs(d) < 0.01) O.tYaw = null; O.idle = now; }
+  else if (!RXG.drag && now - O.idle > 4000) O.yaw += dt * 0.22;   // když na auto nikdo nesahá, kamera ho pomalu objíždí
+  const W0 = window.innerWidth, H0 = window.innerHeight, por = H0 > W0, L = RXG.len || 4.2, Hh = RXG.hgt || 1.4;
+  // vzdálenost: celé auto se vejde i na výšku (úzký vodorovný záběr)
+  const hf = Math.atan(Math.tan((cam.fov * Math.PI) / 360) * (W0 / Math.max(1, H0)) * (por ? 1 : 0.62));
+  const d = Math.max(4.4 + L * 1.05, (L * 0.58) / Math.tan(hf) + 1.2) * O.z, cp = Math.cos(O.pitch);
+  cam.position.set(Math.sin(O.yaw) * cp * d, 0.5 + Math.sin(O.pitch) * d, Math.cos(O.yaw) * cp * d);
+  cam.lookAt(0, 0.45 + Hh * 0.15, 0);
+  cam.aspect = W0 / Math.max(1, H0);
+  if (por) cam.setViewOffset(W0, H0, 0, H0 * 0.25, W0, H0); else cam.setViewOffset(W0, H0, W0 * 0.19, 0, W0, H0);   // auto vedle panelu
+}
+function garRebuild() { RXG.carId = null; rxgSetCar(GAR.id); }
+function garRender() {
+  const id = GAR.id, ct = CAR_TYPES[id], items = shopItemsFor(id), lv = shopLevels(id), up = Object.values(lv).reduce((a, b) => a + b, 0);
+  $('garMoney').textContent = moneyStr(saved.money | 0).replace(/ \$$/, '');
+  const cs = $('garCars'); cs.innerHTML = '';
+  for (const [k, c] of Object.entries(CAR_TYPES)) {
+    const b = document.createElement('button'), u = Object.values(shopLevels(k)).reduce((a, v) => a + v, 0);
+    b.className = 'gar-car'; b.dataset.car = k; b.setAttribute('aria-pressed', String(k === id));
+    b.innerHTML = '<b></b><small></small>'; b.querySelector('b').textContent = c.name;
+    b.querySelector('small').innerHTML = (k === saved.car ? '<span class="on">● jedeš s ním</span> · ' : '') + (c.formula ? 'formule' : 'rally · okruhy · RX') + ` · ${u} ★`;
+    b.onclick = () => { UIS.click(); GAR.id = k; GAR.orb.tYaw = 0.8; garRebuild(); garRender(); };
+    cs.appendChild(b);
+  }
+  $('garName').textContent = ct.name; $('garUp').textContent = `${up}/${items.length * 3} ★`;
+  $('garDesc').textContent = ct.formula ? `Formule 1 · tým ${F1_TEAMS[f1Team()].name}` : ct.desc;
+  $('garStats').innerHTML = rxCarStats(id).map(([n, v]) => `<span>${n}</span><i><u style="width:${(v * 100).toFixed(0)}%"></u></i>`).join('');
+  if (ct.formula && GAR.tab === 'decal') GAR.tab = 'tune';
+  for (const b of $('garTabs').children) { b.hidden = !!ct.formula && b.dataset.t === 'decal'; b.setAttribute('aria-pressed', String(b.dataset.t === GAR.tab)); b.textContent = b.dataset.t === 'paint' && ct.formula ? 'Tým' : { tune: 'Tuning', paint: 'Lak', decal: 'Polepy' }[b.dataset.t]; }
+  const list = $('garList'); list.innerHTML = '';
+  if (GAR.tab === 'tune') for (const it of items) {
+    const l = lv[it.id], price = l < 3 ? shopPrice(it, l) : 0, row = document.createElement('div');
+    row.className = 'gar-it' + (l >= 3 ? ' max' : ''); row.dataset.it = it.id;
+    row.innerHTML = '<span class="ic"></span><b></b><button></button><small></small>';
+    row.querySelector('.ic').textContent = it.icon || '⚙';
+    row.querySelector('b').innerHTML = `${it.name.replace(/[<>&]/g, '')} <span class="lv">${[1, 2, 3].map((k) => (k <= l ? '★' : '<u>★</u>')).join('')}</span>`;
+    row.querySelector('small').textContent = l > 0 ? it.tiers[l - 1] : `${it.base || 'základ'} · ${it.fx(1)}`;
+    const btn = row.querySelector('button');
+    if (l >= 3) { btn.textContent = 'MAX'; btn.disabled = true; }
+    else { btn.textContent = `${it.tiers[l]} · ${price ? moneyStr(price) : 'ZDARMA'}`; btn.disabled = (saved.money | 0) < price; btn.onclick = () => garBuy(it.id); }
+    list.appendChild(row);
+  } else if (GAR.tab === 'paint') {
+    const sw = document.createElement('div'); sw.className = 'gar-sw'; list.appendChild(sw);
+    if (ct.formula) for (const [key, tm] of Object.entries(F1_TEAMS)) {
+      const b = document.createElement('button'); b.setAttribute('aria-pressed', String(f1Team() === key));
+      b.innerHTML = `<i style="background:linear-gradient(135deg, ${tm.body} 0 58%, ${tm.a1} 58% 74%, ${tm.a2} 74%)"></i><span></span>`; b.querySelector('span').textContent = tm.name;
+      b.onclick = () => { saved.team = key; persist(); UIS.rev(true); if (car3d && saved.car === 'f1' && !G.gp) setLivery(saved.livery); garRebuild(); garRender(); };
+      sw.appendChild(b);
+    } else LIVERIES.forEach((l, i) => {
+      const b = document.createElement('button'), own = liveryOwned(i); b.className = own ? '' : 'locked'; b.setAttribute('aria-pressed', String((saved.livery | 0) === i));
+      b.innerHTML = `<i style="background:linear-gradient(135deg, ${l.body} 0 58%, ${l.a1} 58% 74%, ${l.a2} 74% 84%, ${l.body} 84%)"></i><span></span>`; b.querySelector('span').textContent = (own ? '' : '🔒 ') + l.name;
+      b.onclick = () => { if (!own) { const a = ACH_BY[l.ach]; toast(`Odemkneš úspěchem „${a.name}“: ${a.desc}`, 2.6); return; } if (car3d && !G.gp) setLivery(i); else { saved.livery = i; persist(); } garRebuild(); garRender(); };
+      sw.appendChild(b);
+    });
+  } else for (const dc of DECALS) {
+    const own = decalOwned(id, dc.id), cur = decalOf(id) === dc.id, row = document.createElement('div');
+    row.className = 'gar-it' + (cur ? ' max' : '');
+    row.innerHTML = '<span class="ic">▨</span><b></b><button></button><small></small>';
+    row.querySelector('b').textContent = dc.name; row.querySelector('small').textContent = cur ? 'nasazeno' : own ? 'máš ho' : dc.ach ? 'odemkne úspěch' : '';
+    const btn = row.querySelector('button'); btn.textContent = cur ? 'NASAZENO' : own ? 'NASADIT' : dc.ach ? '🔒 ÚSPĚCH' : moneyStr(dc.price); btn.disabled = cur;
+    btn.onclick = () => {
+      if (!own && dc.ach) { const a = ACH_BY[dc.ach]; toast(`Odemkneš úspěchem „${a.name}“: ${a.desc}`, 2.6); return; }
+      if (!own) { if ((saved.money | 0) < dc.price) { toast('Na tenhle polep zatím nemáš peníze', 1.6); return; } saved.money = (saved.money | 0) - dc.price; saved.decalsOwned = { ...(saved.decalsOwned || {}), [id + ':' + dc.id]: 1 }; UIS.coin(); }
+      saved.decals = { ...(saved.decals || {}), [id]: dc.id }; persist();
+      if (saved.car === id && car3d && !G.gp) setLivery(saved.livery);
+      GAR.orb.tYaw = 1.55; garRebuild(); garRender();
+    };
+    list.appendChild(row);
+  }
+  $('garPick').textContent = saved.car === id ? 'Jedeš s tímhle autem ✓' : 'Jet s tímhle autem';
+}
+function garBuy(itemId) {
+  const id = GAR.id, it = shopItemsFor(id).find((x) => x.id === itemId), l = shopLvC(id, itemId);
+  if (!it || l >= 3) return;
+  const price = shopPrice(it, l);
+  if ((saved.money | 0) < price) { toast('Na tohle zatím nemáš peníze', 1.6); return; }
+  saved.money = (saved.money | 0) - price; shopSet(id, itemId, l + 1); persist();
+  if (achShop() >= 10) achUnlock('shop');
+  if (saved.car === id && car3d && !G.gp) setLivery(saved.livery);   // auto v menu i v závodě
+  UIS.coin(); toast(`Namontováno: ${it.tiers[l]}`, 1.6);
+  if (GAR_FOCUS[itemId] != null) GAR.orb.tYaw = GAR_FOCUS[itemId];   // kamera se natočí k novému dílu
+  garRebuild(); garRender();
+}
+$('garBack').onclick = () => { UIS.click('back'); rxgClose(true); };
+$('garPick').onclick = () => { const ct = CAR_TYPES[GAR.id]; if (saved.car !== GAR.id) { useCar(GAR.id); toast(`Jedeš s autem ${ct.name}`, 1.6); } garRender(); };
+for (const b of $('garTabs').children) b.onclick = () => { UIS.click(); GAR.tab = b.dataset.t; garRender(); };
+{
+  const el = $('garage'), ptr = new Map();
+  let pinch = 0;
+  el.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button, .gar-panel, .gar-cars, .gar-top')) return;
+    ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); RXG.drag = { id: e.pointerId };
+    if (GAR.orb) { GAR.orb.idle = performance.now(); GAR.orb.tYaw = null; }
+    if (ptr.size === 2) { const [a, b] = [...ptr.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); }
+  });
+  el.addEventListener('pointermove', (e) => {
+    const P = ptr.get(e.pointerId), O = GAR.orb; if (!P || !O) return;
+    const dx = e.clientX - P.x, dy = e.clientY - P.y; P.x = e.clientX; P.y = e.clientY; O.idle = performance.now();
+    if (ptr.size >= 2) { const [a, b] = [...ptr.values()], dd = Math.hypot(a.x - b.x, a.y - b.y); if (pinch > 0 && dd > 0) O.z = clamp(O.z * pinch / dd, 0.55, 1.5); pinch = dd; return; }
+    O.yaw -= dx * 0.009; O.pitch = clamp(O.pitch + dy * 0.006, 0.03, 1.2);
+  });
+  const up = (e) => { ptr.delete(e.pointerId); if (!ptr.size) RXG.drag = null; pinch = 0; };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  el.addEventListener('wheel', (e) => { if (!GAR.orb || e.target.closest('.gar-panel, .gar-cars')) return; e.preventDefault(); GAR.orb.z = clamp(GAR.orb.z * (1 + e.deltaY * 0.0012), 0.55, 1.5); GAR.orb.idle = performance.now(); }, { passive: false });
+  document.addEventListener('keydown', (e) => {
+    if ($('garage').hidden || !GAR.orb) return;
+    if (e.code === 'Escape') { e.preventDefault(); $('garBack').click(); }
+    else if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') { e.preventDefault(); GAR.orb.yaw += e.code === 'ArrowLeft' ? 0.25 : -0.25; GAR.orb.idle = performance.now(); }
+    else if (e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); GAR.orb.pitch = clamp(GAR.orb.pitch + (e.code === 'ArrowUp' ? 0.12 : -0.12), 0.03, 1.2); }
+  });
+}
 function renderMenu() {
-  const list = $('stageList');
+  const list = $('stageList'), cat = HUB.view === 'circ' ? 'circ' : 'rally';
   list.innerHTML = '';
   tracks.forEach((td, i) => {
     const st = td.st, best = saved.best[st.id];
     const b = document.createElement('button');
     b.className = 'stage'; b.setAttribute('aria-pressed', String(i === G.sel));
+    b.hidden = !menuInCat(st, cat);   // v seznamu jsou všechny tratě, vidět jen ty z vybrané kategorie
     const medal = best != null ? medalFor(td, best) : null;
     b.innerHTML = `${thumbSvg(td)}<span><span class="nm">${st.badge ? `<i class="tbadge" style="background:${st.badge}"></i>` : ''}${st.name}</span><span class="meta">${st.surface} · ${(td.length / 1000).toFixed(1)} km · ${st.tod}</span></span>` +
       `<span class="bt ${best != null ? 'has' : ''}">${medal && medal !== 'none' ? `<i class="medal m-${medal}"></i>` : ''}${best != null ? fmt(best) : '<i class="go">›</i>'}</span>`;
-    b.onclick = () => { if (i !== G.sel) loadStage(i, startDemo); };
+    b.onclick = () => { if (menuInCat(st, cat)) { saved[cat + 'Sel'] = st.id; persist(); } if (i !== G.sel) loadStage(i, startDemo); };
     list.appendChild(b);
   });
+  $('catTitle').textContent = cat === 'circ' ? 'OKRUHY' : 'RALLY';
+  $('catSub').textContent = cat === 'circ' ? 'okruhy se silničními auty' : 'rychlostní zkoušky · mistrovství · výzva týdne';
+  $('lblStages').textContent = cat === 'circ' ? 'Okruhy' : 'Rychlostní zkoušky';
+  $('bChamp').hidden = cat === 'circ'; $('bWeekly').hidden = cat === 'circ';
   const td = tracks[G.sel];
   const nTurns = td.notes.filter((n) => n.kind === 'turn').length, nJumps = td.crests.length;
   $('stageDetail').innerHTML =
@@ -17239,13 +17630,14 @@ function renderMenu() {
   for (const [id, ct] of Object.entries(CAR_TYPES)) {
     const b = document.createElement('button');
     b.className = 'car-pick'; b.setAttribute('aria-pressed', String((saved.car || 'bmw') === id));
+    b.hidden = !!ct.formula;   // formule má svou kategorii (Velká cena)
     b.innerHTML = `<b></b><small></small>`;
     b.querySelector('b').textContent = ct.name; b.querySelector('small').textContent = ct.formula ? `Tým ${F1_TEAMS[f1Team()].name} · klepni znovu: výběr týmu a Velká cena` : ct.desc;
     if (ct.formula) { const sw = document.createElement('i'); sw.className = 'team-dot'; sw.style.background = F1_TEAMS[f1Team()].body; b.querySelector('b').prepend(sw); }
     // formule: první klepnutí ji vybere, druhé (nebo dvojklik) otevře výběr týmu a Velkou cenu
     b.onclick = () => {
       if (ct.formula && saved.car === id) { openTeams(); return; }
-      saved.car = id; persist(); UIS.rev(!!ct.formula); renderMenu(); ensureCarModel(ct.model).then(() => { if (saved.car === id) setLivery(saved.livery); });
+      saved.car = id; if (!ct.formula) saved.roadCar = id; persist(); UIS.rev(!!ct.formula); renderMenu(); ensureCarModel(ct.model).then(() => { if (saved.car === id) setLivery(saved.livery); });
     };
     cl.appendChild(b);
   }
@@ -17253,7 +17645,7 @@ function renderMenu() {
   $('tWxVal').textContent = RW_NAMES[saved.rallyWx || 'auto'];
   $('tTyreVal').textContent = RTYRE[RTYRE[saved.rtyre] ? saved.rtyre : 'std'].n; tg('tSpare', saved.spare !== false);
   $('bTrophySub').textContent = `${achCount()} / ${ACH.length} úspěchů`;
-  $('bWeekly').hidden = false; $('bWeeklySub').textContent = wkSub();
+  $('bWeeklySub').textContent = wkSub();
   tg('tFog', !!saved.rallyFog); tg('tABS', !!saved.asABS); tg('tDmg', saved.damage !== false); tg('tESP', !!saved.asESP); tg('tLineC', !!saved.rlineCorners); tg('tRumble', saved.rumble !== false);
   tg('tVoice', saved.voice); tg('tSound', saved.sound); tg('tAuto', saved.autoGas); tg('tBrake', saved.autoBrake); tg('tGhost', saved.ghost); tg('tLine', saved.rline !== false); tg('tTilt', saved.tilt);
   renderVoiceInfo();
@@ -17261,6 +17653,7 @@ function renderMenu() {
   $('tHandlingVal').textContent = HP().name;
   $('tTiltSensVal').textContent = (TILT_SENS[saved.tiltSens] || TILT_SENS.mid).n; $('tTiltDzVal').textContent = (TILT_DZ[saved.tiltDz] || TILT_DZ.mid).n; $('tMirrorVal').textContent = saved.mirror === false ? 'vypnuté' : 'zapnuté';
   $('tScaleVal').textContent = saved.paceScale === 'mild1' ? '1 rychlá · 6 ostrá (McRae)' : '1 ostrá · 6 rychlá';
+  if (HUB.view === 'hub') hubRender();
 }
 $('tVoice').onclick = () => { saved.voice = Voice.on = !saved.voice; persist(); renderMenu(); if (saved.voice) Voice.say('pravá čtyři do levá dva'); };
 $('tSound').onclick = () => { saved.sound = !saved.sound; Sound.setOn(saved.sound); persist(); renderMenu(); };
@@ -17954,7 +18347,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { HUB, GAR, menuView, menuCat, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
