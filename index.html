@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw4rixwl';
+window.__BUILD = 'mw50ddi1';
 (function () {
   function check() {
     try {
@@ -1288,7 +1288,7 @@ window.__BUILD = 'mw4rixwl';
 <div id="rxModal" class="modal" hidden>
   <div class="card team-card">
     <h2>Rallycross <em>5 aut · joker</em></h2>
-    <p class="help">Okruh z asfaltu a šotoliny proti čtyřem soupeřům. Jednou za závod musíš projet joker (delší objížďku vedle trati), jinak dostaneš +30 s. Auta jezdí bokem a strkají se – kontakt ani opření o zeď se netrestá.</p>
+    <p class="help">Okruh z asfaltu a šotoliny proti čtyřem soupeřům. Jednou za závod musíš projet joker (delší objížďku vedle trati se šikanou z pneumatik – ostrůvky objeď podle modrých značek), jinak dostaneš +30 s. Auta jezdí bokem a strkají se – kontakt ani opření o zeď se netrestá.</p>
     <p class="label">Trať</p>
     <div class="tracks" id="rxList"></div>
     <p class="label">Soupeři</p>
@@ -1703,6 +1703,13 @@ function rxTurtle(seq, step = 5) {
   pts.pop();   // poslední bod = start
   return pts.map(([a, b]) => [+a.toFixed(2), +(-b).toFixed(2)]);
 }
+// joker = mezitrať: vlastní silnice (šířka 2·wJ) po vnější straně zatáčky. Od trati se odpojí plynulým obloukem
+// (Lt m), vede D m za okrajem trati a pak se zase připojí; mezi ní a tratí je travnatý ostrůvek s pneumatikami.
+// Uprostřed je šikana – dvě zatáčky za sebou: silnice se rozšíří na 2·wC a dva ostrůvky z pneumatik (první u vnitřního
+// okraje, druhý gap m za ním u vnějšího, každý zavře block m, průjezd vedle něj je 2·wC − block m) vedou auto esíčkem.
+// I nejlepší stopou stojí joker soupeře 1–1,8 s (podle trati a obtížnosti), hráče podle toho, jak šikanu trefí.
+// path = stopa soupeřů (vzdálenost od středu trati ven v řídicích bodech), spočítaná předem jako nejrychlejší
+// průjezd (kvazistatický model jízdy, viz STAV.md) s rezervou 1 m od pneumatik; side = strana jokeru (+1 = vpravo).
 const RX_PATH = rxTurtle([83.9, [61.8, 27.5], 13.9, [113, 22.1], 22.2, [-91.7, 25.8], 16.5, [-43.8, 31.1], 16.2, [-85.4, 19.6], 45.8, [159.9, 17.9], 44, [67.5, 38.5], 34, [-62.9, 27.5], 28.9, [44, 37.9], 45.1, [109.8, 18.1], 143.1, [-103.7, 23.6], 39.7, [191.5, 40], 94.6, 25]);
 const RX2_PATH = rxTurtle([83.8, [154.8, 13.3], 39.1, [-80.1, 24.4], 39.2, [94.8, 18.6], 42.8, [-70, 25.1], 41.4, [172.7, 17.3], 25.7, [-58.1, 32.4], 145, [53.5, 31], 16.5, [115.4, 23.8], 13.2, [-55.5, 37.2], 35.2, [155.9, 14.4], 34.8, [-175.2, 17.1], 52.8, [51.9, 24.3], 25]);
 const RX3_PATH = rxTurtle([96.2, [91.3, 17.5], 44.3, [-54.1, 34.6], 15.9, [64, 36.6], 105.4, [179.5, 17.6], 39.4, [-83.4, 24.1], 21.5, [39.4, 38.5], 24.3, [-119.9, 25.6], 61.7, [166.7, 17.8], 33.5, [-69.7, 26.3], 16.1, [162.3, 13.1], 17.9, [-117.9, 20.4], 38.1, [101.8, 17.3], 25]);
@@ -1896,7 +1903,7 @@ const STAGES = [
   {
     id: 'rx', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Sosnová', region: 'Rallycross · 12 zatáček, 80 % šotolina, joker', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Odpoledne',
     circuit: true, rx: true, path: RX_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'SOSNOVÁ',
-    mix: [[90, 1076]], joker: { from: 662, to: 718 },
+    mix: [[90, 1076]], joker: { from: 632, to: 748, side: 1, D: 18, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.35, gap: 16, block: 7.5 }, path: [-3.3, -5.1, -0.4, 11.7, 20.5, 24.9, 24.5, 20.8, 20.8, 21.8, 22.5, 21.7, 18.2, 12.2, 7.7, 2, 0, 0.3] },
     len: 1186, seed: 811, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#3b7ccc', hor: '#dfe8ee', bottom: '#b8c3bb' }, sun: { dir: [0.4, 0.7, 0.55], color: '#fff3e0', int: 3.3 },
@@ -1910,7 +1917,7 @@ const STAGES = [
   {
     id: 'rx2', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Vysočina', region: 'Rallycross · 12 zatáček, 4 vracáky, 80 % šotolina', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Ráno',
     circuit: true, rx: true, path: RX2_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'VYSOČINA',
-    mix: [[90, 927]], joker: { from: 670, to: 735 },
+    mix: [[90, 927]], joker: { from: 640, to: 765, side: 1, D: 14, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.35, gap: 16, block: 7.5 }, path: [-1, -2.2, 0.3, 8.2, 18.6, 22.2, 19.5, 17.3, 18.3, 19.8, 20.3, 19.3, 17.2, 14.3, 11.2, 3.6, -0.3, -1.7] },
     len: 1037, seed: 827, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
@@ -1955,7 +1962,7 @@ const STAGES = [
   {
     id: 'rx3', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Švédsko', region: 'Rallycross · lesní trať jako Höljes, 12 zatáček, 80 % šotolina', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Podvečer',
     circuit: true, rx: true, path: RX3_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'ŠVÉDSKO',
-    mix: [[100, 895]], joker: { from: 205, to: 268 },
+    mix: [[100, 895]], joker: { from: 185, to: 328, side: 1, D: 14, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.6, gap: 16, block: 7.5 }, path: [-1.2, 0.3, 4.2, 9.7, 13.1, 16.7, 17.8, 18.8, 21.8, 24.3, 22.5, 18.8, 15.2, 12.8, 9.7, 4.2, 0.7, -4.4] },
     len: 1005, seed: 839, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
@@ -2250,10 +2257,13 @@ function buildTrackData0(st) {
     if (st.joker && wallL) {
       const at = (r) => { let i = startIdx; while (i < finishIdx && rel(i) < r) i++; return i; };
       const j0 = st.joker.from, j1 = st.joker.to, jm = (j0 + j1) / 2, i0 = at(j0), i1 = at(j1), im = at(jm);
-      const mx = (X[i0] + X[i1]) / 2, mz = (Z[i0] + Z[i1]) / 2, side = -Math.sign((mx - X[im]) * NX[im] + (mz - Z[im]) * NZ[im]) || 1;
-      joker = { from: j0, to: j1, mid: jm, side };
+      const mx = (X[i0] + X[i1]) / 2, mz = (Z[i0] + Z[i1]) / 2, side = st.joker.side || -Math.sign((mx - X[im]) * NX[im] + (mz - Z[im]) * NZ[im]) || 1;
+      const wJ = st.joker.wJ || 4.5, ch = st.joker.chic, chc = ch ? j0 + ch.c * (j1 - j0) : 0;
+      joker = { from: j0, to: j1, mid: jm, side, D: HW + (st.joker.D || 6), Lt: st.joker.Lt || 30, wJ, wC: st.joker.wC || wJ, c0: HW - 1, path: st.joker.path || null,
+        chic: ch ? { ra: chc - ch.gap / 2, rb: chc + ch.gap / 2, block: ch.block } : null };
+      // zeď za vnějším okrajem silnice jokeru
       const wa = side > 0 ? wallR : wallL;
-      for (let i = 0; i < n; i++) { const r = rel(i), k = smooth(j0 - 40, j0 - 8, r) * (1 - smooth(j1 + 8, j1 + 40, r)); if (k > 0) wa[i] = Math.max(wa[i], lerp(wa[i], HW + 11.5, k)); }
+      for (let i = 0; i < n; i++) { const r = rel(i), rr = clamp(r, j0, j1), c = rxJokerC(joker, rr), k = smooth(j0 - 30, j0, r) * (1 - smooth(j1, j1 + 30, r)); if (k > 0) wa[i] = Math.max(wa[i], lerp(wa[i], c + rxJokerW(joker, rr) + 1.6, k)); }
     }
   }
   return { st, n, ds, L, X, Y, Z, S, TX, TZ, NX, NZ, HD, K, V, startIdx, finishIdx, length: S[finishIdx] - S[startIdx], notes, crests, ideal, base, noise, wallL, wallR, pit, bridgeH, bridge, mix, joker };
@@ -3586,6 +3596,19 @@ function buildWorld(td) {
         for (let dx = -rc; dx <= rc; dx++) { const gx = cx + dx; if (gx < 0 || gx >= GW) continue;
           if ((gx0 + gx * CELL - X[i]) ** 2 + (gz0 + gz * CELL - Z[i]) ** 2 < Rc2) { const k = gz * GW + gx; if (y < MINY[k]) MINY[k] = y; } } }
     }
+    // rallycross: ani u silnice jokeru (mezitrať stranou trati) nesmí terén vystoupit nad její úroveň
+    const J = td.joker;
+    if (J) {
+      const Rj = (J.wC || J.wJ) + 5, Rj2 = Rj * Rj, rj = Math.ceil(Rj / CELL);
+      for (let i = td.startIdx; i < td.finishIdx; i++) {
+        const r = rxRel(td, td.S[i]); if (r < J.from || r > J.to) continue;
+        const c = rxJokerC(J, r) * J.side, px = X[i] + td.NX[i] * c, pz = Z[i] + td.NZ[i] * c, y = Y[i] - 0.08;
+        const cx = Math.round((px - gx0) / CELL), cz = Math.round((pz - gz0) / CELL);
+        for (let dz = -rj; dz <= rj; dz++) { const gz = cz + dz; if (gz < 0 || gz >= GH) continue;
+          for (let dx = -rj; dx <= rj; dx++) { const gx = cx + dx; if (gx < 0 || gx >= GW) continue;
+            if ((gx0 + gx * CELL - px) ** 2 + (gz0 + gz * CELL - pz) ** 2 < Rj2) { const k = gz * GW + gx; if (y < MINY[k]) MINY[k] = y; } } }
+      }
+    }
   }
   const inner = HW + 3.5, bw = 60;
   for (let gz = 0; gz < GH; gz++) for (let gx = 0; gx < GW; gx++) {
@@ -3813,10 +3836,10 @@ function buildWorld(td) {
     const r = p.relOf(S[i]);
     return r > p.garage[0] - 25 && r < p.garage[1] + 25;
   };
-  const addObstacle = (x, z, r, hard) => {
+  const addObstacle = (x, z, r, hard, kind) => {
     const key = Math.floor(x / 10) * 100000 + Math.floor(z / 10);
     let a = obstacles.get(key); if (!a) { a = []; obstacles.set(key, a); }
-    a.push({ x, z, r, hard: !!hard });
+    a.push({ x, z, r, hard: !!hard, kind });
   };
   // ---- město kolem městského okruhu (Monako): dvě řady domů za zdmi (barvy Riviéry, okna z jedné dlaždice),
   // hotel nad tunelem; mřížka obsazení 4 m, aby stromy a diváci nestáli v domech
@@ -5612,7 +5635,7 @@ function buildWorld(td) {
   // ---- rallycross: šotolina přes asfalt v šotolinových úsecích, pruh jokeru po vnější straně, pneumatiky oddělující joker, cedule
   if (td.mix || td.joker) {
     // oboustranný: pruh se staví zleva doprava, takže měl rub nahoru a šotolina (i joker) nebyla vidět
-    const gMat = new T.MeshLambertMaterial({ map: roadTexture('gravel', st.seed + 5), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: T.DoubleSide });
+    let gMat = new T.MeshLambertMaterial({ map: roadTexture('gravel', st.seed + 5), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: T.DoubleSide });
     addCloudShadow(gMat, 'rx-gravel');
     const strip = (test, latA, latB, lift) => {
       const pos = [], uv = [], idx = []; let prev = -1;
@@ -5632,22 +5655,95 @@ function buildWorld(td) {
     if (td.mix) strip((i) => td.mix.some(([a, b]) => rel(i) >= a && rel(i) <= b), () => -HW - 0.4, () => HW + 0.4, 0.05);
     const J = td.joker;
     if (J) {
-      strip((i) => rel(i) > J.from - 12 && rel(i) < J.to + 12, () => J.side * (HW - 0.3), () => J.side * (HW + 10.2), 0.045);
-      // pneumatiky (po třech na sobě) mezi tratí a jokerem; dají se nabourat jako překážka
-      const tyres = [];
-      for (let i = td.startIdx; i < td.finishIdx; i++) { const r = rel(i); if (r > J.from + 16 && r < J.to - 16 && (tyres.length === 0 || Math.hypot(X[i] - tyres[tyres.length - 1][0], Z[i] - tyres[tyres.length - 1][1]) > 2.3)) { const x = X[i] + NX[i] * J.side * (HW + 1.5), z = Z[i] + NZ[i] * J.side * (HW + 1.5); tyres.push([x, z, Y[i]]); addObstacle(x, z, 0.55, false); } }
+      // silnice jokeru (mimo trať), stejná šotolina
+      const jc = (i) => rxJokerC(J, rel(i)), jwi = (i) => rxJokerW(J, rel(i));
+      strip((i) => rel(i) >= J.from && rel(i) <= J.to && jc(i) + jwi(i) > HW + 0.4, (i) => J.side * Math.max(HW + 0.3, jc(i) - jwi(i)), (i) => J.side * (jc(i) + jwi(i)), 0.047);
+      // pneumatiky (po třech na sobě) podél ostrůvku mezi tratí a jokerem: u trati a u silnice jokeru; dají se nabourat
+      const tyres = [], addTyre = (i, l) => { const x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l; tyres.push([x, z, Y[i]]); addObstacle(x, z, 0.55, false, 'tyre'); };
+      for (const [edge, need] of [[(i) => HW + 1.5, 2.6], [(i) => jc(i) - jwi(i) - 1.4, 5]]) {
+        let last = null;
+        for (let i = td.startIdx; i < td.finishIdx; i++) {
+          const r = rel(i); if (r < J.from || r > J.to || jc(i) - jwi(i) < HW + need) continue;
+          const l = edge(i), x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l;
+          if (!last || Math.hypot(x - last[0], z - last[1]) > 2.3) { addTyre(i, l); last = [x, z]; }
+        }
+      }
       const tg = mergeColored([0, 1, 2].map((k) => ({ geo: new T.TorusGeometry(0.34, 0.16, 8, 16).rotateX(Math.PI / 2).translate(0, 0.18 + k * 0.3, 0), color: k === 1 ? '#f2f2f2' : '#18191c' })));
       const im = new T.InstancedMesh(tg, new T.MeshLambertMaterial({ vertexColors: true }), tyres.length);
       tyres.forEach(([x, z, y], k) => { m4.makeTranslation(x, y - 0.02, z); im.setMatrixAt(k, m4); });
       im.computeBoundingSphere(); im.castShadow = true; group.add(im);
-      // cedule JOKER u vjezdu a výjezdu
-      const tex = canvasTex(256, 96, (g2, w, h) => { g2.fillStyle = '#ffd200'; g2.fillRect(0, 0, w, h); g2.fillStyle = '#111214'; g2.font = '900 54px Arial, sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('JOKER', w / 2, h / 2 + 3); });
-      for (const r0 of [J.from - 25]) {
-        let i = td.startIdx; while (i < td.finishIdx && rel(i) < r0) i++;
-        const x = X[i] + NX[i] * J.side * (HW + 12), z = Z[i] + NZ[i] * J.side * (HW + 12), bd = new T.Mesh(new T.PlaneGeometry(2.6, 1.0), new T.MeshLambertMaterial({ map: tex, side: T.DoubleSide }));
-        bd.position.set(x, Y[i] + 2.2, z); bd.rotation.y = td.HD[i] + Math.PI; group.add(bd);
-        for (const dx of [-1.1, 1.1]) { const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 2.2, 6).translate(0, 1.1, 0), new T.MeshLambertMaterial({ color: '#cfd5de' })); p.position.set(x + Math.cos(td.HD[i]) * dx, Y[i], z - Math.sin(td.HD[i]) * dx); group.add(p); }
+      // šikana: dva ostrůvky z červenobílých pneumatik (dvě řady za sebou) – první u vnitřního okraje silnice jokeru,
+      // druhý u vnějšího; auto mezi nimi projede esíčkem (dvě zatáčky za sebou). Ostrůvek sahá přesně block m od okraje
+      // silnice, na špičce má modrou značku, kudy ho objet (jako na dopravním ostrůvku).
+      if (J.chic) {
+        const chic = [], keep = [], idxAt = (r) => { let i = td.startIdx; while (i < td.finishIdx && rel(i) < r) i++; return i; };
+        const span = (i, inner) => { const c = jc(i), w = jwi(i); return inner ? [c - w + 0.3, c - w + J.chic.block - 0.55] : [c + w - J.chic.block + 0.55, c + w - 0.3]; };
+        for (const [r0, inner] of [[J.chic.ra, true], [J.chic.rb, false]]) {
+          for (const dr of [-0.9, 0.9]) {
+            const i = idxAt(r0 + dr), [a0, a1] = span(i, inner), nS = Math.ceil((a1 - a0) / 0.95);
+            for (let q = 0; q <= nS; q++) { const l = a0 + ((a1 - a0) * q) / nS, x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l; chic.push([x, z, Y[i]]); addObstacle(x, z, 0.55, false, 'tyre'); }
+          }
+          const i = idxAt(r0), [a0, a1] = span(i, inner); keep.push([i, inner ? a1 - 1.2 : a0 + 1.2, inner]);   // značka mezi řadami kousek od špičky
+        }
+        const cg = mergeColored([0, 1, 2].map((k) => ({ geo: new T.TorusGeometry(0.34, 0.16, 8, 16).rotateX(Math.PI / 2).translate(0, 0.18 + k * 0.3, 0), color: k === 1 ? '#f4f4f4' : '#d81e1e' })));
+        const cm = new T.InstancedMesh(cg, new T.MeshLambertMaterial({ vertexColors: true }), chic.length);
+        chic.forEach(([x, z, y], k) => { m4.makeTranslation(x, y - 0.02, z); cm.setMatrixAt(k, m4); });
+        cm.computeBoundingSphere(); cm.castShadow = true; group.add(cm);
+        // modrá kulatá značka se šikmou šipkou dolů: první ostrůvek objet zvenku, druhý zevnitř (+N = vpravo)
+        const keepTex = (right) => canvasTex(256, 256, (g2, w, h) => {
+          g2.fillStyle = '#ffffff'; g2.beginPath(); g2.arc(w / 2, h / 2, 126, 0, Math.PI * 2); g2.fill();
+          g2.fillStyle = '#1d5fbf'; g2.beginPath(); g2.arc(w / 2, h / 2, 116, 0, Math.PI * 2); g2.fill();
+          g2.save(); g2.translate(w / 2, h / 2); g2.rotate(right ? -Math.PI / 4 : Math.PI / 4); g2.fillStyle = '#ffffff'; g2.beginPath();
+          g2.moveTo(0, 86); g2.lineTo(-44, 26); g2.lineTo(-17, 26); g2.lineTo(-17, -80); g2.lineTo(17, -80); g2.lineTo(17, 26); g2.lineTo(44, 26); g2.closePath(); g2.fill(); g2.restore();
+        });
+        const pm = new T.MeshLambertMaterial({ color: '#cfd5de' });
+        for (const [i, l, inner] of keep) {
+          const right = inner === J.side > 0, x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l;
+          const bd = new T.Mesh(new T.CircleGeometry(0.62, 28), new T.MeshLambertMaterial({ map: keepTex(right), side: T.DoubleSide, transparent: true }));
+          bd.position.set(x, Y[i] + 1.75, z); bd.rotation.y = td.HD[i] + Math.PI; bd.name = 'rxKeep'; group.add(bd);
+          const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.75, 6).translate(0, 0.875, 0), pm); p.position.set(x, Y[i], z); group.add(p);
+        }
       }
+      // cedule: velká žlutá JOKER se šipkou u odbočky (na špičce ostrůvku) a předem 100 m a 50 m před odbočkou
+      const arrowR = J.side > 0;   // +N je ve směru jízdy vpravo
+      const signTex = (sub) => canvasTex(512, 200, (g2, w, h) => {
+        g2.fillStyle = '#ffd200'; g2.fillRect(0, 0, w, h); g2.strokeStyle = '#111214'; g2.lineWidth = 10; g2.strokeRect(5, 5, w - 10, h - 10);
+        g2.fillStyle = '#111214'; g2.font = '900 92px Arial, sans-serif'; g2.textBaseline = 'middle'; g2.textAlign = arrowR ? 'left' : 'right';
+        g2.fillText('JOKER', arrowR ? 34 : w - 34, sub ? 78 : h / 2 + 4);
+        if (sub) { g2.font = '800 54px Arial, sans-serif'; g2.fillText(sub, arrowR ? 36 : w - 36, 156); }
+        // šipka
+        const ax = arrowR ? w - 70 : 70, d = arrowR ? 1 : -1; g2.beginPath();
+        g2.moveTo(ax + d * 52, h / 2); g2.lineTo(ax - d * 6, h / 2 - 62); g2.lineTo(ax - d * 6, h / 2 - 26); g2.lineTo(ax - d * 62, h / 2 - 26);
+        g2.lineTo(ax - d * 62, h / 2 + 26); g2.lineTo(ax - d * 6, h / 2 + 26); g2.lineTo(ax - d * 6, h / 2 + 62); g2.closePath(); g2.fill();
+      });
+      const postM = new T.MeshLambertMaterial({ color: '#cfd5de' });
+      const sign = (r0, lat, wd, ht, tex, hy) => {
+        let i = td.startIdx; while (i < td.finishIdx && rel(i) < r0) i++;
+        const x = X[i] + NX[i] * J.side * lat, z = Z[i] + NZ[i] * J.side * lat;
+        const bd = new T.Mesh(new T.PlaneGeometry(wd, ht), new T.MeshLambertMaterial({ map: tex, side: T.DoubleSide }));
+        bd.position.set(x, Y[i] + hy, z); bd.rotation.y = td.HD[i] + Math.PI; group.add(bd);
+        for (const dx of [-wd * 0.38, wd * 0.38]) { const p = new T.Mesh(new T.CylinderGeometry(0.07, 0.07, hy, 6).translate(0, hy / 2, 0), postM); p.position.set(x - Math.cos(td.HD[i]) * dx, Y[i], z + Math.sin(td.HD[i]) * dx); group.add(p); }
+      };
+      // špička ostrůvku: první místo, kde je mezi tratí a jokerem aspoň 3 m trávy
+      let rTip = J.from; while (rTip < J.mid && rxJokerC(J, rTip) - rxJokerW(J, rTip) < HW + 3) rTip += 1;
+      sign(rTip + 4, (HW + rxJokerC(J, rTip + 4) - rxJokerW(J, rTip + 4)) / 2, 4.2, 1.65, signTex(null), 2.9);
+      // portál přes silnici jokeru hned za odbočkou: velká cedule JOKER se šipkou nad hlavou
+      { const r0 = rTip + 10; let i = td.startIdx; while (i < td.finishIdx && rel(i) < r0) i++;
+        const c = rxJokerC(J, r0), wd = 2 * rxJokerW(J, r0) + 1.6, hy = 4.6, x = X[i] + NX[i] * J.side * c, z = Z[i] + NZ[i] * J.side * c, h = td.HD[i];
+        const bd = new T.Mesh(new T.PlaneGeometry(Math.min(wd - 1, 7.2), 2.2), new T.MeshLambertMaterial({ map: signTex(null), side: T.DoubleSide }));
+        bd.position.set(x, Y[i] + hy, z); bd.rotation.y = h + Math.PI; group.add(bd);
+        const gm = new T.MeshLambertMaterial({ color: '#2a2d33' });
+        for (const dx of [-wd / 2, wd / 2]) { const p = new T.Mesh(new T.BoxGeometry(0.22, hy + 1.1, 0.22).translate(0, (hy + 1.1) / 2, 0), gm); p.position.set(x - Math.cos(h) * dx, Y[i], z + Math.sin(h) * dx); group.add(p); }
+        const beam = new T.Mesh(new T.BoxGeometry(wd, 0.25, 0.25), gm); beam.position.set(x, Y[i] + hy + 1.15, z); beam.rotation.y = h + Math.PI; group.add(beam); }
+      sign(J.from - 100, HW + 2.6, 3.2, 1.25, signTex('100 m'), 2.3);
+      sign(J.from - 50, HW + 2.6, 3.2, 1.25, signTex('50 m'), 2.3);
+      // žlutá šipka na trati 30 m před odbočkou (ukazuje do jokeru)
+      { let i = td.startIdx; while (i < td.finishIdx && rel(i) < J.from - 30) i++;
+        const sh = new T.Shape(); sh.moveTo(0, 2.4); sh.lineTo(1.3, 0.6); sh.lineTo(0.5, 0.6); sh.lineTo(0.5, -2.2); sh.lineTo(-0.5, -2.2); sh.lineTo(-0.5, 0.6); sh.lineTo(-1.3, 0.6); sh.closePath();
+        const ag = new T.ShapeGeometry(sh); ag.rotateX(-Math.PI / 2);
+        const am = new T.Mesh(ag, new T.MeshBasicMaterial({ color: '#ffd200', transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8, depthWrite: false }));
+        const l = J.side * (HW - 2.4); am.position.set(X[i] + NX[i] * l, Y[i] + 0.07, Z[i] + NZ[i] * l);
+        am.rotation.y = td.HD[i] + Math.PI + J.side * -0.5; group.add(am); }
     }
   }
   // ---- kaluže na šotolině
@@ -8082,6 +8178,25 @@ const Sound = {
     return fl;
   },
   thump(strength, kind = 'hit') { this.impact(strength, kind); },
+  // tupá rána při kontaktu aut (rallycross) a nárazu do pneumatik: hluboké žuchnutí karoserie, bez kovového zvonění,
+  // střepů a ozvěny. pan = strana (−1 vlevo … 1 vpravo), vzdálené srážky soupeřů hrají tišeji
+  bump(strength, pan = 0) {
+    if (!this.ctx || !this.noiseBuf) return;
+    const c = this.ctx, t = c.currentTime, s = clamp(strength, 0, 1);
+    if (s < 0.04) return;
+    const pp = c.createStereoPanner ? c.createStereoPanner() : null, dest = pp ? (pp.connect(this.out), pp) : this.out;
+    if (pp) pp.pan.value = clamp(pan, -0.8, 0.8);
+    // „dum“: tón rychle klesne ze 150 na 55 Hz; mírné zkreslení přidá vyšší složky, aby byl slyšet i z reproduktoru telefonu
+    const o = c.createOscillator(), ws = c.createWaveShaper(), g = c.createGain(), cv = new Float32Array(256);
+    for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; cv[i] = Math.tanh(x * 2.4); } ws.curve = cv;
+    o.type = 'sine'; o.frequency.setValueAtTime(150 + 30 * s, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.62 * s, t + 0.005); g.gain.setTargetAtTime(0, t + 0.02, 0.06);
+    o.connect(ws); ws.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.4);
+    // tělo rány (tlumený šum kolem 200–500 Hz) a ťuknutí plastu/plechu – bez ostrých výšek, kovového zvonění a ozvěny
+    const lf = this.burst('lowpass', 900, 0.8, 0.9 * s, t, 0.045, 0.25, dest); lf.frequency.setTargetAtTime(200, t, 0.05);
+    this.burst('bandpass', 380 + Math.random() * 80, 1.3, 0.75 * s, t + 0.002, 0.04, 0.15, dest);
+    if (s > 0.5) this.burst('bandpass', 720 + Math.random() * 120, 1.0, 0.22 * (s - 0.4), t + 0.01, 0.04, 0.15, dest);   // silnější rána: tlumené zmačkání
+  },
   // náraz po vrstvách: hluboká rána, drcení plechu, kovový zvuk (s ladícími dozvuky) a při silném nárazu cinkání skla;
   // strom a balík zní hluchě, zeď a kámen kovově, přistání jen dunivě
   // velký náraz: hluboký třesk, exploze šumu, drcení plechu a ostré kovové prasknutí, k tomu dozvuk (dlouhý ohlas jako ve velké hale)
@@ -8810,7 +8925,7 @@ const HANDLING = {
 // trakce (plyn ho vytočí), stabilizace nechá drift do ~35° a jemné „držení driftu“ (jako v Drift Battle: cílový úhel
 // z volantu a plynu, zadek se k němu přitahuje) zabrání roztočení. Platí jen v rallycrossovém závodě.
 HANDLING.rx = { name: 'Rallycross', lat: 1.32, rear: 0.93, driveRear: 0.8, tc: 0, damp: 2.3, counter: 1.0, stab: 0.52, stabK: 1.45, brake: 1.2, off: 0.9, shoulder: 1 };
-const RXT = { turn: 13, drag: 9 };   // rallycross: zatáčení navíc v driftu (m/s²) a ztráta rychlosti bokem (m/s² při 90°)
+const RXT = { turn: 13, drag: 9, hold: 0.42 };   // rallycross: zatáčení navíc v driftu (m/s²), ztráta rychlosti bokem (m/s² při 90°), nejvyšší držený úhel při brzdění se zatáčením (rad)
 const rxDriftOn = () => !!(G.rx && G.mode === 'race' && W && W.td.st.rx && !carType().formula);
 const HP = () => (rxDriftOn() ? HANDLING.rx : HANDLING[saved.handling] || HANDLING.arcade);
 // přilnavost povrchu pro daný režim (krajnice a terén mimo cestu jsou v arkádě mírnější)
@@ -8969,15 +9084,23 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
     const gk = tire === TIRE.tarmac ? 0.6 : 1, sI = c.steer, gas = inp.throttle > 0.15 || inp.hb;
     const turn = Math.abs(wR) > 0.18 ? Math.sign(wR) : Math.abs(sI) > 0.06 ? Math.sign(sI) : 0;
     // puštěný volant: auto se srovná (i když už skoro nezatáčí a jen klouže bokem)
-    if (Math.abs(sI) <= 0.08 && Math.abs(b2) > 0.08) wR += (b2 - Math.sign(b2) * 0.04) * 9 * gk * dt;
+    if (Math.abs(sI) <= 0.08 && Math.abs(b2) > 0.08) { wR += (b2 - Math.sign(b2) * 0.04) * 9 * gk * dt; car.rxHold = 0; }
     else if (turn) {
       const into = Math.abs(sI) > 0.08 && Math.sign(sI) === turn, free = Math.abs(sI) <= 0.08;
+      // brzda (nebo bez plynu) a volant do zatáčky: auto zůstane vytočené – drží se úhel, na který se natočilo (nejvýš
+      // ~30°), takže po přidání plynu už míří, kam má; s plynem pak drift pokračuje podle plynu a držený úhel se pomalu rozpouští
+      const bIn = -turn * b2;   // úhel driftu do zatáčky (kladný = zadek ven)
+      if (into && !gas && RXT.hold) car.rxHold = Math.min(RXT.hold * gk, Math.max(car.rxHold || 0, bIn));
+      else if (!into) car.rxHold = 0;
+      else car.rxHold = Math.max(0, (car.rxHold || 0) - 0.35 * dt);
       // pod plynem a s volantem do zatáčky: drift 10–27° podle volantu; puštěný volant auto srovná, protivolant drift zmírní;
       // bez plynu jen pojistka proti hodinám
       let mag = !gas ? 0.12 : free ? 0.06 : into ? (0.12 + 0.33 * Math.min(1, Math.abs(sI) * 1.2)) * (0.35 + 0.65 * Math.max(inp.throttle, inp.hb ? 0.8 : 0)) : 0.16;
       mag *= gk;
-      const bT = -turn * mag, over = Math.abs(b2) > mag + 0.08;
-      if (gas || over) wR += -(bT - b2) * (over ? (free ? 10 : 8) : 5.5) * gk * dt;
+      const hold = into ? car.rxHold || 0 : 0;
+      if (hold > mag) mag = hold;
+      const holding = !gas && hold > 0.13, bT = -turn * mag, over = Math.abs(b2) > mag + (holding ? 0.03 : 0.08);
+      if (gas || over || holding) wR += -(bT - b2) * (over ? (free ? 10 : holding ? 32 : 8) : gas ? 5.5 : 4) * gk * dt;
       // drift musí zatáčet: rallycrossové auto v driftu pod plynem opisuje ostrý oblouk (tah zadních kol míří do
       // zatáčky). Směr jízdy se proto otáčí k zatáčce navíc až o ~6 m/s² příčného zrychlení podle volantu;
       // úhel driftu drží výše uvedené přitahování, takže auto zatáčí ostřeji a zůstává bokem
@@ -8989,7 +9112,7 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
       // jízda bokem stojí rychlost (víc než u obyčejného auta), takže do vracáku auto zpomalí a zatočí ostře
       if (gas && Math.abs(b2) > 0.08) { const V = Math.hypot(u, v), k = Math.max(0, 1 - RXT.drag * Math.abs(Math.sin(b2)) * gk * dt / Math.max(V, 1)); u *= k; v *= k; }
     }
-  }
+  } else car.rxHold = 0;
 
   // formule na slicích: smyk nad ~4° (se sjetými pneumatikami nad ~10°) se rychle srovná
   const bx = Math.abs(b2) - (slick ? 0.07 + 0.1 * worn + 0.6 * blown : h.stab + 0.12 * worn);
@@ -9085,7 +9208,17 @@ function physics0(dt, inp) {
       const d = Math.sqrt(d2) || 0.01, nx = dx / d, nz = dz / d;
       car.x = o.x + nx * min; car.z = o.z + nz * min;
       const vn = car.vx * nx + car.vz * nz;
-      if (vn < 0) {
+      if (vn < 0 && o.kind === 'tyre') {
+        // pneumatiky (rallycross): měkký náraz – rychlost do pneumatik se pohltí (malý odraz) a tření ubere jen kus
+        // rychlosti podél nich, takže škrtnutí o šikanu stojí málo a čelní náraz auto zastaví; tupá rána, bez poškození
+        const jn = -vn * 1.2, tx = -nz, tz = nx, vt = car.vx * tx + car.vz * tz, dvt = Math.sign(vt) * Math.min(Math.abs(vt), jn * 0.45);
+        car.vx += nx * jn - tx * dvt; car.vz += nz * jn - tz * dvt;
+        car.omega += (Math.random() - 0.5) * Math.min(1.5, -vn * 0.08);
+        if (-vn > 3) {
+          Sound.bump(Math.min(1, -vn / 12)); car.shake = Math.min(1, car.shake + -vn / 30); rumble(Math.min(1, -vn / 16), 120);
+          for (let k = 0; k < 4; k++) dust.emit(o.x, car.y + 0.4, o.z, (Math.random() - 0.5) * 3, 0.6 + Math.random() * 1.5, (Math.random() - 0.5) * 3, 1, 0.9);
+        }
+      } else if (vn < 0) {
         car.vx -= nx * vn * 1.3; car.vz -= nz * vn * 1.3;
         car.vx *= 0.6; car.vz *= 0.6;
         car.omega += (Math.random() - 0.5) * Math.min(3, -vn * 0.12);
@@ -10517,7 +10650,14 @@ function buildMinimap(td) {
   const ox = 60 - ((mnx + mxx) / 2) * sc, oy = 60 - ((mny + mxy) / 2) * sc;
   const m = (p) => [p[0] * sc + ox, p[1] * sc + oy];
   const d = 'M' + pts.map((p) => m(p).map((v) => v.toFixed(1)).join(' ')).join(' L');
-  return { d, map: (x, z) => m(tr(x, z)), end: m(pts[pts.length - 1]) };
+  // rallycross: silnice jokeru (mezitrať) žlutě
+  let joker = '';
+  if (td.joker && td.st.rx) {
+    const J = td.joker, jp = [];
+    for (let i = i0; i <= i1; i += 2) { const r = rxRel(td, td.S[i]); if (r < J.from || r > J.to) continue; const c = rxJokerC(J, r) * J.side; jp.push(m(tr(td.X[i] + td.NX[i] * c, td.Z[i] + td.NZ[i] * c))); }
+    if (jp.length > 1) joker = 'M' + jp.map((p) => p.map((v) => v.toFixed(1)).join(' ')).join(' L');
+  }
+  return { d, joker, map: (x, z) => m(tr(x, z)), end: m(pts[pts.length - 1]) };
 }
 function thumbSvg(td) {
   const mi = buildMinimap(td);
@@ -10691,6 +10831,8 @@ function loadStage(idx, then) {
     hud.mapDone.setAttribute('pathLength', '1000');
     hud.mapDone.style.strokeDasharray = '1000';
     hud.mapFin.setAttribute('cx', mapInfo.end[0]); hud.mapFin.setAttribute('cy', mapInfo.end[1]);
+    if (!hud.mapJoker) { const e = document.createElementNS('http://www.w3.org/2000/svg', 'path'); e.setAttribute('fill', 'none'); e.setAttribute('stroke', '#ffd200'); e.setAttribute('stroke-width', '3'); e.setAttribute('stroke-linecap', 'round'); e.setAttribute('stroke-linejoin', 'round'); hud.map.parentNode.insertBefore(e, hud.mapCar); hud.mapJoker = e; }
+    hud.mapJoker.setAttribute('d', mapInfo.joker || '');
     // Všechny shadery (i skrytých věcí: detailní stromy, plamen nitra, duch, rampa) se přeloží hned,
     // ne až za jízdy, kdy by překlad hru na chvíli zastavil.
     if (W.rline) W.rline.mesh.visible = true; // i čára ideální stopy (jinak by se shader překládal až za jízdy)
@@ -12951,25 +13093,91 @@ function rxAcc(v, gr) {
   for (let k = 1; k < RX_ACC_T.length; k++) { const [v1, a1] = RX_ACC_T[k], [v0, a0] = RX_ACC_T[k - 1]; if (v <= v1) { a = a0 + (a1 - a0) * clamp((v - v0) / (v1 - v0), 0, 1); break; } }
   return a * (gr ? 0.92 : 1);
 }
-function rxVt(td, i, v, pace) {
+function rxVt(td, i, v, pace, arr = td.V) {
   let vt = 1e9; const ahead = Math.round((v * 1.4 + 12) / td.ds);
-  for (let k = i; k < i + ahead && k < td.n; k++) vt = Math.min(vt, td.V[k]);
+  for (let k = i; k < i + ahead && k < td.n; k++) vt = Math.min(vt, arr[k]);
   return Math.min(43, vt * pace);
+}
+// cílová rychlost podle brzdné dráhy (brzdí až tak, aby na pomalé místo dojel právě jeho rychlostí; 10 m/s²)
+function rxVtBrake(td, i, v, pace, arr) {
+  let vt = 1e9; const m = Math.round((v * v / 20 + 8) / td.ds) + 2;
+  for (let k = i; k < i + m && k < td.n; k++) vt = Math.min(vt, Math.sqrt((arr[k] * pace) ** 2 + 2 * 10 * (k - i) * td.ds));
+  return Math.min(43, vt);
 }
 // stopa soupeřů: v zatáčce k vnitřnímu okraji (vrchol), mezi zatáčkami plynule zpět; kladné = strana +N
 function rxRacingLine(td) {
   if (td.rxLine) return td.rxLine;
-  const n = td.n, raw = new Float32Array(n), out = new Float32Array(n), w = Math.max(1, Math.round(6 / td.ds));
+  const n = td.n, raw = new Float32Array(n), out = new Float32Array(n), w = Math.max(1, Math.round(6 / td.ds)), hw = td.st.hw || 4.2;   // šířka této trati (ne té, co je zrovna načtená)
   for (let i = w; i < n - w; i++) {
     // střed oblouku leží na straně, kam se trať stáčí: poloha středu tětivy vůči bodu
     const mx = (td.X[i - w] + td.X[i + w]) / 2 - td.X[i], mz = (td.Z[i - w] + td.Z[i + w]) / 2 - td.Z[i];
     const side = Math.sign(mx * td.NX[i] + mz * td.NZ[i]);
-    raw[i] = side * clamp(Math.abs(td.K[i]) * 30, 0, 1) * (HW - 1.5);
+    raw[i] = side * clamp(Math.abs(td.K[i]) * 30, 0, 1) * (hw - 1.5);
   }
   // vyhlazení a posun dopředu (k vnitřku se auto stáčí už před vrcholem)
   const sw = Math.max(1, Math.round(9 / td.ds)), lead = Math.round(4 / td.ds);
   for (let i = 0; i < n; i++) { let a = 0, c = 0; for (let k = i - sw + lead; k <= i + sw + lead; k++) if (k >= 0 && k < n) { a += raw[k]; c++; } out[i] = c ? a / c : 0; }
   return (td.rxLine = out);
+}
+// stopa soupeřů jokerem: body z dat trati (nejrychlejší průjezd šikanou spočítaný předem), Catmull-Rom; k tomu
+// rychlost na ní podle zakřivení stopy (s rozjezdem a brzděním; soupeř k ní brzdí po brzdné křivce, rxVtBrake)
+// a dn = změna posunu do boku na metr trati (pro skutečnou délku dráhy)
+const RXJ = { cap: 0, fac: 0, vk: 1.0 };   // ladění jokeru soupeřů (cap: strop ideální rychlostí trati, fac: délka dráhy vůči ideální stopě, vk: násobek rychlosti)
+function rxJokerPath(td) {
+  if (td.rxJoker !== undefined) return td.rxJoker;
+  const J = td.joker; if (!J || !J.path) return (td.rxJoker = null);
+  const line = rxRacingLine(td), span = J.to - J.from, hw = td.st.hw || 4.2, n = td.n;
+  const cps = [-60, -40, -20, -5].map((d) => J.from + d).concat([0.1, 0.2, 0.3, 0.36, 0.42, 0.47, 0.52, 0.57, 0.62, 0.7, 0.8, 0.9].map((f) => J.from + f * span)).concat([5, 20, 40, 60].map((d) => J.to + d));
+  const idxAt = (r) => { let i = td.startIdx; while (i < td.finishIdx && rxRel(td, td.S[i]) < r) i++; return i; };
+  const vals = [line[idxAt(cps[0])] * J.side, ...J.path, line[idxAt(cps[cps.length - 1])] * J.side];
+  const L = Float32Array.from(line), V = Float32Array.from(td.V), dn = new Float32Array(n);
+  let i0 = -1, i1 = -1;
+  for (let i = td.startIdx; i < td.finishIdx; i++) {
+    const r = rxRel(td, td.S[i]);
+    if (r <= cps[0] || r >= cps[cps.length - 1]) continue;
+    if (i0 < 0) i0 = i; i1 = i;
+    let k = 0; while (k < cps.length - 2 && r > cps[k + 1]) k++;
+    const p0 = vals[Math.max(0, k - 1)], p1 = vals[k], p2 = vals[k + 1], p3 = vals[Math.min(vals.length - 1, k + 2)], u = (r - cps[k]) / (cps[k + 1] - cps[k]);
+    const nn = 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
+    const w = Math.min(1, (r - cps[0]) / 25, (cps[cps.length - 1] - r) / 25);
+    L[i] = J.side * nn * w + line[i] * (1 - w);   // soupeř jede nejlepší stopou (spočítanou předem)
+  }
+  if (i0 >= 0) {
+    // rychlost podle zakřivení stopy: jemné vzorkování po 0,5 m (šikana je ostrá, body trati po 2 m by ji zkreslily);
+    // boční zrychlení jako u ideální rychlosti trati na šotolině (9,81 · 1,25 · 0,9 · 0,86), krát násobek RXJ.vk
+    const s0 = td.S[td.startIdx], fidx = (r) => { const fi = (s0 + r - td.S[0]) / td.ds, i = clamp(Math.floor(fi), 0, n - 2); return [i, fi - i]; };
+    const nAt = (r) => {
+      const [i, f] = fidx(r), ln = lerp(line[i], line[i + 1], f);
+      let k = 0; while (k < cps.length - 2 && r > cps[k + 1]) k++;
+      const p0 = vals[Math.max(0, k - 1)], p1 = vals[k], p2 = vals[k + 1], p3 = vals[Math.min(vals.length - 1, k + 2)], u = (r - cps[k]) / (cps[k + 1] - cps[k]);
+      const nn = 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u * u * u);
+      const w = Math.min(1, (r - cps[0]) / 25, (cps[cps.length - 1] - r) / 25);
+      return J.side * nn * w + ln * (1 - w);
+    };
+    const FP = [], FR = [];
+    for (let r = cps[0]; r <= cps[cps.length - 1]; r += 0.5) {
+      const [i, f] = fidx(r), x = lerp(td.X[i], td.X[i + 1], f), z = lerp(td.Z[i], td.Z[i + 1], f);
+      let nx = lerp(td.NX[i], td.NX[i + 1], f), nz = lerp(td.NZ[i], td.NZ[i + 1], f); const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+      const l = nAt(r); FP.push(x + nx * l, z + nz * l); FR.push(r);
+    }
+    const M = FR.length, FK = new Float32Array(M);
+    for (let k = 3; k < M - 3; k++) {
+      const ax = FP[2 * (k - 3)], az = FP[2 * (k - 3) + 1], bx = FP[2 * k], bz = FP[2 * k + 1], cx = FP[2 * (k + 3)], cz = FP[2 * (k + 3) + 1];
+      const ab = Math.hypot(bx - ax, bz - az), bc = Math.hypot(cx - bx, cz - bz), ca = Math.hypot(ax - cx, az - cz);
+      FK[k] = (2 * Math.abs((bx - ax) * (cz - az) - (bz - az) * (cx - ax))) / Math.max(1e-6, ab * bc * ca);
+    }
+    for (let i = i0 + 1; i <= i1 - 1; i++) {
+      const r = rxRel(td, td.S[i]); let kmax = 0;
+      for (let k = Math.max(5, Math.round((r - 1.5 - FR[0]) / 0.5)); k <= Math.min(M - 6, Math.round((r + 1.5 - FR[0]) / 0.5)); k++) { let sk = 0; for (let q = -2; q <= 2; q++) sk += FK[k + q]; kmax = Math.max(kmax, sk / 5); }
+      const vc = Math.sqrt(9.49 / Math.max(1e-4, kmax)) * RXJ.vk;
+      V[i] = RXJ.cap ? Math.min(td.V[i], vc) : vc;
+      dn[i] = (L[i + 1] - L[i - 1]) / (2 * td.ds);
+    }
+    // brzdění před šikanou a rozjezd za ní (stejně jako ideální rychlost trati)
+    for (let i = i0 + 1; i <= i1 + 40 && i < n; i++) V[i] = Math.min(V[i], Math.sqrt(V[i - 1] * V[i - 1] + 2 * 8.5 * td.ds));
+    for (let i = i1; i >= Math.max(1, i0 - 60); i--) V[i - 1] = Math.min(V[i - 1], Math.sqrt(V[i] * V[i] + 2 * 9.45 * td.ds));
+  }
+  return (td.rxJoker = { L, V, dn, r0: cps[0], r1: cps[cps.length - 1] });
 }
 // rallycrossová auta jsou menší (jako Škoda Fabia nebo Ford Focus): soupeři jen v menších autech a všechna auta
 // se v rallycrossu kreslí o desetinu menší
@@ -12978,7 +13186,11 @@ const RX_RIVALS = [['Novák', 'fabia', 2], ['Kopecká', 'fabia', 1], ['Svoboda',
 const RX_SCALE = 0.88;   // větší auta se v rallycrossu zmenší; Fabia má skutečnou velikost (rxScale 1)
 const rxScaleOf = (ct) => (ct && ct.rxScale) || RX_SCALE;
 const rxRel = (td, s) => ((((s - td.S[td.startIdx]) % td.length) + td.length) % td.length);
-function inJoker(td, s, lat) { const j = td.joker; if (!j) return false; const r = rxRel(td, s); return r > j.from - 8 && r < j.to + 8 && lat * j.side > HW - 0.5 && lat * j.side < HW + 10.5; }
+// střed silnice jokeru (vzdálenost od středu trati ven) v místě r jokeru: u odbočky c0, plynule (kosinus, Lt m) na D a zpět
+function rxJokerC(J, r) { const sm = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * x)); return J.c0 + (J.D - J.c0) * Math.min(sm((r - J.from) / J.Lt), sm((J.to - r) / J.Lt)); }
+// poloviční šířka silnice jokeru: u šikany rozšířená na wC (plynule 22–8 m před první a za druhou řadou pneumatik)
+function rxJokerW(J, r) { if (!J.chic || J.wC <= J.wJ) return J.wJ; const sm = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * x)); return J.wJ + (J.wC - J.wJ) * Math.min(sm((r - (J.chic.ra - 22)) / 14), sm(((J.chic.rb + 22) - r) / 14)); }
+function inJoker(td, s, lat) { const j = td.joker; if (!j) return false; const r = rxRel(td, s); if (r < j.from || r > j.to) return false; return Math.abs(lat * j.side - rxJokerC(j, r)) <= rxJokerW(j, r) + 0.3; }
 const rxGravel = (td, s) => !!td.mix && td.mix.some(([a, b]) => { const r = rxRel(td, s); return r >= a && r <= b; });
 // průjezdní čas kola soupeře z jeho rychlostního profilu (stejný model jako v závodě, bez provozu, z místa)
 function rxSimLap(td, skill, accK = 1) {
@@ -13067,10 +13279,14 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   const gr = rxGravel(td, td.S[i]), line = td.rxLine ? td.rxLine[i] : 0, r = rxRel(td, td.S[i]), fin = a.finishT != null;
   let vt = rxVt(td, i, a.v, a.skill);
   if (fin) vt = Math.min(vt, 14);   // po cíli volné dojezdové kolo
-  const takeJ = !fin && j && !a.joker && alap >= a.jokerLap - 1 && alap <= RX_LAPS - 1, inJ = !!(j && takeJ && r > j.from - 40 && r < j.to + 10);
+  const takeJ = !fin && j && !a.joker && alap >= a.jokerLap - 1 && alap <= RX_LAPS - 1, JP = j ? rxJokerPath(td) : null;
+  // joker: soupeř do něj vjede v kole, kdy ho má v plánu, a jede jím až do konce (i když už ho má započítaný)
+  if (JP && !a.jz && takeJ && r > JP.r0 && r < j.from) a.jz = true;
+  if (a.jz && (r >= JP.r1 || r < JP.r0 - 5)) a.jz = false;
+  const inJ = !!(JP && a.jz), exact = inJ && r > j.from && r < j.to;
   // stopa: z místa na roštu plynule na ideální stopu (vnitřek zatáček)
   let latT = lerp(a.lat0, line + a.lat0 * 0.12, clamp(a.d / 110, 0, 1));
-  if (inJ) { latT = j.side * (HW + 4.5); vt *= 0.9; if (r > j.mid - 5 && r < j.mid + 5) a.joker = true; }
+  if (inJ) { latT = JP.L[i]; vt = rxVtBrake(td, i, a.v, a.skill, JP.V); if (r > j.mid - 5 && r < j.mid + 5) a.joker = true; }   // v jokeru jen rychlost podle jeho stopy
   // chyba: v nové zatáčce občas vyjede do široka a ztratí rychlost
   if (Math.abs(td.K[i]) > 0.03) { const cid = Math.round(td.S[i] / 25); if (cid !== a.corner) { a.corner = cid; if (alap >= 0 && !fin && Math.random() < a.mist) a.err = 1.2 + Math.random(); } }
   if (a.err > 0) { a.err -= dt; vt *= 0.82; latT = -Math.sign(line || 1) * (HW - 1.2); }
@@ -13106,7 +13322,7 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   }
   // obrana: rychlejší auto těsně za ním → zavře vnitřek příští zatáčky
   if (a.aggr > 0.6 && !inJ) for (const o of others) if (o.g < -1 && o.g > -9 && o.v > a.v - 1) { const ins = td.rxLine ? td.rxLine[Math.min(td.n - 1, i + Math.round(25 / td.ds))] : 0; latT = lerp(latT, ins, 0.35 * a.aggr); break; }
-  const lo = inJ && j.side < 0 ? -(HW + 6) : -HW + 1.0, hi = inJ && j.side > 0 ? HW + 6 : HW - 1.0;
+  const jw = j ? j.D + (j.wC || j.wJ) : HW, lo = inJ && j.side < 0 ? -jw : -HW + 1.0, hi = inJ && j.side > 0 ? jw : HW - 1.0;
   latT = clamp(latT, lo, hi);
   // natočení po nárazu: řidič auto chytí; při velkém vychýlení se roztočí a po otočce zase rozjede
   const tgt = Math.round(a.yaw / (2 * Math.PI)) * 2 * Math.PI, dev = a.yaw - tgt;
@@ -13123,12 +13339,21 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   if (a.react > 0) { a.react -= dt; vt = 0; }
   const off = Math.abs(a.lat) > HW + 0.4 && !inJ;
   a.v += clamp(vt * (off ? 0.8 : 1) - a.v, -11 * dt, rxAcc(a.v, gr) * a.accK * (off ? 0.6 : 1) * dt);
-  a.d += a.v * dt;
-  // do boku: řízená rychlost (jen s rozjetým autem, takže na místě se nekroutí) + odstrčení, které tlumí pneumatiky
-  const vlMax = Math.min(5, Math.max(0, a.v) * 0.28);
-  a.vl += clamp(clamp((latT - a.lat) * 1.6, -vlMax, vlMax) - a.vl, -8 * dt, 8 * dt);
-  a.vp -= Math.sign(a.vp) * Math.min(Math.abs(a.vp), 7.5 * dt);
-  a.lat += (a.vl + a.vp) * dt;
+  if (exact) {
+    // šikana v jokeru: jede přesně po stopě; postup po trati podle skutečné délky dráhy (vůči ideální stopě)
+    const k1 = 1 + td.K[i] * JP.L[i], fac = Math.sqrt(k1 * k1 + JP.dn[i] * JP.dn[i]) / (RXJ.fac ? Math.max(0.5, 1 + td.K[i] * line) : 1);
+    a.d += Math.max(0, a.v) * dt / Math.max(0.3, fac);
+    const fi = (((a.d % lap) + lap) % lap) / td.ds, q = clamp(td.startIdx + Math.floor(fi), 0, td.n - 2), fq = fi - Math.floor(fi);
+    const latN = lerp(JP.L[q], JP.L[q + 1], fq);
+    a.vl = clamp((latN - a.lat) / Math.max(dt, 1e-3), -12, 12); a.vp = 0; a.lat = latN;
+  } else {
+    a.d += a.v * dt;
+    // do boku: řízená rychlost (jen s rozjetým autem, takže na místě se nekroutí) + odstrčení, které tlumí pneumatiky
+    const vlMax = Math.min(inJ ? 9 : 5, Math.max(0, a.v) * (inJ ? 0.6 : 0.28));
+    a.vl += clamp(clamp((latT - a.lat) * (inJ ? 2.4 : 1.6), -vlMax, vlMax) - a.vl, -(inJ ? 14 : 8) * dt, (inJ ? 14 : 8) * dt);
+    a.vp -= Math.sign(a.vp) * Math.min(Math.abs(a.vp), 7.5 * dt);
+    a.lat += (a.vl + a.vp) * dt;
+  }
   // zeď
   const wl = td.wallL ? td.wallL[i] - 1.0 : HW + 4, wr = td.wallR ? td.wallR[i] - 1.0 : HW + 4;
   if (a.lat > wr) { a.lat = wr; if (a.vl + a.vp > 0) { a.vp = -(a.vl + a.vp) * 0.25; a.vl = 0; a.v *= 0.97; } }
@@ -13182,7 +13407,7 @@ function rxContacts(td, R) {
   }
   if (bodies.length < 2) return;
   for (const b of bodies) { b.vx0 = b.vx; b.vz0 = b.vz; b.w0 = b.w; }
-  let hit = 0, hx = 0, hz = 0, hy = 0, meHit = 0;
+  let hit = 0, hx = 0, hz = 0, hy = 0, meHit = 0, aiHit = 0, ax = 0, az = 0;
   for (let it = 0; it < 2; it++) {
     for (let p = 0; p < bodies.length; p++) for (let q = p + 1; q < bodies.length; q++) {
       const A = bodies[p], B = bodies[q];
@@ -13191,6 +13416,7 @@ function rxContacts(td, R) {
       if (!c) continue;
       if (c.vn > hit) { hit = c.vn; hx = c.cx; hz = c.cz; hy = A.me ? car.y : td.Y[A.a.i0]; }
       if ((A.me || B.me) && c.vn > meHit) meHit = c.vn;
+      if (!A.me && !B.me && c.vn > aiHit) { aiHit = c.vn; ax = c.cx; az = c.cz; }
       // posun hned, aby další dvojice počítaly s rozdělenými auty
       for (const b of [A, B]) { b.x += b.px; b.z += b.pz; if (b.me) { car.x += b.px; car.z += b.pz; } else { const i = b.a.i0; b.a.d += b.px * td.TX[i] + b.pz * td.TZ[i]; b.a.lat += b.px * td.NX[i] + b.pz * td.NZ[i]; } b.px = b.pz = 0; }
     }
@@ -13201,9 +13427,15 @@ function rxContacts(td, R) {
     a.v += dvx * td.TX[i] + dvz * td.TZ[i]; a.vp = (a.vp || 0) + dvx * td.NX[i] + dvz * td.NZ[i]; a.wy = (a.wy || 0) + (b.w - b.w0);
   }
   // odezva: náraz hráče (zvuk, otřes, vibrace), jiskry nebo hlína na místě srážky
-  if (meHit > 1.2 && G.time - (R.bumpT || -9) > 0.25) {
+  if (meHit > 1.2 && G.time - (R.bumpT || -9) > 0.3) {
     R.bumpT = G.time; R.contacts = (R.contacts || 0) + 1;
-    Sound.thump(Math.min(1, 0.25 + meHit / 9), 'wall'); car.shake = Math.min(1, car.shake + Math.min(0.6, meHit / 10)); rumble(Math.min(1, meHit / 10), 140);
+    // strana rány vůči hráči (vpravo +)
+    const rx2 = -Math.cos(car.h), rz2 = Math.sin(car.h), side = ((hx - car.x) * rx2 + (hz - car.z) * rz2) > 0 ? 0.5 : -0.5;
+    Sound.bump(Math.min(1, 0.2 + meHit / 8), side); car.shake = Math.min(1, car.shake + Math.min(0.6, meHit / 10)); rumble(Math.min(1, meHit / 10), 140);
+  }
+  if (aiHit > 1.5 && G.time - (R.aiBumpT || -9) > 0.35) {
+    const dd = Math.hypot(ax - car.x, az - car.z);
+    if (dd < 45) { R.aiBumpT = G.time; Sound.bump(Math.min(1, 0.15 + aiHit / 9) * (1 - dd / 45) * 0.8, clamp(((ax - car.x) * -Math.cos(car.h) + (az - car.z) * Math.sin(car.h)) / 20, -0.7, 0.7)); }
   }
   if (hit > 3) {
     const gy = hy;
@@ -13234,7 +13466,12 @@ function rxTick(dt) {
   const run = G.phase === 'run';
   if (R.gate && run && R.gate.up < 1) { R.gate.up = Math.min(1, R.gate.up + dt * 1.8); R.gate.piv.rotation.z = smooth(0, 1, R.gate.up) * 1.45; }   // závora se zvedá
   // hráč: joker
-  if (run && j && !R.joker) { const r = rxRel(td, car.s); if (r > j.mid - 15 && r < j.mid + 15 && car.lat * j.side > HW + 2.5) { R.joker = true; toast('Joker projetý ✓', 1.6); Sound.beep(988, 0.12); } }
+  if (run && j && !R.joker) {
+    const r = rxRel(td, car.s);
+    if (r > j.mid - 15 && r < j.mid + 15 && inJoker(td, car.s, car.lat)) { R.joker = true; toast('Joker projetý ✓', 1.6); Sound.beep(988, 0.12); }
+    // upozornění 150 m před odbočkou (jednou za kolo), dokud joker nemá
+    if (r > j.from - 160 && r < j.from - 140 && R.jWarn !== R.lap && !R.quali) { R.jWarn = R.lap; toast(`JOKER ${j.side > 0 ? 'vpravo ➜' : '⬅ vlevo'} za 150 m`, 2.4); if (R.lap >= RX_LAPS - 1) Voice.say('Joker!'); }
+  }
   const myP = rxProg();
   const myV = Math.max(0, car.vf || 0);
   // soupeři jedou i po dojetí (dojezdové kolo), ať v cíli nestojí jako sloupy
@@ -16652,7 +16889,7 @@ function tickUpdate(dt) {
       // stojí na místě (u zdi, otočený proti směru, zapíchnutý v ohrazení) a nejede ani v boxech: nabídne se návrat na trať
       const parked = Math.abs(car.vf) < 1.5 && G.time > 2 && !(G.gp && (G.gp.service > 0 || G.gp.pilot || G.gp.waiting));
       G.parked = parked ? (G.parked || 0) + dt : 0;
-      hud.reset.hidden = !(G.stuck > 1.5 || G.parked > 3 || Math.abs(car.lat) > HW + 14);
+      hud.reset.hidden = !(G.stuck > 1.5 || G.parked > 3 || (Math.abs(car.lat) > HW + 14 && !inJoker(td, car.s, car.lat)));
       // okruh: auto mimo silnici hluboko pod její úrovní (za zdí u úseku nad jiným úsekem) – zpět na trať
       const under = td.st.circuit && !car.air && Math.abs(car.lat) > HW + 2 && car.y < td.Y[car.idx] - 2;
       G.under = under ? (G.under || 0) + dt : 0;
@@ -16718,7 +16955,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
