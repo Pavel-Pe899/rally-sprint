@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw51q7a0';
+window.__BUILD = 'mw5b6e60';
 (function () {
   function check() {
     try {
@@ -1799,11 +1799,12 @@ function rxTurtle(seq, step = 5) {
 }
 // joker = mezitrať: vlastní silnice (šířka 2·wJ) po vnější straně zatáčky. Od trati se odpojí plynulým obloukem
 // (Lt m), vede D m za okrajem trati a pak se zase připojí; mezi ní a tratí je travnatý ostrůvek s pneumatikami.
-// Uprostřed je šikana – dvě zatáčky za sebou: silnice se rozšíří na 2·wC a dva ostrůvky z pneumatik (první u vnitřního
-// okraje, druhý gap m za ním u vnějšího, každý zavře block m, průjezd vedle něj je 2·wC − block m) vedou auto esíčkem.
+// Uprostřed je šikana – dvě zatáčky za sebou: silnice se rozšíří na 2·wC a dva trojúhelníkové klíny (první u vnitřního
+// okraje, druhý gap m za ním u vnějšího, špička sahá block m do silnice, průjezd vedle ní 2·wC − block m; k příjezdu
+// dlouhé šikmé, takže auto, které se netrefí, po klínu sklouzne) vedou auto esíčkem. Ostrůvek obíhá mantinel.
 // I nejlepší stopou stojí joker soupeře 1–1,8 s (podle trati a obtížnosti), hráče podle toho, jak šikanu trefí.
 // path = stopa soupeřů (vzdálenost od středu trati ven v řídicích bodech), spočítaná předem jako nejrychlejší
-// průjezd (kvazistatický model jízdy, viz STAV.md) s rezervou 1 m od pneumatik; side = strana jokeru (+1 = vpravo).
+// průjezd (kvazistatický model jízdy, viz STAV.md) s rezervou od klínů; side = strana jokeru (+1 = vpravo).
 const RX_PATH = rxTurtle([83.9, [61.8, 27.5], 13.9, [113, 22.1], 22.2, [-91.7, 25.8], 16.5, [-43.8, 31.1], 16.2, [-85.4, 19.6], 45.8, [159.9, 17.9], 44, [67.5, 38.5], 34, [-62.9, 27.5], 28.9, [44, 37.9], 45.1, [109.8, 18.1], 143.1, [-103.7, 23.6], 39.7, [191.5, 40], 94.6, 25]);
 const RX2_PATH = rxTurtle([83.8, [154.8, 13.3], 39.1, [-80.1, 24.4], 39.2, [94.8, 18.6], 42.8, [-70, 25.1], 41.4, [172.7, 17.3], 25.7, [-58.1, 32.4], 145, [53.5, 31], 16.5, [115.4, 23.8], 13.2, [-55.5, 37.2], 35.2, [155.9, 14.4], 34.8, [-175.2, 17.1], 52.8, [51.9, 24.3], 25]);
 const RX3_PATH = rxTurtle([96.2, [91.3, 17.5], 44.3, [-54.1, 34.6], 15.9, [64, 36.6], 105.4, [179.5, 17.6], 39.4, [-83.4, 24.1], 21.5, [39.4, 38.5], 24.3, [-119.9, 25.6], 61.7, [166.7, 17.8], 33.5, [-69.7, 26.3], 16.1, [162.3, 13.1], 17.9, [-117.9, 20.4], 38.1, [101.8, 17.3], 25]);
@@ -1997,7 +1998,7 @@ const STAGES = [
   {
     id: 'rx', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Sosnová', region: 'Rallycross · 12 zatáček, 80 % šotolina, joker', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Odpoledne',
     circuit: true, rx: true, path: RX_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'SOSNOVÁ',
-    mix: [[90, 1076]], joker: { from: 632, to: 748, side: 1, D: 18, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.35, gap: 16, block: 7.5 }, path: [-3.3, -5.1, -0.4, 11.7, 20.5, 24.9, 24.5, 20.8, 20.8, 21.8, 22.5, 21.7, 18.2, 12.2, 7.7, 2, 0, 0.3] },
+    mix: [[90, 1076]], joker: { from: 632, to: 748, side: 1, D: 17, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.45, gap: 16, block: 7.5 }, path: [-3.6, -6.1, -1.9, 9.4, 16.6, 23.4, 26.4, 25.2, 22.4, 20.3, 19.1, 18.6, 17.9, 15.3, 10.1, 2.8, 0, -0.2] },
     len: 1186, seed: 811, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#3b7ccc', hor: '#dfe8ee', bottom: '#b8c3bb' }, sun: { dir: [0.4, 0.7, 0.55], color: '#fff3e0', int: 3.3 },
@@ -2011,7 +2012,7 @@ const STAGES = [
   {
     id: 'rx2', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Vysočina', region: 'Rallycross · 12 zatáček, 4 vracáky, 80 % šotolina', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Ráno',
     circuit: true, rx: true, path: RX2_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'VYSOČINA',
-    mix: [[90, 927]], joker: { from: 640, to: 765, side: 1, D: 14, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.35, gap: 16, block: 7.5 }, path: [-1, -2.2, 0.3, 8.2, 18.6, 22.2, 19.5, 17.3, 18.3, 19.8, 20.3, 19.3, 17.2, 14.3, 11.2, 3.6, -0.3, -1.7] },
+    mix: [[90, 927]], joker: { from: 640, to: 765, side: 1, D: 21, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.45, gap: 16, block: 7.5 }, path: [-0.5, 0.5, 2.8, 9.7, 19.4, 25, 29.8, 29.5, 26.5, 24, 23, 23, 23, 18.7, 13.2, 3.1, -1.1, -1.7] },
     len: 1037, seed: 827, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
@@ -2056,7 +2057,7 @@ const STAGES = [
   {
     id: 'rx3', photo: { road: 'asphalt', tint: '#b6b6b4', terrain: 'grass' }, name: 'Rallycross Švédsko', region: 'Rallycross · lesní trať jako Höljes, 12 zatáček, 80 % šotolina', surface: 'Šotolina + asfalt', road: 'tarmac', tod: 'Podvečer',
     circuit: true, rx: true, path: RX3_PATH, hw: 6.5, kerbs: false, gpName: 'RALLYCROSS', country: 'ŠVÉDSKO',
-    mix: [[100, 895]], joker: { from: 185, to: 328, side: 1, D: 14, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.6, gap: 16, block: 7.5 }, path: [-1.2, 0.3, 4.2, 9.7, 13.1, 16.7, 17.8, 18.8, 21.8, 24.3, 22.5, 18.8, 15.2, 12.8, 9.7, 4.2, 0.7, -4.4] },
+    mix: [[100, 895]], joker: { from: 185, to: 328, side: 1, D: 16, Lt: 45, wJ: 5, wC: 7, chic: { c: 0.6, gap: 16, block: 7.5 }, path: [-1.2, -0.2, 3.7, 10.9, 15.1, 19, 21.6, 23.9, 25.4, 25.8, 24.4, 20.7, 17.5, 15.4, 11.2, 3.5, -1.1, -5.2] },
     len: 1005, seed: 839, turn: 1, hills: 5, hillScale: 1 / 300, bumps: 0.3, crests: 1, water: null, tilt: [0, 0],
     grip: 1.12, offGrip: 0.6, loose: false,
     sky: { top: '#5d8fc8', hor: '#f0e2cf', bottom: '#c4b9a4' }, sun: { dir: [-0.55, 0.42, 0.6], color: '#ffe2bc', int: 3.0 },
@@ -3923,6 +3924,15 @@ function buildWorld(td) {
 
   // ---- stromy, keře, kameny (instancované po blocích 1024 m)
   const obstacles = new Map(); // mřížka 10 m → překážky pro srážky
+  // mantinely jako úsečky (joker v rallycrossu): auto po nich klouže, nezasekne se jako o kulaté překážky
+  const barriers = { segs: [], grid: new Map() };
+  const addBarrier = (x1, z1, x2, z2) => {
+    const sg = { x1, z1, x2, z2, l2: Math.max(1e-6, (x2 - x1) ** 2 + (z2 - z1) ** 2) }, keys = new Set(), L = Math.sqrt(sg.l2);
+    for (let t = 0; t <= L + 1e-6; t += 4) { const f = Math.min(1, t / L); keys.add(Math.floor((x1 + (x2 - x1) * f) / 10) * 100000 + Math.floor((z1 + (z2 - z1) * f) / 10)); }
+    keys.add(Math.floor(x2 / 10) * 100000 + Math.floor(z2 / 10));
+    for (const k of keys) { let a = barriers.grid.get(k); if (!a) { a = []; barriers.grid.set(k, a); } a.push(sg); }
+    barriers.segs.push(sg);
+  };
   // budova boxů a paddock za ní: tam nestojí stromy ani diváci
   const inPaddock = (i, side, off) => {
     const p = td.pit;
@@ -4594,6 +4604,8 @@ function buildWorld(td) {
     const fenceMat = addShine(new T.MeshStandardMaterial({ map: fenceTex, alphaTest: 0.45, alphaToCoverage: true, side: T.DoubleSide, metalness: lowSun ? 0.35 : 0.75, roughness: lowSun ? 0.6 : 0.32 }), 'fence', { gloss: 1.2 });
     const railMat = addShine(new T.MeshStandardMaterial({ color: '#9aa2ab', side: T.DoubleSide, metalness: lowSun ? 0.4 : 0.8, roughness: lowSun ? 0.55 : 0.3 }), 'rail', { gloss: 1.2 });
     const postsPos = [];
+    // rallycross: svodidla, pneumatiky a šipky (beton s reklamou jen u startu a mezi blízkými úseky trati)
+    const rxBar = st.rx ? rxBarrierPlan(td) : null;
     const addRail = (pts, rad) => { const tube = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts), Math.min(1500, pts.length * 2), rad, 6, false), railMat); tube.castShadow = false; group.add(tube); };
     const mk = (pos, uv, idx, mat, cast) => {
       const g = new T.BufferGeometry();
@@ -4604,8 +4616,8 @@ function buildWorld(td) {
     };
     for (const side of [-1, 1]) {
       const wa = side > 0 ? td.wallR : td.wallL;
-      const fp = [], fu = [], cp = [], cu = [], fp2 = [], fu2 = [], fp3 = [], rp = [], fi = [], ci = [], ri = [];
-      const fp2b = [], sk = [], su = [], skOk = [];
+      const fp = [], fu = [], cp = [], cu = [], fp2 = [], fu2 = [], fp3 = [], rp = [], fi = [], ci = [], ri = [], fiW = [];
+      const fp2b = [], sk = [], su = [], skOk = [], P = rxBar && rxBar[side];
       // je pod bodem (do 3 m od kraje) jiný, níž položený úsek trati?
       const roadBelow = (x, z, i0, y0) => { const cx = Math.floor(x / 10), cz = Math.floor(z / 10);
         for (let a = -2; a <= 2; a++) for (let b2 = -2; b2 <= 2; b2++) { const l = tHash.get((cx + a) * 100000 + cz + b2); if (!l) continue;
@@ -4627,26 +4639,29 @@ function buildWorld(td) {
         { const gy = terrainAt(bx + nx * 0.8, bz + nz * 0.8), drop = y - gy; sk.push(bx, y, bz, bx, Math.min(y, gy - 0.4), bz); su.push(u * 8, 0, u * 8, Math.max(0, drop) / 4);
           // most (mostovka i nájezdy) beton dolů nemá – pod ním vede druhá silnice; a nikde nesmí stát přes jiný úsek trati
           const onBridge = td.bridgeH && td.bridgeH[i] > 0.3;
-          skOk.push(drop > 0.35 && !hidden && !onBridge && !roadBelow(bx, bz, i, y)); }
+          skOk.push(drop > 0.35 && !hidden && !onBridge && !roadBelow(bx, bz, i, y) && !(P && P.A[i] > 0.5)); }
         cp.push(x, y + 1.05, z, bx, y + 1.05, bz, bx, y, bz); cu.push(u * 8, 0, u * 8, 0.12, u * 8, 0.6);
-        // plot nad zdí a nahoře přesah k trati, na hraně trubka
-        const fx = x + nx * 0.2, fz = z + nz * 0.2;
-        fp2.push(fx, y + 1.05, fz, fx, y + 4.3, fz); fu2.push(u * 16, 0, u * 16, 1.6);
-        fp2b.push(fx - nx * 0.07, y + 1.05, fz - nz * 0.07, fx - nx * 0.07, y + 4.3, fz - nz * 0.07);
+        // plot nad zdí a nahoře přesah k trati, na hraně trubka (rallycross se svodidlem: plot dál a až k zemi)
+        const fo = P ? P.A[i] * 0.95 + P.Tw[i] * 0.75 : 0, fb = 1.05 - (P ? P.A[i] * 0.97 : 0);
+        const fx = x + nx * (0.2 + fo), fz = z + nz * (0.2 + fo);
+        fp2.push(fx, y + fb, fz, fx, y + 4.3, fz); fu2.push(u * 16, 0, u * 16, 1.6);
+        fp2b.push(fx - nx * 0.07, y + fb, fz - nz * 0.07, fx - nx * 0.07, y + 4.3, fz - nz * 0.07);
         fp3.push(fx, y + 4.3, fz, fx - nx * 0.55, y + 4.95, fz - nz * 0.55);
-        rp.push(fx - nx * 0.55, y + 4.9, fz - nz * 0.55, fx - nx * 0.55, y + 5.02, fz - nz * 0.55, fx, y + 1.0, fz, fx, y + 1.12, fz);
-        if ((i - r0) % 3 === 0 && !hidden) postsPos.push([fx, y + 1.05, fz, Math.atan2(nx, nz)]);
+        rp.push(fx - nx * 0.55, y + 4.9, fz - nz * 0.55, fx - nx * 0.55, y + 5.02, fz - nz * 0.55, fx, y + fb - 0.05, fz, fx, y + fb + 0.07, fz);
+        if ((i - r0) % 3 === 0 && !hidden) postsPos.push([fx, y + fb, fz, Math.atan2(nx, nz), (4.35 - fb) / 3.3]);
         if (i < r1 && !hidden && !hiddenNext) {
-          const a2 = (i - r0) * 2;
-          fi.push(...(side > 0 ? [a2, a2 + 1, a2 + 2, a2 + 1, a2 + 3, a2 + 2] : [a2, a2 + 2, a2 + 1, a2 + 1, a2 + 2, a2 + 3])); // líc k trati
+          const a2 = (i - r0) * 2, face = side > 0 ? [a2, a2 + 1, a2 + 2, a2 + 1, a2 + 3, a2 + 2] : [a2, a2 + 2, a2 + 1, a2 + 1, a2 + 2, a2 + 3];
+          const wallHere = !P || Math.min(P.A[i], P.A[i + 1]) < 0.6;
+          fi.push(...face); // líc k trati
+          if (wallHere) fiW.push(...face);
           const c3 = (i - r0) * 3;
-          ci.push(c3, c3 + 3, c3 + 1, c3 + 1, c3 + 3, c3 + 4, c3 + 1, c3 + 4, c3 + 2, c3 + 2, c3 + 4, c3 + 5);
+          if (wallHere) ci.push(c3, c3 + 3, c3 + 1, c3 + 1, c3 + 3, c3 + 4, c3 + 1, c3 + 4, c3 + 2, c3 + 2, c3 + 4, c3 + 5);
           const r4 = (i - r0) * 4;
           ri.push(r4, r4 + 4, r4 + 1, r4 + 1, r4 + 4, r4 + 5, r4 + 2, r4 + 6, r4 + 3, r4 + 3, r4 + 6, r4 + 7);
         }
       }
-      mk(fp, fu, fi, wallMat, true);
-      mk(cp, cu, ci, capMat, false);
+      if (fiW.length) mk(fp, fu, fiW, wallMat, true);
+      if (ci.length) mk(cp, cu, ci, capMat, false);
       { const si = []; for (let k = 0; k + 1 < skOk.length; k++) if (skOk[k] || skOk[k + 1]) { const a2 = k * 2; si.push(a2, a2 + 2, a2 + 1, a2 + 1, a2 + 2, a2 + 3); }
         if (si.length) mk(sk, su, si, capMat, true); }
       mk(fp2, fu2, fi, fenceMat, false);
@@ -4659,7 +4674,7 @@ function buildWorld(td) {
         for (let i = r0; i <= r1; i += 2) {
           const hid = td.pit && side === td.pit.side && (() => { const q = td.pit.relOf(S[i]); return q > td.pit.garage[0] - 3 && q < td.pit.garage[1] + 3; })();
           if (hid) { if (pts.length > 3) addRail(pts, rad); pts.length = 0; continue; }
-          const o = wa[i] * side + side * 0.2, y = Y[i] - 0.1 + dy;
+          const o = wa[i] * side + side * (0.2 + (P ? P.A[i] * 0.95 + P.Tw[i] * 0.75 : 0)), y = Y[i] - 0.1 + dy;
           pts.push(new T.Vector3(X[i] + NX[i] * o, y, Z[i] + NZ[i] * o));
         }
         if (pts.length > 3) addRail(pts, rad);
@@ -4671,8 +4686,9 @@ function buildWorld(td) {
     const postBase = new T.CylinderGeometry(0.16, 0.2, 0.12, 10).translate(0, 0.06, 0), postBrace = new T.CylinderGeometry(0.03, 0.03, 1.4, 5).rotateX(0.95).translate(0, 0.6, -0.55);
     void postBrace;
     const posts = new T.InstancedMesh(mergeColored([{ geo: postGeo }, { geo: postTop }, { geo: postBase }]), addShine(new T.MeshStandardMaterial({ color: '#8d959e', metalness: 0.8, roughness: 0.32 }), 'post', { gloss: 1.2 }), postsPos.length);
-    postsPos.forEach(([x, y, z, a], k) => posts.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, a, 0)), vS.set(1, 1, 1))));
+    postsPos.forEach(([x, y, z, a, sy], k) => posts.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, a, 0)), vS.set(1, sy || 1, 1))));
     posts.computeBoundingSphere(); group.add(posts);
+    if (rxBar) rxDressBarriers(group, td, rxBar, adTex);
     // velké reklamní tabule na lešení za zdí na výjezdech ze zatáček
     const boardMat = new T.MeshLambertMaterial({ map: adTex });
     for (const nt of td.notes) {
@@ -5729,8 +5745,11 @@ function buildWorld(td) {
   // ---- rallycross: šotolina přes asfalt v šotolinových úsecích, pruh jokeru po vnější straně, pneumatiky oddělující joker, cedule
   if (td.mix || td.joker) {
     // oboustranný: pruh se staví zleva doprava, takže měl rub nahoru a šotolina (i joker) nebyla vidět
-    let gMat = new T.MeshLambertMaterial({ map: roadTexture('gravel', st.seed + 5), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: T.DoubleSide });
-    addCloudShadow(gMat, 'rx-gravel');
+    // šotolina z fotografické textury (jemné zrno, odstíněná do šedohnědé) s normálovou mapou; bez fotek kreslená
+    const gPh = photoTexSat('ground_d', 0.32, (2 * HW) / 2.6, ROAD_TEX_LEN / 2.6), gNo = gPh && photoTex('ground_n', false, (2 * HW) / 2.6, ROAD_TEX_LEN / 2.6);
+    let gMat = gPh ? new T.MeshLambertMaterial({ map: gPh, normalMap: gNo, normalScale: new T.Vector2(1.1, 1.1), color: '#c2b4a2', polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: T.DoubleSide })
+      : new T.MeshLambertMaterial({ map: roadTexture('gravel', st.seed + 5), polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, side: T.DoubleSide });
+    addCloudShadow(gMat, gPh ? 'rx-gravel-ph' : 'rx-gravel');
     const strip = (test, latA, latB, lift) => {
       const pos = [], uv = [], idx = []; let prev = -1;
       for (let i = td.startIdx; i <= td.finishIdx; i++) {
@@ -5747,43 +5766,100 @@ function buildWorld(td) {
     };
     const rel = (i) => rxRel(td, S[i]);
     if (td.mix) strip((i) => td.mix.some(([a, b]) => rel(i) >= a && rel(i) <= b), () => -HW - 0.4, () => HW + 0.4, 0.05);
+    // vyjetá stopa v šotolině: po ideální stopě utužený tmavší pás se dvěma kolejemi od kol
+    if (td.mix && st.rx) {
+      const line = rxRacingLine(td), rutTex = canvasTex(128, 256, (g, w, h) => {
+        g.clearRect(0, 0, w, h);
+        const band = g.createLinearGradient(0, 0, w, 0); band.addColorStop(0, 'rgba(58,44,32,0)'); band.addColorStop(0.2, 'rgba(58,44,32,.28)'); band.addColorStop(0.8, 'rgba(58,44,32,.28)'); band.addColorStop(1, 'rgba(58,44,32,0)');
+        g.fillStyle = band; g.fillRect(0, 0, w, h);
+        for (const cx of [0.28, 0.72]) { const gr = g.createLinearGradient((cx - 0.11) * w, 0, (cx + 0.11) * w, 0); gr.addColorStop(0, 'rgba(40,30,22,0)'); gr.addColorStop(0.5, 'rgba(40,30,22,.62)'); gr.addColorStop(1, 'rgba(40,30,22,0)'); g.fillStyle = gr; g.fillRect((cx - 0.11) * w, 0, 0.22 * w, h); }
+        const r = mulberry32(17); for (let k = 0; k < 700; k++) { g.fillStyle = `rgba(${r() < 0.5 ? '25,18,12' : '170,150,125'},${0.12 + r() * 0.25})`; g.fillRect(r() * w, r() * h, 1 + r() * 2, 1 + r() * 3); }
+      });
+      rutTex.wrapS = rutTex.wrapT = T.RepeatWrapping; rutTex.anisotropy = MAX_ANISO;
+      const rutMat = new T.MeshLambertMaterial({ map: rutTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -8 });
+      const pos = [], uv = [], idx = []; let prev = -1;
+      for (let i = td.startIdx; i <= td.finishIdx; i++) {
+        if (!td.mix.some(([a, b]) => rel(i) >= a && rel(i) <= b)) { prev = -1; continue; }
+        const c = clamp(line[i], -HW + 1.8, HW - 1.8), k0 = pos.length / 3, a = c - 1.75, b = c + 1.75;
+        pos.push(X[i] + NX[i] * a, Y[i] + 0.06, Z[i] + NZ[i] * a, X[i] + NX[i] * b, Y[i] + 0.06, Z[i] + NZ[i] * b); uv.push(0, S[i] / 9, 1, S[i] / 9);
+        if (prev >= 0) idx.push(prev, k0, prev + 1, prev + 1, k0, k0 + 1);
+        prev = k0;
+      }
+      if (idx.length) { const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+        const m = new T.Mesh(g, rutMat); m.renderOrder = 1; m.receiveShadow = true; group.add(m); }
+    }
     const J = td.joker;
     if (J) {
       // silnice jokeru (mimo trať), stejná šotolina
       const jc = (i) => rxJokerC(J, rel(i)), jwi = (i) => rxJokerW(J, rel(i));
       strip((i) => rel(i) >= J.from && rel(i) <= J.to && jc(i) + jwi(i) > HW + 0.4, (i) => J.side * Math.max(HW + 0.3, jc(i) - jwi(i)), (i) => J.side * (jc(i) + jwi(i)), 0.047);
-      // pneumatiky (po třech na sobě) podél ostrůvku mezi tratí a jokerem: u trati a u silnice jokeru; dají se nabourat
-      const tyres = [], addTyre = (i, l) => { const x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l; tyres.push([x, z, Y[i]]); addObstacle(x, z, 0.55, false, 'tyre'); };
-      for (const [edge, need] of [[(i) => HW + 1.5, 2.6], [(i) => jc(i) - jwi(i) - 1.4, 5]]) {
-        let last = null;
-        for (let i = td.startIdx; i < td.finishIdx; i++) {
-          const r = rel(i); if (r < J.from || r > J.to || jc(i) - jwi(i) < HW + need) continue;
-          const l = edge(i), x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l;
-          if (!last || Math.hypot(x - last[0], z - last[1]) > 2.3) { addTyre(i, l); last = [x, z]; }
+      // bod v místě r jokeru, l m od středu trati na stranu jokeru (plynule mezi body trati): [x, y, z]
+      const jAt = (r) => { let i = td.startIdx; while (i < td.finishIdx - 1 && rel(i + 1) <= r) i++; return [i, clamp((r - rel(i)) / Math.max(1e-6, rel(i + 1) - rel(i)), 0, 1)]; };
+      const jP = (r, l) => { const [i, f] = jAt(r), j = i + 1; let nx = lerp(NX[i], NX[j], f), nz = lerp(NZ[i], NZ[j], f); const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+        return [lerp(X[i], X[j], f) + nx * J.side * l, lerp(Y[i], Y[j], f), lerp(Z[i], Z[j], f) + nz * J.side * l]; };
+      const railMat = rxRailMat(), seg = (p0, p1) => addBarrier(p0[0], p0[2], p1[0], p1[2]);
+      // ostrůvek mezi tratí a jokerem: obehnaný svodidlem (mantinel), na obou koncích ostrá špička, po které auto sklouzne
+      // na jednu nebo druhou stranu (dřív tu byly pneumatiky, o které se auto zasekávalo)
+      const lt = HW + 1.35, lj = (r) => rxJokerC(J, r) - rxJokerW(J, r) - 1.0;
+      let rs = null, re = null;
+      for (let r = J.from; r <= J.to; r += 0.5) if (lj(r) - lt >= 1.0) { if (rs == null) rs = r; re = r; }
+      {
+        if (rs != null && re - rs > 10) {
+          const tSide = [], jSide = [];
+          for (let r = rs; r < re; r += 2) { tSide.push(jP(r, lt)); jSide.push(jP(r, lj(r))); }
+          tSide.push(jP(re, lt)); jSide.push(jP(re, lj(re)));
+          const mA = (lt + lj(rs)) / 2, mB = (lt + lj(re)) / 2, A = jP(rs - 7, mA), B = jP(re + 7, mB);
+          // boky špiček po 1 m (rovné v souřadnicích trati, i když je trať v ostré zatáčce)
+          const nose = (r1, n1, r2, n2) => { const out = []; for (let k = 1; k < 7; k++) { const u = k / 7; out.push(jP(lerp(r1, r2, u), lerp(n1, n2, u))); } return out; };
+          const tPath = [A, ...nose(rs - 7, mA, rs, lt), ...tSide, ...nose(re, lt, re + 7, mB), B];
+          const jPath = [A, ...nose(rs - 7, mA, rs, lj(rs)), ...jSide, ...nose(re, lj(re), re + 7, mB), B];
+          const loop = [...tPath, ...jPath.slice(0, -1).reverse()];
+          for (let k = 0; k + 1 < loop.length; k++) seg(loop[k], loop[k + 1]);
+          rxGuardrail(group, tPath, railMat); rxGuardrail(group, jPath, railMat);
+          // špičky ostrůvku: žlutočerné pruhované čelo (vidět z dálky)
+          const noseTex = canvasTex(64, 128, (g2, w, h) => { g2.fillStyle = '#ffc419'; g2.fillRect(0, 0, w, h); g2.fillStyle = '#111214'; for (let k = -2; k < 8; k++) { g2.beginPath(); g2.moveTo(0, k * 32); g2.lineTo(w, k * 32 + 32); g2.lineTo(w, k * 32 + 48); g2.lineTo(0, k * 32 + 16); g2.closePath(); g2.fill(); } });
+          for (const [P0, P1] of [[A, tPath[1]], [B, tPath[tPath.length - 2]]]) {
+            const nm = new T.Mesh(new T.CylinderGeometry(0.22, 0.22, 1.0, 10).translate(0, 0.5, 0), new T.MeshLambertMaterial({ map: noseTex }));
+            nm.position.set(P0[0], P0[1] - 0.05, P0[2]); nm.rotation.y = Math.atan2(P1[0] - P0[0], P1[2] - P0[2]); group.add(nm);
+          }
         }
       }
-      const tg = mergeColored([0, 1, 2].map((k) => ({ geo: new T.TorusGeometry(0.34, 0.16, 8, 16).rotateX(Math.PI / 2).translate(0, 0.18 + k * 0.3, 0), color: k === 1 ? '#f2f2f2' : '#18191c' })));
-      const im = new T.InstancedMesh(tg, new T.MeshLambertMaterial({ vertexColors: true }), tyres.length);
-      tyres.forEach(([x, z, y], k) => { m4.makeTranslation(x, y - 0.02, z); im.setMatrixAt(k, m4); });
-      im.computeBoundingSphere(); im.castShadow = true; group.add(im);
-      // šikana: dva ostrůvky z červenobílých pneumatik (dvě řady za sebou) – první u vnitřního okraje silnice jokeru,
-      // druhý u vnějšího; auto mezi nimi projede esíčkem (dvě zatáčky za sebou). Ostrůvek sahá přesně block m od okraje
-      // silnice, na špičce má modrou značku, kudy ho objet (jako na dopravním ostrůvku).
+      // šikana: dva trojúhelníkové klíny (beton s červenobílými pruhy) – první u vnitřního okraje silnice jokeru, druhý
+      // gap m za ním u vnějšího; špička sahá block m do silnice. K příjezdu jsou dlouhé a šikmé (13 m), takže auto, které
+      // se netrefí, po klínu sjede do mezery a jede dál; zadní strana je krátká. Na špičce modrá značka, kudy objet.
       if (J.chic) {
-        const chic = [], keep = [], idxAt = (r) => { let i = td.startIdx; while (i < td.finishIdx && rel(i) < r) i++; return i; };
-        const span = (i, inner) => { const c = jc(i), w = jwi(i); return inner ? [c - w + 0.3, c - w + J.chic.block - 0.55] : [c + w - J.chic.block + 0.55, c + w - 0.3]; };
+        // klín přiléhá k mantinelu ostrůvku (vnitřní) nebo ke zdi (vnější), ať za ním není škvíra, ve které by se auto
+        // zaklínilo; vnitřní klín začíná až za špičkou ostrůvku
+        const L2 = 3, Bk = J.chic.block, H = 0.85;
+        const stripeTex = canvasTex(256, 64, (g2, w, h) => { g2.fillStyle = '#f2f2ee'; g2.fillRect(0, 0, w, h); g2.fillStyle = '#d81e1e'; for (let k = -1; k < 9; k++) { g2.beginPath(); g2.moveTo(k * 32, h); g2.lineTo(k * 32 + 16, h); g2.lineTo(k * 32 + 40, 0); g2.lineTo(k * 32 + 24, 0); g2.closePath(); g2.fill(); } g2.fillStyle = 'rgba(0,0,0,.18)'; g2.fillRect(0, h - 6, w, 6); });
+        stripeTex.wrapS = T.RepeatWrapping;
+        const sideM = new T.MeshLambertMaterial({ map: stripeTex }), topM = new T.MeshLambertMaterial({ color: '#8d9096' }), keep = [];
         for (const [r0, inner] of [[J.chic.ra, true], [J.chic.rb, false]]) {
-          for (const dr of [-0.9, 0.9]) {
-            const i = idxAt(r0 + dr), [a0, a1] = span(i, inner), nS = Math.ceil((a1 - a0) / 0.95);
-            for (let q = 0; q <= nS; q++) { const l = a0 + ((a1 - a0) * q) / nS, x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l; chic.push([x, z, Y[i]]); addObstacle(x, z, 0.55, false, 'tyre'); }
-          }
-          const i = idxAt(r0), [a0, a1] = span(i, inner); keep.push([i, inner ? a1 - 1.2 : a0 + 1.2, inner]);   // značka mezi řadami kousek od špičky
+          const L1 = inner && rs != null ? clamp(r0 - rs - 4, 8, 13) : 13;
+          const edge = (r) => (inner ? rxJokerC(J, r) - rxJokerW(J, r) : rxJokerC(J, r) + rxJokerW(J, r)), into = inner ? 1 : -1;
+          const bo = inner ? 1.0 : 1.6, back = (r) => edge(r) - into * bo;   // mantinel ostrůvku / zeď za okrajem silnice
+          // šikmé strany jsou rovné v souřadnicích trati (po 1 m): v ostré zatáčce by přímka mezi koncovými body
+          // vybočila o několik metrů do silnice (a jinam, než s kolika počítá stopa soupeřů)
+          const outl = [], rr = [];
+          const face = (ra2, rb2, na, nb, first) => { const m = Math.max(1, Math.ceil(rb2 - ra2 - 1e-6)); for (let k = first ? 0 : 1; k <= m; k++) { const u = k / m, r = lerp(ra2, rb2, u); outl.push(jP(r, edge(r) + into * lerp(na, nb, u))); rr.push(r); } };
+          face(r0 - L1, r0, -bo, Bk, true); face(r0, r0 + L2, Bk, -bo, false);
+          const base = rr.map((r) => jP(r, back(r)));
+          // kolize: obě šikmé strany a základna podél okraje silnice
+          for (let k = 0; k + 1 < outl.length; k++) { seg(outl[k], outl[k + 1]); seg(base[k], base[k + 1]); }
+          // těleso klínu: boční stěny (pruhy) a horní plocha (pás mezi obrysem a základnou ve stejných místech trati)
+          const pos = [], uv = [], idx = [], wall = (a2, b2, u0) => { const v = pos.length / 3, L = Math.hypot(b2[0] - a2[0], b2[2] - a2[2]); pos.push(a2[0], a2[1] - 0.1, a2[2], b2[0], b2[1] - 0.1, b2[2], a2[0], a2[1] + H, a2[2], b2[0], b2[1] + H, b2[2]); uv.push(u0, 0, u0 + L / 3, 0, u0, 1, u0 + L / 3, 1); idx.push(v, v + 1, v + 2, v + 1, v + 3, v + 2); return u0 + L / 3; };
+          let u0 = 0; for (let k = 0; k + 1 < outl.length; k++) u0 = wall(outl[k], outl[k + 1], u0);
+          const g1 = new T.BufferGeometry(); g1.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g1.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g1.setIndex(idx); g1.computeVertexNormals();
+          const wm = new T.Mesh(g1, sideM); wm.material = sideM; wm.castShadow = true; wm.receiveShadow = true; wm.material.side = T.DoubleSide; group.add(wm);
+          const tp = [], ti = [];
+          outl.forEach((q2, k) => { tp.push(q2[0], q2[1] + H, q2[2], base[k][0], base[k][1] + H, base[k][2]); if (k) ti.push(2 * k - 2, 2 * k - 1, 2 * k, 2 * k - 1, 2 * k + 1, 2 * k); });
+          const g2 = new T.BufferGeometry(); g2.setAttribute('position', new T.Float32BufferAttribute(tp, 3)); g2.setIndex(ti); g2.computeVertexNormals();
+          const top = new T.Mesh(g2, topM); top.material.side = T.DoubleSide; top.receiveShadow = true; group.add(top);
+          // značka na špičce (kousek od ní na klínu), čelem k přijíždějícím
+          const kp = jP(r0 - 1.2, edge(r0 - 1.2) + into * (Bk - 1.4));
+          keep.push([kp, inner, jAt(r0)[0]]);
         }
-        const cg = mergeColored([0, 1, 2].map((k) => ({ geo: new T.TorusGeometry(0.34, 0.16, 8, 16).rotateX(Math.PI / 2).translate(0, 0.18 + k * 0.3, 0), color: k === 1 ? '#f4f4f4' : '#d81e1e' })));
-        const cm = new T.InstancedMesh(cg, new T.MeshLambertMaterial({ vertexColors: true }), chic.length);
-        chic.forEach(([x, z, y], k) => { m4.makeTranslation(x, y - 0.02, z); cm.setMatrixAt(k, m4); });
-        cm.computeBoundingSphere(); cm.castShadow = true; group.add(cm);
-        // modrá kulatá značka se šikmou šipkou dolů: první ostrůvek objet zvenku, druhý zevnitř (+N = vpravo)
+        // modrá kulatá značka se šikmou šipkou dolů: první klín objet zvenku, druhý zevnitř (+N = vpravo)
         const keepTex = (right) => canvasTex(256, 256, (g2, w, h) => {
           g2.fillStyle = '#ffffff'; g2.beginPath(); g2.arc(w / 2, h / 2, 126, 0, Math.PI * 2); g2.fill();
           g2.fillStyle = '#1d5fbf'; g2.beginPath(); g2.arc(w / 2, h / 2, 116, 0, Math.PI * 2); g2.fill();
@@ -5791,11 +5867,11 @@ function buildWorld(td) {
           g2.moveTo(0, 86); g2.lineTo(-44, 26); g2.lineTo(-17, 26); g2.lineTo(-17, -80); g2.lineTo(17, -80); g2.lineTo(17, 26); g2.lineTo(44, 26); g2.closePath(); g2.fill(); g2.restore();
         });
         const pm = new T.MeshLambertMaterial({ color: '#cfd5de' });
-        for (const [i, l, inner] of keep) {
-          const right = inner === J.side > 0, x = X[i] + NX[i] * J.side * l, z = Z[i] + NZ[i] * J.side * l;
+        for (const [[x, y, z], inner, i] of keep) {
+          const right = inner === J.side > 0;
           const bd = new T.Mesh(new T.CircleGeometry(0.62, 28), new T.MeshLambertMaterial({ map: keepTex(right), side: T.DoubleSide, transparent: true }));
-          bd.position.set(x, Y[i] + 1.75, z); bd.rotation.y = td.HD[i] + Math.PI; bd.name = 'rxKeep'; group.add(bd);
-          const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.75, 6).translate(0, 0.875, 0), pm); p.position.set(x, Y[i], z); group.add(p);
+          bd.position.set(x, y + H + 1.55, z); bd.rotation.y = td.HD[i] + Math.PI; bd.name = 'rxKeep'; group.add(bd);
+          const p = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 1.55, 6).translate(0, 0.775, 0), pm); p.position.set(x, y + H, z); group.add(p);
         }
       }
       // cedule: velká žlutá JOKER se šipkou u odbočky (na špičce ostrůvku) a předem 100 m a 50 m před odbočkou
@@ -6021,7 +6097,7 @@ function buildWorld(td) {
 
   const rline = st.circuit ? buildRacingLine(td) : null;
   if (rline) { group.add(rline.mesh); if (st.road === 'tarmac') group.add(buildRubberLine(td)); }
-  return { group, td, pit: pitW, startLights, rline, cityChunks, flood: floodW, terrainAt, roadDistAt, obstacles, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
+  return { group, td, pit: pitW, startLights, rline, cityChunks, flood: floodW, terrainAt, roadDistAt, obstacles, barriers, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
 }
 
 // ---------------------------------------------------------------- auto
@@ -9328,6 +9404,7 @@ function physics0(dt, inp) {
     }
   }
 
+  if (W.barriers && W.barriers.segs.length) barrierCollide(dt);
   // zdi okruhu: auto se od nich odrazí (rychlost do zdi se otočí a utlumí), při silnějším nárazu jiskry
   if (td.wallL) {
     const i = car.idx, lat = (car.x - td.X[i]) * td.NX[i] + (car.z - td.Z[i]) * td.NZ[i];
@@ -10216,6 +10293,41 @@ function crewPose(name) {
 const tmpV = new T.Vector3(), dustCol = new T.Color();
 let emitAcc = 0, stoneAcc = 0;
 let specFrame = false;
+// srážka s mantinely (úsečky v W.barriers): auto jsou tři kruhy podél osy (předek, střed, zadek). Rychlost do mantinelu
+// se pohltí (malý odraz), podél něj zůstane skoro celá – po šikmém klínu nebo svodidle auto sklouzne a jede dál.
+function barrierCollide(dt) {
+  const B = W.barriers, fx = Math.sin(car.h), fz = Math.cos(car.h), rad = 0.95;
+  for (let pass = 0; pass < 2; pass++) {
+    let best = null;
+    for (const off of [1.35, 0, -1.35]) {
+      const px = car.x + fx * off, pz = car.z + fz * off, cx = Math.floor(px / 10), cz = Math.floor(pz / 10);
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+        const list = B.grid.get((cx + a) * 100000 + (cz + b)); if (!list) continue;
+        for (const sg of list) {
+          const ex = sg.x2 - sg.x1, ez = sg.z2 - sg.z1, t = clamp(((px - sg.x1) * ex + (pz - sg.z1) * ez) / sg.l2, 0, 1);
+          const dx = px - (sg.x1 + ex * t), dz = pz - (sg.z1 + ez * t), d2 = dx * dx + dz * dz;
+          if (d2 >= rad * rad) continue;
+          const d = Math.sqrt(d2) || 1e-3, pen = rad - d;
+          if (!best || pen > best.pen) best = { pen, nx: dx / d, nz: dz / d, off };
+        }
+      }
+    }
+    if (!best) break;
+    car.x += best.nx * best.pen; car.z += best.nz * best.pen;
+    const vn = car.vx * best.nx + car.vz * best.nz;
+    if (vn < 0) {
+      car.vx -= best.nx * vn * 1.15; car.vz -= best.nz * vn * 1.15;
+      const keep = 1 - Math.min(0.22, -vn * 0.012); car.vx *= keep; car.vz *= keep;
+      // náraz předkem nebo zadkem auto natočí podél mantinelu (předek se odvrátí od něj; kladné omega = předek doprava)
+      const nr = best.nx * fz - best.nz * fx;   // složka normály mantinelu ve směru „doprava od auta“
+      car.omega = car.omega * 0.7 + clamp(best.off * nr * -vn * 0.28, -2.5, 2.5);
+      if (-vn > 3) { Sound.thump(Math.min(1, -vn / 10), 'wall'); car.shake = Math.min(1, car.shake + -vn / 24); rumble(Math.min(1, -vn / 14), 150);
+        sparkBurst(car.x - best.nx * 1, car.y + 0.4, car.z - best.nz * 1, Math.min(30, 4 + -vn * 2), Math.min(1.6, -vn / 10)); }
+    }
+    const vt = Math.hypot(car.vx - best.nx * (car.vx * best.nx + car.vz * best.nz), car.vz - best.nz * (car.vx * best.nx + car.vz * best.nz));
+    if (vt > 4) Sound.scrape(Math.min(1, vt / 40));
+  }
+}
 function updateCarVisual(dt, inp) {
   const fx = Math.sin(car.h), fz = Math.cos(car.h), rx = -fz, rz = fx;
   const flying = car.air && car.hAbove > 0.08;
@@ -13254,11 +13366,14 @@ function rxJokerPath(td) {
       let nx = lerp(td.NX[i], td.NX[i + 1], f), nz = lerp(td.NZ[i], td.NZ[i + 1], f); const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
       const l = nAt(r); FP.push(x + nx * l, z + nz * l); FR.push(r);
     }
-    const M = FR.length, FK = new Float32Array(M);
+    const M = FR.length, FK = new Float32Array(M), FS = new Float32Array(M);
     for (let k = 3; k < M - 3; k++) {
       const ax = FP[2 * (k - 3)], az = FP[2 * (k - 3) + 1], bx = FP[2 * k], bz = FP[2 * k + 1], cx = FP[2 * (k + 3)], cz = FP[2 * (k + 3) + 1];
       const ab = Math.hypot(bx - ax, bz - az), bc = Math.hypot(cx - bx, cz - bz), ca = Math.hypot(ax - cx, az - cz);
       FK[k] = (2 * Math.abs((bx - ax) * (cz - az) - (bz - az) * (cx - ax))) / Math.max(1e-6, ab * bc * ca);
+      // znaménkové zakřivení (změna směru stopy na metr) – podle něj soupeř v jokeru natáčí auto do smyku
+      const h0 = Math.atan2(bx - ax, bz - az), h1 = Math.atan2(cx - bx, cz - bz);
+      FS[k] = Math.atan2(Math.sin(h1 - h0), Math.cos(h1 - h0)) / Math.max(1e-6, (ab + bc) / 2);
     }
     for (let i = i0 + 1; i <= i1 - 1; i++) {
       const r = rxRel(td, td.S[i]); let kmax = 0;
@@ -13270,6 +13385,8 @@ function rxJokerPath(td) {
     // brzdění před šikanou a rozjezd za ní (stejně jako ideální rychlost trati)
     for (let i = i0 + 1; i <= i1 + 40 && i < n; i++) V[i] = Math.min(V[i], Math.sqrt(V[i - 1] * V[i - 1] + 2 * 8.5 * td.ds));
     for (let i = i1; i >= Math.max(1, i0 - 60); i--) V[i - 1] = Math.min(V[i - 1], Math.sqrt(V[i] * V[i] + 2 * 9.45 * td.ds));
+    const KS = new Float32Array(M); for (let k = 0; k < M; k++) { let sk = 0, c = 0; for (let q = -2; q <= 2; q++) if (k + q >= 0 && k + q < M) { sk += FS[k + q]; c++; } KS[k] = sk / c; }
+    return (td.rxJoker = { L, V, dn, r0: cps[0], r1: cps[cps.length - 1], KS, kr0: FR[0] });
   }
   return (td.rxJoker = { L, V, dn, r0: cps[0], r1: cps[cps.length - 1] });
 }
@@ -13282,6 +13399,165 @@ const rxScaleOf = (ct) => (ct && ct.rxScale) || RX_SCALE;
 const rxRel = (td, s) => ((((s - td.S[td.startIdx]) % td.length) + td.length) % td.length);
 // střed silnice jokeru (vzdálenost od středu trati ven) v místě r jokeru: u odbočky c0, plynule (kosinus, Lt m) na D a zpět
 function rxJokerC(J, r) { const sm = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * x)); return J.c0 + (J.D - J.c0) * Math.min(sm((r - J.from) / J.Lt), sm((J.to - r) / J.Lt)); }
+// rallycross: kde stojí svodidlo místo betonové zdi (A), kde je před ním zeď z pneumatik (Tw, vnější strana zatáček
+// s poloměrem pod 70 m) a kde svítící šipkové tabule (C, ostré zatáčky pod 38 m). Beton zůstává u startovní rovinky
+// a tam, kde je za zdí málo místa (blízký jiný úsek trati). Hodnoty 0–1 po bodech trati, pro každou stranu zvlášť.
+function rxBarrierPlan(td) {
+  const n = td.n, HW = td.st.hw, L = td.length, out = {};
+  const sm = (src, h) => { const o = new Float32Array(n); for (let i = 0; i < n; i++) { let a = 0, c = 0; for (let q = -h; q <= h; q++) { const j = i + q; if (j >= 0 && j < n) { a += src[j]; c++; } } o[i] = a / c; } return o; };
+  const dil = (src, h) => { const o = new Float32Array(n); for (let i = 0; i < n; i++) { let m = 0; for (let q = -h; q <= h; q++) { const j = i + q; if (j >= 0 && j < n) m = Math.max(m, src[j]); } o[i] = m; } return o; };
+  for (const side of [-1, 1]) {
+    const wa = side > 0 ? td.wallR : td.wallL, A0 = new Float32Array(n), T0 = new Float32Array(n), C0 = new Float32Array(n);
+    for (let i = 1; i < n - 1; i++) {
+      const r = rxRel(td, td.S[i]), room = wa[i] - HW >= 4 && wa[i] - HW < 40, J = td.joker, inJ = J && side === J.side && r > J.from - 25 && r < J.to + 25;
+      A0[i] = room && r > 115 && r < L - 45 ? 1 : 0;
+      if (inJ) { A0[i] = room ? 1 : 0; continue; }   // u jokeru jen svodidlo (bez pneumatik a šipek)
+      // tečna se stáčí k +N (doprava) → střed zatáčky vpravo, vnější strana vlevo
+      const k = ((td.TX[i + 1] - td.TX[i - 1]) * td.NX[i] + (td.TZ[i + 1] - td.TZ[i - 1]) * td.NZ[i]) / (2 * td.ds), outside = -Math.sign(k) === side;
+      T0[i] = A0[i] && outside && Math.abs(k) > 1 / 70 ? 1 : 0;
+      C0[i] = A0[i] && outside && Math.abs(k) > 1 / 38 ? 1 : 0;
+    }
+    const A = sm(A0, 3), Tw = sm(dil(T0, 4), 2);
+    for (let i = 0; i < n; i++) Tw[i] = Math.min(Tw[i], A[i]);
+    out[side] = { A, Tw, C: dil(C0, 2) };
+  }
+  return out;
+}
+// výbava rallycrossové trati podle plánu bariér: ocelová svodidla (W profil na sloupcích), zdi z pneumatik ve vnějších
+// zatáčkách, svítící šipkové tabule v ostrých zatáčkách a reklamní plachty na plotě
+// materiál svodidla: W profil (dva hřbety a žlábky ve stínování textury), pozinkovaný plech se šmouhami a blátem
+function rxRailMat() {
+  const wTex = canvasTex(64, 128, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h);
+    for (const [t, c] of [[0, '#8e959d'], [0.08, '#e9edf1'], [0.2, '#b9c0c8'], [0.32, '#6c737b'], [0.44, '#d7dce2'], [0.5, '#f4f6f8'], [0.56, '#d7dce2'], [0.68, '#6c737b'], [0.8, '#b9c0c8'], [0.92, '#e9edf1'], [1, '#8e959d']]) gr.addColorStop(t, c);
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    const r = mulberry32(31); for (let k = 0; k < 160; k++) { g.fillStyle = `rgba(${r() < 0.5 ? '60,50,40' : '255,255,255'},${0.05 + r() * 0.1})`; g.fillRect(r() * w, r() * h, 1 + r() * 4, 1 + r() * 2); }
+    g.fillStyle = 'rgba(90,70,50,.35)'; g.fillRect(0, h * 0.86, w, h * 0.14);   // bláto odstříknuté zespodu
+    g.fillStyle = 'rgba(40,40,44,.8)'; g.fillRect(w / 2 - 2, h * 0.47, 4, h * 0.06);   // šroub u sloupku
+  });
+  wTex.wrapS = T.RepeatWrapping; wTex.anisotropy = MAX_ANISO;
+  return addShine(new T.MeshStandardMaterial({ map: wTex, metalness: 0.65, roughness: 0.42, side: T.DoubleSide }), 'rail', { gloss: 1.1 });
+}
+// svodidlo podél lomené čáry bodů [x, y, z] (y = zem): pás 0,36–0,80 m a sloupky po ~2 m
+function rxGuardrail(group, pts, mat) {
+  if (pts.length < 2) return;
+  const pos = [], uv = [], idx = [], posts = [];
+  let u = 0, acc = 2;
+  pts.forEach(([x, y, z], k) => {
+    if (k) { const d = Math.hypot(x - pts[k - 1][0], z - pts[k - 1][2]); u += d / 2.4; acc += d; }
+    pos.push(x, y + 0.36, z, x, y + 0.8, z); uv.push(u, 0, u, 1);
+    if (k) idx.push(2 * k - 2, 2 * k, 2 * k - 1, 2 * k - 1, 2 * k, 2 * k + 1);
+    if (acc >= 2) { acc = 0; posts.push([x, y, z]); }
+  });
+  const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+  geo.computeVertexNormals(); geo.computeBoundingSphere();
+  const m = new T.Mesh(geo, mat); m.receiveShadow = true; group.add(m);
+  const pm = new T.InstancedMesh(new T.BoxGeometry(0.1, 0.98, 0.1).translate(0, 0.37, 0), new T.MeshStandardMaterial({ color: '#7d848c', metalness: 0.6, roughness: 0.5 }), posts.length), m4 = new T.Matrix4();
+  posts.forEach(([x, y, z], k) => pm.setMatrixAt(k, m4.makeTranslation(x, y - 0.12, z)));
+  pm.computeBoundingSphere(); group.add(pm);
+}
+function rxDressBarriers(group, td, plan, adTex) {
+  const { X, Y, Z, NX, NZ } = td, r0 = td.startIdx, r1 = td.finishIdx, m4 = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), vP = new T.Vector3(), vS = new T.Vector3(1, 1, 1);
+  const wMat = rxRailMat();
+  const posts = [], stacks = [], boards = [[], []], banners = [];
+  for (const side of [-1, 1]) {
+    const P = plan[side], wa = side > 0 ? td.wallR : td.wallL, pos = [], uv = [], idx = [];
+    let u = 0, prev = null, nv = 0, run = false, tyreAcc = 0, lastT = null, boardAcc = 0, banAcc = 9, k0 = -1;
+    for (let i = r0; i <= r1; i++) {
+      const A = P.A[i], Tw = P.Tw[i], nx = NX[i] * side, nz = NZ[i] * side, y = Y[i] - 0.1;
+      const g = wa[i] + 0.03 + Tw * 0.74, x = X[i] + nx * g, z = Z[i] + nz * g;
+      if (prev) u += Math.hypot(x - prev[0], z - prev[1]) / 2.4;
+      prev = [x, z];
+      // svodidlo: pás 0,36–0,80 m nad zemí
+      if (A > 0.35) {
+        pos.push(x, y + 0.36, z, x, y + 0.8, z); uv.push(u, 0, u, 1);
+        if (run) idx.push(nv - 2, nv, nv - 1, nv - 1, nv, nv + 1);
+        nv += 2; run = true;
+        if ((i - r0) % 1 === 0) posts.push([x + nx * 0.1, y - 0.12, z + nz * 0.1, Math.atan2(nx, nz)]);
+      } else run = false;
+      // zeď z pneumatik (sloupky po třech) těsně před svodidlem, kolem dokola po 0,64 m
+      if (Tw > 0.55) {
+        const tx = X[i] + nx * (wa[i] + 0.34), tz = Z[i] + nz * (wa[i] + 0.34);
+        if (lastT) { tyreAcc += Math.hypot(tx - lastT[0], tz - lastT[1]); }
+        const steps = lastT ? Math.floor(tyreAcc / 0.64) : 1;
+        for (let k = 0; k < steps; k++) {
+          const f = lastT ? 1 - (tyreAcc - (k + 1) * 0.64) / Math.max(0.01, Math.hypot(tx - lastT[0], tz - lastT[1])) : 1, ff = clamp(f, 0, 1);
+          stacks.push([lastT ? lerp(lastT[0], tx, ff) : tx, y + 0.02, lastT ? lerp(lastT[1], tz, ff) : tz, stacks.length]);
+        }
+        if (lastT) tyreAcc -= steps * 0.64;
+        lastT = [tx, tz];
+      } else { lastT = null; tyreAcc = 0; }
+      // šipkové tabule v ostrých zatáčkách (za pneumatikami, před plotem), čelem k trati
+      if (P.C[i] > 0.5 && A > 0.9) {
+        boardAcc += td.ds;
+        if (boardAcc >= 5) { boardAcc = 0; const o = wa[i] + 0.78 + Tw * 0.74; boards[side > 0 ? 1 : 0].push([X[i] + nx * o, y, Z[i] + nz * o, Math.atan2(-nx, -nz)]); }
+      } else boardAcc = 4;
+      // reklamní plachta na plotě (rovné úseky se svodidlem)
+      if (A > 0.95 && P.C[i] < 0.5) {
+        banAcc += td.ds;
+        if (banAcc >= 24 && i + 3 <= r1) { banAcc = 0; k0 = (k0 + 1) % 8; const o = wa[i] + 1.1 + Tw * 0.75, j = i + 3, o2 = wa[j] + 1.1 + P.Tw[j] * 0.75;
+          banners.push([X[i] + nx * o, Z[i] + nz * o, X[j] + NX[j] * side * o2, Z[j] + NZ[j] * side * o2, y, k0, side]); }
+      } else banAcc = Math.min(banAcc, 14);
+    }
+    if (idx.length) {
+      const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+      geo.computeVertexNormals(); geo.computeBoundingSphere();
+      const m = new T.Mesh(geo, wMat); m.receiveShadow = true; group.add(m);
+    }
+  }
+  // sloupky svodidel
+  if (posts.length) {
+    const pm = new T.InstancedMesh(new T.BoxGeometry(0.1, 0.98, 0.13).translate(0, 0.49, 0), new T.MeshStandardMaterial({ color: '#7d848c', metalness: 0.6, roughness: 0.5 }), posts.length);
+    posts.forEach(([x, y, z, a], k) => pm.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, a, 0)), vS.set(1, 1, 1))));
+    pm.computeBoundingSphere(); group.add(pm);
+  }
+  // sloupek tří pneumatik: válec s texturou (dvě černé, prostřední natřená – barva instance), nahoře kruh s otvorem
+  if (stacks.length) {
+    const side = canvasTex(128, 96, (g, w, h) => {
+      for (let t = 0; t < 3; t++) {
+        const y0 = (t * h) / 3, gr = g.createLinearGradient(0, y0, 0, y0 + h / 3);
+        const c = t === 1 ? ['#9a9a9a', '#f2f2f2', '#ffffff', '#cfcfcf', '#8c8c8c'] : ['#060708', '#2a2c30', '#3a3d42', '#25272b', '#060708'];
+        c.forEach((cc, k) => gr.addColorStop(k / 4, cc)); g.fillStyle = gr; g.fillRect(0, y0, w, h / 3);
+        g.fillStyle = 'rgba(0,0,0,.35)'; for (let x = 0; x < w; x += 8) g.fillRect(x, y0 + h / 9, 3, h / 9);   // dezén
+      }
+    });
+    const top = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#1b1c1f'; g.fillRect(0, 0, w, h); g.fillStyle = '#060607'; g.beginPath(); g.arc(w / 2, h / 2, w * 0.27, 0, Math.PI * 2); g.fill(); g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 2; g.beginPath(); g.arc(w / 2, h / 2, w * 0.42, 0, Math.PI * 2); g.stroke(); });
+    const im = new T.InstancedMesh(new T.CylinderGeometry(0.32, 0.32, 0.78, 12, 1).translate(0, 0.39, 0), [new T.MeshLambertMaterial({ map: side }), new T.MeshLambertMaterial({ map: top }), new T.MeshLambertMaterial({ map: top })], stacks.length);
+    const cols = ['#ffffff', '#ffffff', '#ffd23a', '#e8232b', '#ffffff', '#2f6fe0'], col = new T.Color();
+    stacks.forEach(([x, y, z, k], j) => { im.setMatrixAt(j, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, k * 1.7, 0)), vS.set(1, 1, 1))); im.setColorAt(j, col.set(cols[Math.floor(k / 5) % cols.length])); });
+    im.instanceColor.needsUpdate = true; im.computeBoundingSphere(); im.castShadow = true; im.receiveShadow = true; group.add(im);
+  }
+  // svítící šipkové tabule (černý panel, tři oranžovožluté šipky) – směr podle strany: šipky míří po směru jízdy
+  const chevTex = (right) => canvasTex(256, 96, (g, w, h) => {
+    g.fillStyle = '#0c0d10'; g.fillRect(0, 0, w, h); g.strokeStyle = '#2b2e35'; g.lineWidth = 6; g.strokeRect(3, 3, w - 6, h - 6);
+    const d = right ? 1 : -1;
+    for (let k = 0; k < 3; k++) {
+      const cx = w / 2 + (k - 1) * 70, sx = cx - d * 18;
+      g.save(); g.shadowColor = '#ffb000'; g.shadowBlur = 14; g.fillStyle = '#ffc419';
+      g.beginPath(); g.moveTo(sx, 14); g.lineTo(sx + d * 22, 14); g.lineTo(sx + d * 46, h / 2); g.lineTo(sx + d * 22, h - 14); g.lineTo(sx, h - 14); g.lineTo(sx + d * 24, h / 2); g.closePath(); g.fill(); g.restore();
+    }
+  });
+  boards.forEach((list, si) => {
+    if (!list.length) return;
+    const tex = chevTex(si === 0);   // vlevo od trati (strana −1) šipky doprava, vpravo doleva
+    const bm = new T.InstancedMesh(new T.PlaneGeometry(2.3, 0.86).translate(0, 1.32, 0), new T.MeshStandardMaterial({ map: tex, emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 1.25, roughness: 0.6, side: T.DoubleSide }), list.length);
+    const pm = new T.InstancedMesh(mergeColored([{ geo: new T.CylinderGeometry(0.045, 0.045, 1.4, 6).translate(-0.85, 0.7, -0.04) }, { geo: new T.CylinderGeometry(0.045, 0.045, 1.4, 6).translate(0.85, 0.7, -0.04) }]), new T.MeshLambertMaterial({ color: '#2a2d33' }), list.length);
+    list.forEach(([x, y, z, a], k) => { m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, a, 0)), vS.set(1, 1, 1)); bm.setMatrixAt(k, m4); pm.setMatrixAt(k, m4); });
+    bm.computeBoundingSphere(); pm.computeBoundingSphere(); group.add(bm, pm);
+  });
+  // reklamní plachty na plotě (stejné značky jako na zdech): jedna síť, každá plachta má výřez textury
+  if (banners.length) {
+    const pos = [], uv = [], idx = [];
+    banners.forEach(([x0, z0, x1, z1, y, k, side], b) => {
+      const u0 = k / 8, u1 = (k + 1) / 8, a = side > 0 ? [u1, u0] : [u0, u1], v = b * 4;
+      pos.push(x0, y + 0.92, z0, x1, y + 0.92, z1, x0, y + 1.86, z0, x1, y + 1.86, z1); uv.push(a[0], 0, a[1], 0, a[0], 1, a[1], 1);
+      idx.push(v, v + 1, v + 2, v + 1, v + 3, v + 2);
+    });
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+    geo.computeVertexNormals(); geo.computeBoundingSphere();
+    const m = new T.Mesh(geo, new T.MeshLambertMaterial({ map: adTex, side: T.DoubleSide })); m.receiveShadow = true; group.add(m);
+  }
+}
 // poloviční šířka silnice jokeru: u šikany rozšířená na wC (plynule 22–8 m před první a za druhou řadou pneumatik)
 function rxJokerW(J, r) { if (!J.chic || J.wC <= J.wJ) return J.wJ; const sm = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * x)); return J.wJ + (J.wC - J.wJ) * Math.min(sm((r - (J.chic.ra - 22)) / 14), sm(((J.chic.rb + 22) - r) / 14)); }
 function inJoker(td, s, lat) { const j = td.joker; if (!j) return false; const r = rxRel(td, s); if (r < j.from || r > j.to) return false; return Math.abs(lat * j.side - rxJokerC(j, r)) <= rxJokerW(j, r) + 0.3; }
@@ -13457,7 +13733,8 @@ function rxAiPose(td, a) {
   const lap = td.length, dd = (((a.d % lap) + lap) % lap), fi = dd / td.ds, i0 = clamp(td.startIdx + Math.floor(fi), 0, td.n - 2), f = fi - Math.floor(fi);
   a.i0 = i0; a.f = f;
   a.x = lerp(td.X[i0], td.X[i0 + 1], f) + td.NX[i0] * a.lat; a.z = lerp(td.Z[i0], td.Z[i0 + 1], f) + td.NZ[i0] * a.lat;
-  a.hd = td.HD[i0] + (a.slide || 0) + Math.atan2(a.vl || 0, Math.max(4, a.v)) + (a.yaw || 0);
+  // pohyb do boku (k +N) natáčí auto k +N = směrem k menšímu úhlu (dopředu je (sin h, cos h), N = (−cos h, sin h))
+  a.hd = td.HD[i0] + (a.slide || 0) - Math.atan2(a.vl || 0, Math.max(4, a.v)) + (a.yaw || 0);
 }
 // nejbližší body dvou úseček (osy aut) – Ericson, Real-Time Collision Detection
 function rxSegClosest(ax, az, bx, bz, cx, cz, dx, dz) {
@@ -13539,9 +13816,14 @@ function rxContacts(td, R) {
 function rxAiVisual(td, a, dt, run) {
   if (!a.c3) return;
   const i0 = a.i0, gr = rxGravel(td, td.S[i0]);
-  // smyk v zatáčce (zadek ven, nos do zatáčky), na šotolině víc než na asfaltu
-  const slideT = run && a.spinT <= 0 ? clamp(td.K[i0] * a.v * 0.8, -0.55, 0.55) * (gr ? 1 : 0.55) : 0;
-  a.slide = (a.slide || 0) + (slideT - (a.slide || 0)) * Math.min(1, dt * 3.2);
+  // smyk v zatáčce (zadek ven, nos do zatáčky), na šotolině víc než na asfaltu; v jokeru podle zakřivení jeho stopy
+  // (ne podle hlavní trati – jinak by auto na odbočce do jokeru „driftovalo“ do ostrůvku), a to kus před autem: v šikaně
+  // se auto přehodí z jednoho smyku do druhého včas a zadkem nesmýkne ke klínu, který právě objíždí
+  let kk = td.K[i0], rate = 3.2;
+  const JK = a.jz && td.rxJoker && td.rxJoker.KS;
+  if (JK) { const k = Math.round((rxRel(td, td.S[i0] + a.f * td.ds) + Math.max(0, a.v) * 0.3 - td.rxJoker.kr0) / 0.5); kk = JK[clamp(k, 0, JK.length - 1)]; rate = 5; }
+  const slideT = run && a.spinT <= 0 ? clamp(kk * a.v * 0.8, -0.55, 0.55) * (gr ? 1 : 0.55) : 0;
+  a.slide = (a.slide || 0) + (slideT - (a.slide || 0)) * Math.min(1, dt * rate);
   rxAiPose(td, a);
   const y = groundAt(a.x, a.z, { i: i0, s: td.S[i0], lat: a.lat, y: lerp(td.Y[i0], td.Y[i0 + 1], a.f) });
   const rt = a.c3.root, hd = a.hd;
