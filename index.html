@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw6as6tw';
+window.__BUILD = 'mw6uz9zv';
 (function () {
   function check() {
     try {
@@ -7513,11 +7513,11 @@ CAR_TYPES.fabia = {
   parts: { wheel: /^Wheel_/, caliper: null, tire: /_tire/, paint: /^Car_body$/, head: /^mat_7$/, tail: /^mat_7$/, rim: /^mat_14$/, noShadow: /Wheel_|mat_7|mat_24|mat_25|mat_1[358]$|mat_17/ },
 };
 // Škoda Fabia RS: vyladěná Fabie – o 30 % silnější motor, o 30 % lepší brzdy (silnější i na hranici přilnavosti),
-// z výroby tvrdší podvozek (o 6 % víc přilnavosti, karoserie se naklání rychleji a nehoupe se), o 15 % větší náklon
-// při brzdění a v driftu; se závodními pruhy
+// z výroby tvrdší podvozek (o 6 % víc přilnavosti, karoserie reaguje 2,2× rychleji a nehoupe se) a náklon při brzdění
+// a v driftu 0,8× proti Fabii R5; se závodními pruhy
 CAR_TYPES.fabiars = {
   ...CAR_TYPES.fabia, name: 'Škoda Fabia RS', desc: 'raketa: o 30 % silnější, o 30 % lépe brzdí, tvrdší podvozek',
-  power: CAR_TYPES.fabia.power * 1.3, vmax: CAR_TYPES.fabia.vmax * 1.1, grip: CAR_TYPES.fabia.grip * 1.06, brakeK: 1.3, brakeGrip: 1.3, lean: 1.15, stiff: 1.7, decal0: 'stripes',
+  power: CAR_TYPES.fabia.power * 1.3, vmax: CAR_TYPES.fabia.vmax * 1.1, grip: CAR_TYPES.fabia.grip * 1.06, brakeK: 1.3, brakeGrip: 1.3, lean: 0.8, stiff: 2.2, decal0: 'stripes',
 };
 CAR_TYPES.senna = {
   name: 'McLaren Senna', desc: 'hypersport, nejrychlejší a nejostřejší', model: 'senna', power: 1.25, vmax: 1.14, rearBias: 0.04, grip: 1.05,
