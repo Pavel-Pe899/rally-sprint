@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw692ifi';
+window.__BUILD = 'mw6as6tw';
 (function () {
   function check() {
     try {
@@ -969,8 +969,9 @@ window.__BUILD = 'mw692ifi';
   #menu .tools { display: flex; gap: 5px; flex: none; }
   #menu .tool { width: 40px; height: 40px; display: grid; place-items: center; position: relative; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #353a46, #1f2229); box-shadow: 0 3px 0 #050608; color: #fff; cursor: pointer; padding: 0; }
   #menu .tool .ic { width: 22px; height: 22px; margin: 0; }
-  #menu .tool small { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); font-size: 10px; color: #c9ced6; white-space: nowrap; font-family: var(--display); pointer-events: none; opacity: 0; transition: opacity .15s; }
-  #menu .tool:hover small, #menu .tool:focus-visible small { opacity: 1; }
+  /* nástroje: ikona a pod ní vždy popisek (dřív se popisek ukázal jen po najetí myší) */
+  #menu .tool { width: auto; min-width: 48px; height: auto; padding: 4px 6px 3px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  #menu .tool small { font-size: 10px; line-height: 1.1; color: #c9ced6; white-space: nowrap; font-family: var(--display); pointer-events: none; max-width: 64px; overflow: hidden; text-overflow: ellipsis; }
   #menu .tool:hover { border-color: #ffc419; }
   #hubGarage { color: #8dff55; }
   .me-bar { display: flex; align-items: center; gap: 10px; flex: none; font-family: var(--display); font-size: 15px; background: rgba(255, 255, 255, .06); border-radius: 12px; padding: 6px 10px; min-width: 0; }
@@ -1002,7 +1003,11 @@ window.__BUILD = 'mw692ifi';
   .rx-info b { display: block; font-size: 15px; } .rx-info small { color: #ffc419; font-size: 15px; letter-spacing: 1px; } .rx-info em { display: block; font-style: normal; font-size: 11px; color: #c9ced6; }
   #menu .rx-help { display: block; }
   @media (max-height: 450px) {
-    #menu .top-row .logo { font-size: 24px; } #menu .tool { width: 36px; height: 36px; border-radius: 10px; } #menu .tool .ic { width: 19px; height: 19px; }
+    #menu .top-row .logo { font-size: 22px; } #menu .tool { min-width: 44px; padding: 3px 4px 2px; border-radius: 10px; } #menu .tool .ic { width: 18px; height: 18px; } #menu .tool small { font-size: 9px; }
+    .mode-tabs button { flex-direction: row; justify-content: center; gap: 5px; } .mode-tabs .ic { width: 17px; height: 17px; }
+    #menu .stage { padding: 3px 8px 3px 4px; grid-template-columns: 34px minmax(0, 1fr) auto; border-radius: 11px; } #menu .stage .thumb { width: 34px; height: 34px; }
+    #menu .stage .nm { font-size: 16px; } #menu .stage .meta { font-size: 12px; } #menu .stages { gap: 5px; }
+    #menu .label { margin: 2px 0 0; font-size: 11px; }
     .me-bar { padding: 4px 8px; font-size: 13px; gap: 8px; } .me-bar > b { font-size: 14px; } .me-lvl { display: none; }
     .mode-tabs b { font-size: 14px; } .mode-tabs small { display: none; } .mode-tabs button { padding: 5px 2px; }
     #menu .rx-help { display: none; }
@@ -1015,13 +1020,13 @@ window.__BUILD = 'mw692ifi';
   .gar-top h2 { margin: 0; background: #fff; color: #0b0c10; font-size: 28px; font-weight: 900; padding: 2px 20px; font-style: italic; letter-spacing: .04em; }
   .gar-money { margin-left: auto; background: rgba(0, 0, 0, .55); padding: 5px 12px; border-radius: 6px; font-size: 20px; }
   .gar-money i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #20c4e8; color: #062330; font-style: normal; font-weight: 900; font-size: 14px; margin-right: 6px; vertical-align: 1px; }
-  .gar-cars { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right: calc(min(400px, 40vw) + 30px); display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+  .gar-cars { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); right: calc(min(440px, 46vw) + 30px); display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
   .gar-car { flex: none; border: 3px solid rgba(255, 255, 255, .7); background: rgba(10, 12, 16, .75); color: #fff; font-family: var(--display); padding: 5px 12px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 1px; }
   .gar-car b { font-size: 15px; font-weight: 800; white-space: nowrap; } .gar-car small { font-size: 11px; opacity: .75; white-space: nowrap; }
   .gar-car[aria-pressed="true"] { border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .3), rgba(10, 12, 16, .85)); }
   .gar-car .on { color: #3fdc86; }
-  .gar-hint { position: absolute; left: 50%; transform: translateX(calc(-50% - min(200px, 20vw))); top: calc(62px + env(safe-area-inset-top, 0px)); font-size: 13px; color: rgba(255, 255, 255, .7); text-shadow: 0 1px 3px #000; white-space: nowrap; pointer-events: none; }
-  .gar-panel { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(400px, 40vw); display: flex; flex-direction: column; gap: 8px; background: rgba(12, 14, 19, .86); border: 2px solid rgba(255, 255, 255, .14); padding: 10px 12px; box-sizing: border-box; touch-action: pan-y; }
+  .gar-hint { position: absolute; left: 50%; transform: translateX(calc(-50% - min(220px, 23vw))); top: calc(62px + env(safe-area-inset-top, 0px)); font-size: 13px; color: rgba(255, 255, 255, .7); text-shadow: 0 1px 3px #000; white-space: nowrap; pointer-events: none; }
+  .gar-panel { position: absolute; right: max(14px, env(safe-area-inset-right, 0px)); top: calc(62px + env(safe-area-inset-top, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(440px, 46vw); display: flex; flex-direction: column; gap: 8px; background: rgba(12, 14, 19, .86); border: 2px solid rgba(255, 255, 255, .14); padding: 10px 12px; box-sizing: border-box; touch-action: pan-y; }
   .gar-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
   .gar-head h3 { margin: 0; font-size: 24px; font-weight: 900; font-style: italic; } .gar-head small { flex-basis: 100%; color: #c9ced6; font-size: 13px; }
   .gar-up { background: linear-gradient(90deg, #29c77a, #7dff9e); color: #062b16; font-weight: 900; font-size: 13px; padding: 1px 8px; }
@@ -1036,12 +1041,22 @@ window.__BUILD = 'mw692ifi';
   .gar-it .lv { color: #ffc419; letter-spacing: 1px; font-size: 13px; } .gar-it .lv u { text-decoration: none; opacity: .3; }
   .gar-it button { grid-row: span 2; grid-column: 3; border: 0; background: linear-gradient(90deg, #ff7a59, #ff3fa4); color: #fff; font-family: var(--display); font-weight: 800; font-size: 13px; padding: 7px 10px; cursor: pointer; max-width: 150px; line-height: 1.15; }
   .gar-it button:disabled { background: #3a3f48; color: #9aa1ab; cursor: default; }
+  .gar-list.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 5px; }
+  .gar-tile { grid-template-columns: 22px minmax(0, 1fr) auto; gap: 1px 6px; padding: 5px 6px; border-left-width: 3px; }
+  .gar-tile .ic { grid-row: auto; font-size: 15px; }
+  .gar-tile b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gar-tile .lv { font-size: 12px; }
+  .gar-tile small { grid-column: 1 / 3; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #9fe7b9; }
+  .gar-tile button { grid-row: auto; grid-column: 3; max-width: none; font-size: 12px; padding: 3px 7px; white-space: nowrap; }
+  /* parametry auta v jednom řádku: pět sloupců (název nad pruhem) */
+  .gar-stats.row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px 6px; font-size: 11px; }
+  .gar-stats.row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; grid-row: 1; } .gar-stats.row i { grid-row: 2; height: 6px; }
   .gar-sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
   .gar-sw button { border: 3px solid transparent; background: rgba(255, 255, 255, .06); color: #fff; font-family: var(--display); font-size: 12px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
   .gar-sw button i { width: 100%; height: 30px; display: block; } .gar-sw button[aria-pressed="true"] { border-color: #ffc419; } .gar-sw button.locked { opacity: .5; }
   .gar-pick { flex: none; font-size: 18px; padding: 8px; }
   @media (max-height: 560px) { .gar-head small { display: none; } .gar-stats { grid-template-columns: auto 1fr auto 1fr; gap: 2px 8px; font-size: 11px; } .gar-stats i { height: 7px; } }
-  @media (max-height: 450px) { .gar-top h2 { font-size: 22px; } .gar-back { height: 38px; } .gar-panel { top: calc(54px + env(safe-area-inset-top, 0px)); padding: 8px 10px; gap: 6px; } .gar-head h3 { font-size: 19px; } .gar-stats { font-size: 11px; } .gar-hint { top: calc(54px + env(safe-area-inset-top, 0px)); } .gar-pick { font-size: 16px; padding: 7px; } }
+  @media (max-height: 450px) { .gar-tabs button { padding: 2px 0; font-size: 14px; } .gar-tile { padding: 4px 6px; } .gar-top h2 { font-size: 22px; } .gar-back { height: 38px; } .gar-panel { top: calc(54px + env(safe-area-inset-top, 0px)); padding: 8px 10px; gap: 6px; } .gar-head h3 { font-size: 19px; } .gar-stats { font-size: 11px; } .gar-hint { top: calc(54px + env(safe-area-inset-top, 0px)); } .gar-pick { font-size: 16px; padding: 7px; } }
   @media (orientation: portrait) {
     .gar-panel { left: 10px; right: 10px; width: auto; top: auto; height: 52%; }
     .gar-cars { right: 10px; bottom: calc(52% + 16px); }
@@ -2734,10 +2749,12 @@ const camera = new T.PerspectiveCamera(62, 1, 0.3, 7000);
 scene.add(camera);
 
 // ---------------------------------------------------------------- textury
-function canvasTex(w, h, draw, srgb = true) {
+// read = obraz se bude číst zpět (getImageData): plátno zůstane v paměti procesoru, jinak by se každé čtení stahovalo
+// z grafické karty (na telefonu i stovky ms)
+function canvasTex(w, h, draw, srgb = true, read = false) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
-  draw(c.getContext('2d'), w, h);
+  draw(read ? c.getContext('2d', { willReadFrequently: true }) : c.getContext('2d'), w, h);
   const t = new T.CanvasTexture(c);
   if (srgb) t.colorSpace = T.SRGBColorSpace;
   t.wrapS = t.wrapT = T.RepeatWrapping;
@@ -2872,7 +2889,7 @@ function photoTexSat(key, sat, rx, ry) {
       a[i] = l + (a[i] - l) * sat; a[i + 1] = l + (a[i + 1] - l) * sat; a[i + 2] = l + (a[i + 2] - l) * sat;
     }
     g.putImageData(d, 0, 0);
-  });
+  }, true, true);
   t.repeat.set(rx, ry);
   return t;
 }
@@ -2892,7 +2909,7 @@ function photoDetail(key, tw = 256, th = 256) {
       a[i] = a[i + 1] = a[i + 2] = v;
     }
     g.putImageData(d, 0, 0);
-  });
+  }, true, true);
   return t;
 }
 // Překryv cesty přes fotku: šedá 128 = beze změny, tmavší = vyjeté stopy, průhlednost = bílá čára.
@@ -4899,7 +4916,7 @@ function buildWorld(td) {
     const flagGeo = new T.PlaneGeometry(2.2, 1.3, 6, 1).translate(1.1, 0, 0);
     const seatMask = (text, cols, rows) => {
       const c = document.createElement('canvas'); c.width = cols; c.height = rows;
-      const g = c.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, cols, rows);
+      const g = c.getContext('2d', { willReadFrequently: true }); g.fillStyle = '#000'; g.fillRect(0, 0, cols, rows);
       g.fillStyle = '#fff'; g.font = `900 ${rows * 1.05}px Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillText(text, cols / 2, rows / 2 + 1, cols * 0.9);
       const d = g.getImageData(0, 0, cols, rows).data;
@@ -6425,7 +6442,43 @@ function buildCar(lv) {
 
 // Auto z modelu: karoserie do skupiny body (náklony), každé kolo do vlastní otočné skupiny,
 // lak v barvě zvolené livreje, čísla promítnutá na dveře a střechu, lapače bláta a noční rampa.
+// Sdílené tvary aut: model každého auta je stejný (sdílí původní geometrie), takže spojení dílů, odříznutí křídel
+// a oddělení karbonových dílů dává pro stejné vstupy stejný výsledek. Výsledek se proto spočítá jednou a další auta
+// (deset formulí ve Velké ceně) ho jen sdílí – méně paměti v telefonu a rychlejší start. Promáčkliny si geometrii
+// před úpravou kopírují (rdDent), takže sdílený tvar zůstane netknutý.
+const GEO_MEMO = new Map();
+const geoKey = (o) => { o.updateMatrix(); let h = 0; const e = o.matrix.elements; for (let i = 0; i < 16; i++) h = (h * 31 + Math.round(e[i] * 1e4)) | 0; return o.geometry.uuid + ':' + h; };
+function geoMemo(key, make) {
+  let g = GEO_MEMO.get(key);
+  if (!g) { g = make(); GEO_MEMO.set(key, g); }
+  return g;
+}
+// stejné díly (kola, pneumatiky, kryty, trubky, polepy…) mají u všech formulí stejný tvar: podle obsahu (otisk vrcholů,
+// normál, UV a indexů) se najde už existující geometrie a použije se ta; nová kopie se zahodí
+function geoHash(g) {
+  let h = 2166136261 | 0;
+  const mix = (arr) => { if (!arr) { h = Math.imul(h ^ 7, 16777619); return; } h = Math.imul(h ^ arr.length, 16777619); const st = arr.length > 2e6 ? Math.floor(arr.length / 2e6) + 1 : 1; for (let i = 0; i < arr.length; i += st) h = Math.imul(h ^ Math.round(arr[i] * 1e5), 16777619); };
+  mix(g.attributes.position && g.attributes.position.array); mix(g.attributes.normal && g.attributes.normal.array); mix(g.attributes.uv && g.attributes.uv.array); mix(g.index && g.index.array);
+  return (h >>> 0).toString(36) + ':' + (g.attributes.position ? g.attributes.position.count : 0) + ':' + Object.keys(g.attributes).join() + ':' + g.groups.length;
+}
+function geoDedupe(root) {
+  root.traverse((o) => {
+    const g = o.geometry; if (!g || !g.attributes || !g.attributes.position || g.userData.memo) return;
+    const k = 'dd|' + geoHash(g), have = GEO_MEMO.get(k);
+    if (have && have !== g) { o.geometry = have; g.dispose(); }
+    else if (!have) { g.userData.memo = true; GEO_MEMO.set(k, g); }
+  });
+}
 function mergeMeshes(list, parent) {
+  const key = 'merge|' + list.map(geoKey).join(',');
+  const cached = GEO_MEMO.get(key);
+  if (cached) {
+    for (const m of list) parent.remove(m);
+    const out = new T.Mesh(cached, list[0].material);
+    out.castShadow = list[0].castShadow; out.receiveShadow = true;
+    parent.add(out);
+    return out;
+  }
   let nv = 0, ni = 0;
   for (const m of list) { const g = m.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
   const hasUv = list.every((m) => m.geometry.attributes.uv);
@@ -6452,6 +6505,7 @@ function mergeMeshes(list, parent) {
   if (uv) geo.setAttribute('uv', new T.BufferAttribute(uv, 2));
   geo.setIndex(new T.BufferAttribute(idx, 1));
   geo.computeBoundingSphere();
+  GEO_MEMO.set(key, geo);
   const out = new T.Mesh(geo, list[0].material);
   out.castShadow = list[0].castShadow; out.receiveShadow = true;
   parent.add(out);
@@ -6631,8 +6685,9 @@ function buildModelCar(lv, spec) {
         (cy < 0.17 || susp ? move : keep).push(i0, i1, i2);
       }
       if (!move.length) continue;
-      const g1 = g.clone(); g1.setIndex(keep); o.geometry = g1;
-      const g2 = g.clone(); g2.setIndex(move);
+      const gk = 'carbon|' + geoKey(o) + '|' + n + '|' + move.length;
+      const [g1, g2] = geoMemo(gk, () => { const a1 = g.clone(); a1.setIndex(keep); const a2 = g.clone(); a2.setIndex(move); return [a1, a2]; });
+      o.geometry = g1;
       const m2 = new T.Mesh(g2, carbonM); m2.position.copy(o.position); m2.quaternion.copy(o.quaternion); m2.scale.copy(o.scale); m2.castShadow = o.castShadow;
       o.parent.add(m2);
     }
@@ -6663,6 +6718,8 @@ function buildModelCar(lv, spec) {
     const cm = new T.Vector3();
     body.traverse((o) => {
       if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+      const ck = 'cut|' + geoKey(o) + '|' + cutR + cutF, hitG = GEO_MEMO.get(ck);
+      if (hitG) { o.geometry = hitG; o.userData.smooth = true; return; }
       const geo = o.geometry.clone(), p = geo.attributes.position, ix = geo.index, n = ix ? ix.count : p.count, keep = [];
       o.updateMatrix();
       for (let i = 0; i < n; i += 3) {
@@ -6671,7 +6728,7 @@ function buildModelCar(lv, spec) {
         const gone = (cutR && cm.z < -2.28 && cm.y > 0.7 && Math.abs(cm.x) < 0.66) || (cutF && ((cm.z > 1.85 && cm.y < 0.27 && (Math.abs(cm.x) > 0.16 || cm.y < 0.18)) || (cm.z > 2.0 && cm.y < 0.5 && Math.abs(cm.x) > 0.19)));
         if (!gone) keep.push(a, b2, c2);
       }
-      geo.setIndex(keep); o.geometry = creaseNormals(geo); o.userData.smooth = true;
+      geo.setIndex(keep); o.geometry = creaseNormals(geo); o.userData.smooth = true; GEO_MEMO.set(ck, o.geometry);
     });
   }
   const midZ = (bb.min.z + bb.max.z) / 2;
@@ -6854,6 +6911,7 @@ function buildModelCar(lv, spec) {
   blob.rotation.x = -Math.PI / 2; blob.renderOrder = 1;
   const flame = makeFlame(0.42, 0.24, bb.min.z - 0.02);
   body.add(flame);
+  if (spec.formula) geoDedupe(root);
   return { root, body, wheels, pod, beams, beamMat, headMat, tailMat, blob, flame, tyreMat, materials: { paint, acc1, acc2 }, baseColor: new T.Color(lv.body), wetGroups, dryGroups, brakeMats, kersMat: kersMatRef, driver, lv, formula: !!spec.formula, helm: driver[0] || null };
 }
 
@@ -7454,11 +7512,12 @@ CAR_TYPES.fabia = {
   look: { metal: 0.25, rough: 0.32 },
   parts: { wheel: /^Wheel_/, caliper: null, tire: /_tire/, paint: /^Car_body$/, head: /^mat_7$/, tail: /^mat_7$/, rim: /^mat_14$/, noShadow: /Wheel_|mat_7|mat_24|mat_25|mat_1[358]$|mat_17/ },
 };
-// Škoda Fabia RS: vyladěná Fabie – o 20 % silnější motor, o 30 % lepší brzdy (silnější i na hranici přilnavosti),
-// o 15 % víc se naklání při brzdění a v driftu; z výroby se závodními pruhy
+// Škoda Fabia RS: vyladěná Fabie – o 30 % silnější motor, o 30 % lepší brzdy (silnější i na hranici přilnavosti),
+// z výroby tvrdší podvozek (o 6 % víc přilnavosti, karoserie se naklání rychleji a nehoupe se), o 15 % větší náklon
+// při brzdění a v driftu; se závodními pruhy
 CAR_TYPES.fabiars = {
-  ...CAR_TYPES.fabia, name: 'Škoda Fabia RS', desc: 'raketa: o 20 % silnější, o 30 % lépe brzdí, víc se naklání v driftu',
-  power: CAR_TYPES.fabia.power * 1.2, vmax: CAR_TYPES.fabia.vmax * 1.08, brakeK: 1.3, brakeGrip: 1.3, lean: 1.15, decal0: 'stripes',
+  ...CAR_TYPES.fabia, name: 'Škoda Fabia RS', desc: 'raketa: o 30 % silnější, o 30 % lépe brzdí, tvrdší podvozek',
+  power: CAR_TYPES.fabia.power * 1.3, vmax: CAR_TYPES.fabia.vmax * 1.1, grip: CAR_TYPES.fabia.grip * 1.06, brakeK: 1.3, brakeGrip: 1.3, lean: 1.15, stiff: 1.7, decal0: 'stripes',
 };
 CAR_TYPES.senna = {
   name: 'McLaren Senna', desc: 'hypersport, nejrychlejší a nejostřejší', model: 'senna', power: 1.25, vmax: 1.14, rearBias: 0.04, grip: 1.05,
@@ -10546,10 +10605,10 @@ function updateCarVisual(dt, inp) {
   const lonAcc = (car.vf - car.prevVf) / Math.max(dt, 1e-3);
   car.prevVf = car.vf;
   const latAcc = car.vf * car.omega;
-  const lk = carType().lean || 1;   // Fabia RS se naklání víc (brzdění, drift)
-  car.bPitch += (clamp(-lonAcc * 0.0045 * lk, -0.07 * lk, 0.07 * lk) - car.bPitch) * Math.min(1, dt * 7);
-  car.bRoll += (clamp(latAcc * 0.0042 * lk, -0.085 * lk, 0.085 * lk) - car.bRoll) * Math.min(1, dt * 6);
-  car.bounce += (0 - car.bounce) * Math.min(1, dt * 9);
+  const ctV = carType(), lk = ctV.lean || 1, sk = ctV.stiff || 1;   // Fabia RS: víc se naklání, tvrdší podvozek reaguje rychleji
+  car.bPitch += (clamp(-lonAcc * 0.0045 * lk, -0.07 * lk, 0.07 * lk) - car.bPitch) * Math.min(1, dt * 7 * sk);
+  car.bRoll += (clamp(latAcc * 0.0042 * lk, -0.085 * lk, 0.085 * lk) - car.bRoll) * Math.min(1, dt * 6 * sk);
+  car.bounce += (0 - car.bounce) * Math.min(1, dt * 9 * sk);
   const jit = car.surf === 'off' && !flying ? (Math.random() - 0.5) * Math.min(0.06, Math.abs(car.vf) / 300) : 0;
 
   const r = car3d.root;
@@ -11203,7 +11262,7 @@ function precompile(obj) {
 // poprvé objeví (tribuna za zatáčkou, garáže, podrobné stromy) a hra na okamžik škubne.
 function warmUp(root) {
   const shown = [], culled = [];
-  root.traverse((o) => {
+  for (const r of Array.isArray(root) ? root : [root]) r.traverse((o) => {
     if (!o.visible) { shown.push(o); o.visible = true; }
     if ((o.isMesh || o.isPoints) && o.frustumCulled) { culled.push(o); o.frustumCulled = false; }
   });
@@ -11754,13 +11813,15 @@ const gpTeamsOrder = () => Object.keys(F1_TEAMS);
 const TYRE_SOFT = '#e8102a', TYRE_MEDIUM = '#ffd200', TYRE_INTER = '#2fbf4a';
 const tyreCol = (t) => (t === 'wet' ? TYRE_WET : t === 'inter' ? TYRE_INTER : t === 'soft' ? TYRE_SOFT : TYRE_MEDIUM);
 const setTyre = (c, col) => { if (c && c.tyreMat) { c.tyreMat.color.set(col); c.tyreMat.emissive.set(col); } if (c && c.wetGroups) { for (const gr of c.wetGroups) gr.visible = col === TYRE_WET || col === TYRE_INTER; for (const gr of c.dryGroups || []) gr.visible = col !== TYRE_WET && col !== TYRE_INTER && (shopLv('tyres') > 0 || c !== car3d); } };
-function gpBuildAI(key) {
+function gpBuildAI(key, fresh) {
   if (G.gpModels && G.gpModels[key]) return G.gpModels[key];
-  const c = buildModelCar({ ...LIVERIES[0], team: key }, CAR_TYPES.f1);
-  c.beams.visible = false; c.pod.visible = false; c.flame.visible = false;
+  // model formule chybí (nenačetl se): náhradní auto, závod nespadne
+  const c = carModels.f1 ? buildModelCar({ ...LIVERIES[0], team: key }, CAR_TYPES.f1) : buildProceduralCar({ ...LIVERIES[0], team: key });
+  if (c.beams) c.beams.visible = false; if (c.pod) c.pod.visible = false; if (c.flame) c.flame.visible = false;
   scene.add(c.root, c.blob);
-  precompile(c.root);
-  warmUp(c.root);
+  // předehřátí (vykreslení celé scény naprázdno) až jednou za všechna nová auta – dřív se scéna kreslila pro každé auto
+  // zvlášť (10× za sebou), což start Velké ceny protáhlo o desítky sekund
+  if (fresh) fresh.push(c.root); else { precompile(c.root); warmUp(c.root); }
   (G.gpModels = G.gpModels || {})[key] = c;
   return c;
 }
@@ -11777,11 +11838,13 @@ function gpSetup() {
   const quali = !!gp.quali, grid = !quali && Array.isArray(gp.grid) ? gp.grid : null;
   const slotOf = (key, k) => (grid && grid.indexOf(key) >= 0 ? grid.indexOf(key) : k);
   for (const k of Object.keys(G.gpModels || {})) G.gpModels[k].root.visible = G.gpModels[k].blob.visible = !quali && rivals.includes(k);
+  const fresh = [];
   gp.ai = (quali ? [] : rivals).map((key, k) => ({
-    key, team: F1_TEAMS[key], box: teams.indexOf(key), c3d: gpBuildAI(key),
+    key, team: F1_TEAMS[key], box: teams.indexOf(key), c3d: gpBuildAI(key, fresh),
     d: gridRel(slotOf(key, k)), lat: gridLat(slotOf(key, k)), latT: gridLat(slotOf(key, k)), home: (k % 2 ? 1 : -1) * (0.4 + k * 0.25), v: 0,
     k, tyre: 'medium', plan: total > GP_LAPS ? [Math.round(total * 0.72) + (k % 2)] : [], skill: skills[k], pitLap: total > GP_LAPS ? Math.round(total * 0.33) + (k % 3) : pitLaps[k], pit: 0, stopT: 0, wear: 0, done: false, finishT: null, lapNo: 0, lapStart: 0, best: null, spin: 0, passT: 0,
   }));
+  if (fresh.length) { for (const r of fresh) precompile(r); warmUp(fresh); }
   dmgReset(); scReset();
   const strat = gpStratPlan();
   Object.assign(gp, { lap: 0, wear: 0, pitted: false, service: 0, serviceCD: 0, myBox: teams.indexOf(me), lapStart: 0, laps: [], best: null, finished: false, dsq: false, said: {}, limiterShown: false, boxShown: false, pitReq: false, pilot: null, pilotLat: null, tyre: quali ? 'soft' : strat.start, plan: quali ? [] : strat.plan, stratName: strat.name });
@@ -16954,7 +17017,7 @@ function netHostWait() {
   if (meReady && !pend.tReady) pend.tReady = performance.now();
   const slow = ps.filter((p) => p.presence.ack !== pend.id).map((p) => (p.presence.name || 'Hráč').slice(0, 12));
   if (meReady && slow.length && !(performance.now() - (pend.toastT || 0) < 2500)) { pend.toastT = performance.now(); toast(`Čekám, až si trať načte: ${slow.join(', ')}…`, 2.6); }
-  const waitMax = ps.length ? 60000 : 15000;   // nikdo další v čekárně: nejvýš 15 s
+  const waitMax = ps.length ? 90000 : 15000;   // nikdo další v čekárně: nejvýš 15 s (pomalejší telefon má na načtení 90 s)
   if (meReady && (all || performance.now() - pend.tReady > waitMax)) { const at = Date.now() + 4000; netPresence({ go: pend.id, at }); pend.at = at; netStart(pend); }
 }
 function netStart(pend) {
@@ -17598,19 +17661,24 @@ function garRender() {
   $('garName').textContent = ct.name; $('garUp').textContent = `${up}/${items.length * 3} ★`;
   $('garDesc').textContent = ct.formula ? `Formule 1 · tým ${F1_TEAMS[f1Team()].name}` : ct.desc;
   $('garStats').innerHTML = rxCarStats(id).map(([n, v]) => `<span>${n}</span><i><u style="width:${(v * 100).toFixed(0)}%"></u></i>`).join('');
+  $('garStats').classList.add('row');
   if (ct.formula && GAR.tab === 'decal') GAR.tab = 'tune';
   for (const b of $('garTabs').children) { b.hidden = !!ct.formula && b.dataset.t === 'decal'; b.setAttribute('aria-pressed', String(b.dataset.t === GAR.tab)); b.textContent = b.dataset.t === 'paint' && ct.formula ? 'Tým' : { tune: 'Tuning', paint: 'Lak', decal: 'Polepy' }[b.dataset.t]; }
-  const list = $('garList'); list.innerHTML = '';
+  const list = $('garList'); list.innerHTML = ''; list.classList.toggle('tiles', GAR.tab === 'tune');
+  // tuning: malé dlaždice ve dvou sloupcích (na telefonu je vidět celá nabídka najednou): díl, hvězdy, co přidá
+  // další stupeň a cena; celý název dílu je v popisku po podržení / najetí myší
   if (GAR.tab === 'tune') for (const it of items) {
     const l = lv[it.id], price = l < 3 ? shopPrice(it, l) : 0, row = document.createElement('div');
-    row.className = 'gar-it' + (l >= 3 ? ' max' : ''); row.dataset.it = it.id;
-    row.innerHTML = '<span class="ic"></span><b></b><button></button><small></small>';
+    row.className = 'gar-it gar-tile' + (l >= 3 ? ' max' : ''); row.dataset.it = it.id;
+    row.innerHTML = '<span class="ic"></span><b></b><span class="lv"></span><small></small><button></button>';
     row.querySelector('.ic').textContent = it.icon || '⚙';
-    row.querySelector('b').innerHTML = `${it.name.replace(/[<>&]/g, '')} <span class="lv">${[1, 2, 3].map((k) => (k <= l ? '★' : '<u>★</u>')).join('')}</span>`;
-    row.querySelector('small').textContent = l > 0 ? it.tiers[l - 1] : `${it.base || 'základ'} · ${it.fx(1)}`;
+    row.querySelector('b').textContent = it.name;
+    row.querySelector('.lv').innerHTML = [1, 2, 3].map((k) => (k <= l ? '★' : '<u>★</u>')).join('');
+    row.querySelector('small').textContent = l >= 3 ? it.fx(3) : `${l ? it.fx(l) + ' → ' : ''}${it.fx(l + 1)}`;
+    row.title = l >= 3 ? it.tiers[2] : `${l ? it.tiers[l - 1] + ' → ' : ''}${it.tiers[l]}`;
     const btn = row.querySelector('button');
     if (l >= 3) { btn.textContent = 'MAX'; btn.disabled = true; }
-    else { btn.textContent = `${it.tiers[l]} · ${price ? moneyStr(price) : 'ZDARMA'}`; btn.disabled = (saved.money | 0) < price; btn.onclick = () => garBuy(it.id); }
+    else { btn.textContent = price ? moneyStr(price) : 'ZDARMA'; btn.disabled = (saved.money | 0) < price; btn.onclick = () => garBuy(it.id); }
     list.appendChild(row);
   } else if (GAR.tab === 'paint') {
     const sw = document.createElement('div'); sw.className = 'gar-sw'; list.appendChild(sw);
