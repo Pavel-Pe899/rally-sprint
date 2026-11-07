@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw5gt27x';
+window.__BUILD = 'mw5wwjoq';
 (function () {
   function check() {
     try {
@@ -207,7 +207,7 @@ window.__BUILD = 'mw5gt27x';
   .btn.ghost small { color: #ffd23f; opacity: 1; font-weight: 700; }
   .btn.ghost .ic { color: #ffd23f; }
   .btn.gp { background: linear-gradient(180deg, #ff5a36 0%, #e10600 55%, #a80400 100%); color: #fff; text-shadow: 0 2px 0 #5a0000; box-shadow: 0 5px 0 #050608, inset 0 2px 0 rgba(255, 255, 255, .35); }
-  #menu #bStart { font-size: 30px; padding: 14px 18px; }
+  #menu #bStart, #menu #f1Go, #menu #bRx { font-size: 30px; padding: 14px 18px; }
   #menu .sheet { box-sizing: border-box; width: min(490px, 100%); padding-bottom: 0; }
   #menu .modes { gap: 10px; order: 10; }
   /* přilepené dole je jen žluté Odstartovat, ostatní tlačítka se posouvají s nabídkou */
@@ -952,60 +952,55 @@ window.__BUILD = 'mw5gt27x';
   #hud::after { content: ''; position: absolute; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: 260px; height: 8px; pointer-events: none;
     background: linear-gradient(90deg, transparent 0 40%, rgba(225, 6, 0, .85) 40% 100%) 0 100% / 100% 3px no-repeat, repeating-linear-gradient(115deg, transparent 0 6px, rgba(225, 6, 0, .9) 6px 10px) 100% 0 / 60px 8px no-repeat; }
   /* ---------- rallycross: garáž přes celou obrazovku, jen na ležato (telefon na výšku: celé se otočí o 90°) ---------- */
-  /* ---- lobby z dlaždic (kategorie) ---- */
-  #menu[data-view="hub"] .sheet { display: none; }
-  #menu:not([data-view="hub"]) .hub { display: none; }
-  #menu .sheet .brand { display: none; }
-  .hub { pointer-events: auto; position: absolute; inset: 0; display: flex; flex-direction: column; gap: clamp(6px, 1.6vh, 14px); font-family: var(--display);
-    padding: calc(8px + env(safe-area-inset-top, 0px)) max(14px, calc(8px + env(safe-area-inset-right, 0px))) calc(8px + env(safe-area-inset-bottom, 0px)) max(14px, calc(8px + env(safe-area-inset-left, 0px)));
-    background: radial-gradient(90% 70% at 70% 10%, rgba(255, 196, 25, .07), rgba(0, 0, 0, 0) 60%), linear-gradient(180deg, rgba(14, 16, 21, .9), rgba(10, 11, 15, .94)); overflow-y: auto; box-sizing: border-box; }
-  .hub-top { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; border-bottom: 3px solid #f2f2f2; flex: none; }
-  .hub-me { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .hub-helm { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg, #ffc419, #ff7a1a); color: #14161b; flex: none; font-weight: 900; font-size: 24px; font-style: italic; box-shadow: 0 0 0 3px #fff; }
-  .hub-helm svg { width: 30px; height: 30px; }
-  .hub-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; background: #fff; color: #111; padding: 2px 8px 3px; }
-  .hub-id b { font-size: 17px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
-  .hub-lvl { display: flex; align-items: center; gap: 6px; }
-  .hub-lvl i { width: 110px; height: 8px; background: #d9dce1; display: block; }
-  .hub-lvl u { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb300, #ffd84a); }
-  .hub-lvl em { font-style: normal; font-weight: 900; font-size: 13px; color: #fff; background: #1e7cf2; padding: 0 6px; }
-  .hub-flag { width: 34px; height: 24px; flex: none; border: 2px solid #fff; background: linear-gradient(180deg, #fff 0 50%, #d7141a 50%); position: relative; overflow: hidden; }
-  .hub-flag::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 55%; background: #11457e; clip-path: polygon(0 0, 100% 50%, 0 100%); }
-  #menu .hub-logo { margin: 0 auto; font-size: clamp(20px, 3.4vw, 34px); line-height: 1; transform: skewX(-9deg); white-space: nowrap; font-weight: 900; }
-  #menu .hub-logo em { color: #ffc419; font-style: normal; }
-  .hub-res { display: flex; align-items: center; gap: clamp(8px, 1.6vw, 18px); background: rgba(255, 255, 255, .06); padding: 5px 12px; border-radius: 6px; font-size: clamp(15px, 2vw, 21px); white-space: nowrap; }
-  .hub-res b { font-weight: 700; } .hub-res .medal { vertical-align: -3px; }
-  .hr-money i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #20c4e8; color: #062330; font-style: normal; font-weight: 900; font-size: 14px; margin-right: 5px; vertical-align: 1px; }
-  .hub-grid { flex: 1 0 auto; min-height: 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: minmax(92px, 1.3fr) minmax(80px, 1fr); gap: clamp(8px, 1.4vw, 16px); padding: 0 clamp(0px, 3vw, 60px); }
-  .tile { position: relative; overflow: hidden; border: 4px solid #f4f4f4; padding: 0; margin: 0; background: #1c1f26; cursor: pointer; color: #fff; font-family: var(--display); text-align: left; box-shadow: 0 6px 18px rgba(0, 0, 0, .45); transition: transform .12s, border-color .12s; grid-column: span 3; min-height: 0; -webkit-tap-highlight-color: transparent; }
-  .tile.big { grid-column: span 4; }
-  .tile:hover { transform: translateY(-2px); border-color: #fff; } .tile:active { transform: scale(.985); }
-  .tile:focus-visible { outline: 3px solid #ffc419; outline-offset: 2px; }
-  .tile-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .tile-top { position: absolute; top: 8%; right: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; background: rgba(8, 9, 12, .72); padding: 4px 10px 5px 14px; clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%); }
-  .tile-top b { font-size: clamp(12px, 1.7vw, 22px); letter-spacing: .06em; color: var(--lc2); font-weight: 600; }
-  .tile-top em { font-style: normal; font-size: clamp(10px, 1.3vw, 15px); color: #fff; opacity: .9; }
-  .tile:not(.big) .tile-top b { display: none; }
-  .tile-lbl { position: absolute; left: 3%; bottom: 7%; display: flex; align-items: center; gap: 10px; padding: 3px 18px 3px 10px; min-width: 60%; box-sizing: border-box; color: #0b0c10; font-weight: 600; font-size: clamp(15px, 2.6vw, 34px); letter-spacing: .03em; background: linear-gradient(90deg, var(--lc), var(--lc2)); line-height: 1.2; }
-  .tile:not(.big) .tile-lbl { font-size: clamp(13px, 2vw, 26px); min-width: 0; right: 3%; }
-  .tile-lbl svg { width: 1.05em; height: 1.05em; flex: none; }
-  .hub-bot { flex: none; display: flex; justify-content: center; align-items: center; gap: 12px; }
-  .hub-ic { width: clamp(46px, 7vh, 64px); height: clamp(46px, 7vh, 64px); display: grid; place-items: center; background: #f4f4f4; border: 0; color: #0b0c10; cursor: pointer; position: relative; padding: 0; }
-  .hub-ic svg { width: 58%; height: 58%; }
-  .hub-ic small { display: none; }
-  .hub-ic:hover { background: #ffc419; }
-  .hub-again { display: flex; align-items: center; gap: 8px; border: 2px solid #f4f4f4; background: rgba(0, 0, 0, .35); color: #fff; font-family: var(--display); font-size: 16px; padding: 6px 12px; cursor: pointer; max-width: 46vw; }
-  .hub-again .t { display: flex; align-items: center; gap: 6px; font-weight: 800; } .hub-again svg { width: 18px; height: 18px; }
-  .hub-again small { opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cat-head { display: flex; align-items: center; gap: 10px; flex: none; }
-  .cat-back { width: 44px; height: 40px; border: 0; background: linear-gradient(90deg, #ff6b6b, #ff3fa4); color: #fff; font-size: 30px; font-weight: 900; line-height: 1; cursor: pointer; padding: 0 0 4px; }
-  .cat-head h2 { margin: 0; background: #fff; color: #0b0c10; font-family: var(--display); font-size: 26px; font-weight: 900; padding: 2px 16px; letter-spacing: .03em; font-style: italic; }
-  .cat-head small { color: #c9ced6; font-size: 13px; }
-  @media (max-height: 450px) { .hub-top { padding-bottom: 4px; } .hub-helm { width: 34px; height: 34px; } .hub-id b { font-size: 14px; } .hub-lvl i { width: 80px; } .tile { border-width: 3px; } .hub-ic small { display: none; } }
-  @media (max-width: 700px) and (orientation: portrait) {
-    .hub-grid { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-auto-rows: minmax(120px, 26vw); padding: 0; }
-    .tile, .tile.big { grid-column: span 1; } .tile.big:first-child { grid-column: span 2; }
-    #menu .hub-logo { display: none; } .hub-flag { display: none; } .hub-res { margin-left: auto; padding: 4px 8px; }
+  /* ---- menu: horní řádek s ikonami, hráč, záložky Rally / Okruhy / Formule / Rallycross ---- */
+  #menu .pane { display: flex; flex-direction: column; gap: 12px; }
+  #menu .pane .modes, #menu .pane .help { order: 0; }
+  #menu:not([data-view="rally"]):not([data-view="circ"]) .pane-race, #menu:not([data-view="f1"]) .pane-f1, #menu:not([data-view="rx"]) .pane-rx { display: none; }
+  /* hlavní tlačítko záložky je vždy dole: Odstartovat / Velká cena / Otevřít rallycross */
+  #menu:not([data-view="f1"]) #f1Go, #menu:not([data-view="rx"]) #bRx, #menu[data-view="f1"] #bStart, #menu[data-view="rx"] #bStart { display: none; }
+  #menu .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none; }
+  #menu .top-row .logo { font-size: clamp(24px, 3.2vw, 32px); white-space: nowrap; }
+  #menu .top-row .logo br { display: none; }
+  #menu .tools { display: flex; gap: 5px; flex: none; }
+  #menu .tool { width: 40px; height: 40px; display: grid; place-items: center; position: relative; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #353a46, #1f2229); box-shadow: 0 3px 0 #050608; color: #fff; cursor: pointer; padding: 0; }
+  #menu .tool .ic { width: 22px; height: 22px; margin: 0; }
+  #menu .tool small { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); font-size: 10px; color: #c9ced6; white-space: nowrap; font-family: var(--display); pointer-events: none; opacity: 0; transition: opacity .15s; }
+  #menu .tool:hover small, #menu .tool:focus-visible small { opacity: 1; }
+  #menu .tool:hover { border-color: #ffc419; }
+  #hubGarage { color: #8dff55; }
+  .me-bar { display: flex; align-items: center; gap: 10px; flex: none; font-family: var(--display); font-size: 15px; background: rgba(255, 255, 255, .06); border-radius: 12px; padding: 6px 10px; min-width: 0; }
+  .me-bar > b { font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .me-ava { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg, #ffc419, #ff7a1a); color: #14161b; font-weight: 900; font-style: italic; font-size: 17px; }
+  .me-lvl { font-size: 12px; color: #c9ced6; white-space: nowrap; } .me-lvl em { font-style: normal; font-weight: 900; color: #fff; background: #1e7cf2; padding: 0 5px; border-radius: 4px; }
+  .me-res { white-space: nowrap; } .me-res .medal { vertical-align: -3px; }
+  .me-money { margin-left: auto; } .me-money i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #20c4e8; color: #062330; font-style: normal; font-weight: 900; font-size: 12px; margin-right: 4px; vertical-align: 1px; }
+  #menu .again { display: flex; align-items: center; gap: 8px; flex: none; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #2b2f38, #1b1e24); box-shadow: 0 3px 0 #050608; color: #fff; font-family: var(--display); font-size: 16px; padding: 7px 12px; cursor: pointer; text-align: left; }
+  #menu .again[hidden] { display: none; }
+  #menu .again .t { display: flex; align-items: center; gap: 6px; font-weight: 800; white-space: nowrap; } #menu .again svg { width: 18px; height: 18px; color: #ffc419; }
+  #menu .again small { opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .mode-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; flex: none; position: sticky; top: calc(-22px - env(safe-area-inset-top, 0px)); z-index: 4; padding: 6px 0; margin: -6px 0; background: linear-gradient(180deg, var(--panel-strong) 75%, rgba(0, 0, 0, 0)); }
+  .mode-tabs button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 7px 2px 6px; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #2b2f38, #1b1e24); box-shadow: 0 3px 0 #050608; color: #e6ebf3; font-family: var(--display); cursor: pointer; min-width: 0; }
+  .mode-tabs .ic { width: 20px; height: 20px; margin: 0; }
+  .mode-tabs b { font-size: 16px; font-weight: 800; white-space: nowrap; }
+  .mode-tabs small { font-size: 10.5px; opacity: .75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .mode-tabs button[aria-selected="true"] { border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .3), #23262d 80%); color: #fff; box-shadow: 0 3px 0 #050608, 0 0 14px rgba(255, 196, 25, .25); }
+  .mode-tabs button[aria-selected="true"] .ic { color: #ffc419; }
+  #menu .cars { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  #menu .cars .car-pick { flex: none; min-width: 150px; }
+  .f1-teams { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .f1-teams button { flex: none; display: flex; align-items: center; gap: 8px; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #2f333c, #1d2027); box-shadow: 0 3px 0 #050608; color: #fff; font-family: var(--display); font-size: 15px; font-weight: 800; padding: 6px 10px; cursor: pointer; }
+  .f1-teams button i { width: 22px; height: 22px; border-radius: 50%; flex: none; }
+  .f1-teams button[aria-pressed="true"] { border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .25), #23262d 70%); }
+  #menu .start-bar #f1Go, #menu .start-bar #bRx { flex: 1; }
+  .rx-info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .rx-info div { border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #2b2f38, #1b1e24); padding: 8px; font-family: var(--display); text-align: center; }
+  .rx-info b { display: block; font-size: 15px; } .rx-info small { color: #ffc419; font-size: 15px; letter-spacing: 1px; } .rx-info em { display: block; font-style: normal; font-size: 11px; color: #c9ced6; }
+  #menu .rx-help { display: block; }
+  @media (max-height: 450px) {
+    #menu .top-row .logo { font-size: 24px; } #menu .tool { width: 36px; height: 36px; border-radius: 10px; } #menu .tool .ic { width: 19px; height: 19px; }
+    .me-bar { padding: 4px 8px; font-size: 13px; gap: 8px; } .me-bar > b { font-size: 14px; } .me-lvl { display: none; }
+    .mode-tabs b { font-size: 14px; } .mode-tabs small { display: none; } .mode-tabs button { padding: 5px 2px; }
+    #menu .rx-help { display: none; }
   }
   /* ---- garáž: auto v 3D, kolem dokola tažením, tuning a lak se projeví hned ---- */
   .gar { position: fixed; inset: 0; z-index: 20; font-family: var(--display); color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -1216,54 +1211,66 @@ window.__BUILD = 'mw5gt27x';
   </div>
 </div>
 
-<div id="menu" data-view="hub">
-  <div class="hub" id="hub">
-    <div class="hub-top">
-      <div class="hub-me"><span class="hub-helm" id="hubAva" aria-hidden="true">H</span>
-        <span class="hub-id"><b id="hubName"></b><span class="hub-lvl"><i><u id="hubLvlBar"></u></i><em id="hubLvl">1</em></span></span>
-        <span class="hub-flag" aria-hidden="true"></span></div>
-      <span class="hub-logo logo">RALLY <em>SPRINT</em></span>
-      <div class="hub-res"><span title="Úspěchy">🏆 <b id="hubTro"></b></span><span title="Zlaté medaile"><i class="medal m-gold"></i> <b id="hubGold"></b></span><span class="hr-money" title="Peníze"><i>$</i><b id="hubMoney"></b></span></div>
-    </div>
-    <div class="hub-grid">
-      <button class="tile big" id="hubRally" style="--lc:#ff8a1f;--lc2:#ffc419"><canvas class="tile-art"></canvas><span class="tile-top"><b>ETAPY</b><em id="hubRallyN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>RALLY</span></button>
-      <button class="tile big" id="hubF1" style="--lc:#e10600;--lc2:#ff5a3c"><canvas class="tile-art"></canvas><span class="tile-top"><b>VELKÁ CENA</b><em id="hubF1N"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-4h5l2-3h4l1 3h3v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3z" fill="currentColor"/></svg>FORMULE</span></button>
-      <button class="tile big" id="bRx" style="--lc:#11b4e6;--lc2:#40e0ff"><canvas class="tile-art"></canvas><span class="tile-top"><b>POHÁR</b><em id="hubRxN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 10l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3zm4.5-5L6.3 13h11.4l-1.2-3z" fill="currentColor"/></svg>RALLYCROSS</span></button>
-      <button class="tile" id="hubGarage" style="--lc:#29c77a;--lc2:#7dff9e"><canvas class="tile-art"></canvas><span class="tile-top"><b>VYLEPŠENÍ</b><em id="hubGarN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>GARÁŽ</span></button>
-      <button class="tile" id="hubCirc" style="--lc:#8a5cff;--lc2:#c08bff"><canvas class="tile-art"></canvas><span class="tile-top"><b>OKRUHY</b><em id="hubCircN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 0 1 6.7 5h-3.2a3.7 3.7 0 0 0-7 0H5.3A7 7 0 0 1 12 5z" fill="currentColor"/></svg>OKRUHY</span></button>
-      <button class="tile" id="bNet" style="--lc:#ffd200;--lc2:#ffe766"><canvas class="tile-art"></canvas><span class="tile-top"><b>2 HRÁČI</b><em>každý na svém telefonu</em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11l-3-3 1.4-1.4L19 8l-5.6 5.4L12 12l3-3H4zm16 10H9l3 3-1.4 1.4L5 16l5.6-5.4L12 12l-3 3h11z" fill="currentColor"/></svg>PROTI SOBĚ</span></button>
-      <button class="tile" id="bStunts" style="--lc:#ff3fa4;--lc2:#ff8ad0"><canvas class="tile-art"></canvas><span class="tile-top"><b>VÝZVY</b><em id="hubStuntN"></em></span><span class="tile-lbl"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM6 22l3-9-3 1-2-2 6-4h4l4 3-2 2-2-1-1 4 3 6h-3l-2-4-2 4z" fill="currentColor"/></svg>KASKADÉRSKÉ</span></button>
-    </div>
-    <div class="hub-bot">
-      <button class="hub-ic" id="bTrophy" aria-label="Trofeje a profil"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg><small id="bTrophySub"></small></button>
-      <button class="hub-ic" id="bEditor" aria-label="Editor tratí"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.3V21h3.7L17.8 9.9l-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z" fill="currentColor"/></svg><small>editor</small></button>
-      <button class="hub-ic" id="bSettings" aria-label="Nastavení"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg><small>nastavení</small></button>
-      <button class="hub-again" id="bAgainLast" hidden><span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.2A6 6 0 1 0 12 6v3L7.5 5 12 1z" fill="currentColor"/></svg>Jet znovu</span> <small></small></button>
-    </div>
-  </div>
+<div id="menu" data-view="rally">
   <div class="sheet">
-    <div class="cat-head"><button class="cat-back" id="catBack" aria-label="Zpět do lobby">‹</button><h2 id="catTitle">RALLY</h2><small id="catSub"></small></div>
-    <div class="brand">
-      <h1 class="logo"><span id="logoA">RALLY</span><br><em>SPRINT</em></h1>
-      <p class="tagline" id="tagline">Šest rychlostních zkoušek, přes 33 km šotoliny, sněhu, asfaltu, písku a rudé keňské savany. Spolujezdec hlásí každou zatáčku.</p>
-    </div>
-    <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Garáž</span> <small>tuning, lak a polepy · auto ve 3D</small></button>
-    <p class="label" id="lblStages">Rychlostní zkoušky</p>
-    <div class="stages" id="stageList"></div>
-    <div class="detail" id="stageDetail"></div>
-    <div class="actions modes">
-      <button class="btn gp" id="bGpMenu" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>Velká cena F1</span> <small>7 okruhů · 3 kola · výběr týmu</small></button>
-      <div class="row2">
-        <button class="btn ghost" id="bChamp"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg>Mistrovství</span> <small>všech 6 etap za sebou</small></button>
-        <button class="btn ghost" id="bWeekly" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm-2 8h14v10H5zm2 2v3h3v-3z" fill="currentColor"/></svg>Výzva týdne</span> <small id="bWeeklySub"></small></button>
+    <div class="top-row">
+      <div class="brand"><h1 class="logo"><span id="logoA">RALLY</span> <em>SPRINT</em></h1></div>
+      <div class="tools">
+        <button class="tool" id="hubGarage" aria-label="Garáž"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg><small>Garáž</small></button>
+        <button class="tool" id="bNet" aria-label="Proti sobě"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h11l-3-3 1.4-1.4L19 8l-5.6 5.4L12 12l3-3H4zm16 10H9l3 3-1.4 1.4L5 16l5.6-5.4L12 12l-3 3h11z" fill="currentColor"/></svg><small>Proti sobě</small></button>
+        <button class="tool" id="bTrophy" aria-label="Trofeje a profil"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg><small id="bTrophySub">Trofeje</small></button>
+        <button class="tool" id="bEditor" aria-label="Editor tratí"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.3V21h3.7L17.8 9.9l-3.7-3.7zM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7z" fill="currentColor"/></svg><small>Editor</small></button>
+        <button class="tool" id="bSettings" aria-label="Nastavení"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="currentColor"/></svg><small>Nastavení</small></button>
       </div>
     </div>
-    <div class="actions start-bar">
-      <button class="btn" id="bStart"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Odstartovat</span> <small id="bStartSub"></small></button>
+    <div class="me-bar"><span class="me-ava" id="hubAva" aria-hidden="true">H</span><b id="hubName"></b><span class="me-lvl">úroveň <em id="hubLvl">1</em></span><span class="me-res" title="Úspěchy">🏆 <b id="hubTro"></b></span><span class="me-res" title="Zlaté medaile"><i class="medal m-gold"></i> <b id="hubGold"></b></span><span class="me-res me-money" title="Peníze"><i>$</i><b id="hubMoney"></b></span></div>
+    <button class="again" id="bAgainLast" hidden><span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.2A6 6 0 1 0 12 6v3L7.5 5 12 1z" fill="currentColor"/></svg>Jet znovu</span> <small></small></button>
+    <div class="mode-tabs" role="tablist">
+      <button role="tab" id="tabRally" data-v="rally"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg><b>Rally</b><small id="hubRallyN"></small></button>
+      <button role="tab" id="tabCirc" data-v="circ"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 3a7 7 0 0 1 6.7 5h-3.2a3.7 3.7 0 0 0-7 0H5.3A7 7 0 0 1 12 5z" fill="currentColor"/></svg><b>Okruhy</b><small id="hubCircN"></small></button>
+      <button role="tab" id="tabF1" data-v="f1"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l3-4h5l2-3h4l1 3h3v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3z" fill="currentColor"/></svg><b>Formule</b><small id="hubF1N"></small></button>
+      <button role="tab" id="tabRx" data-v="rx"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 10l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3zm4.5-5L6.3 13h11.4l-1.2-3z" fill="currentColor"/></svg><b>Rallycross</b><small id="hubRxN"></small></button>
     </div>
-    <div class="settings">
+    <div class="pane pane-race">
+      <p class="label" id="lblStages">Rychlostní zkoušky</p>
+      <div class="stages" id="stageList"></div>
+      <div class="detail" id="stageDetail"></div>
       <p class="label" id="lblCars">Auto</p>
       <div class="cars" id="carList"></div>
+      <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Garáž</span> <small>tuning, lak a polepy · auto ve 3D</small></button>
+      <div class="actions modes" id="raceModes">
+        <button class="btn gp" id="bGpMenu" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>Velká cena F1</span> <small>7 okruhů · 3 kola · výběr týmu</small></button>
+        <div class="row2">
+          <button class="btn ghost" id="bChamp"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v3h3v2a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V6h3zm0 5V8H6a3 3 0 0 0 1 2.2zm10 0v2.2A3 3 0 0 0 18 8z" fill="currentColor"/></svg>Mistrovství</span> <small>všech 6 etap za sebou</small></button>
+          <button class="btn ghost" id="bWeekly" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zm-2 8h14v10H5zm2 2v3h3v-3z" fill="currentColor"/></svg>Výzva týdne</span> <small id="bWeeklySub"></small></button>
+        </div>
+        <button class="btn ghost" id="bStunts"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM6 22l3-9-3 1-2-2 6-4h4l4 3-2 2-2-1-1 4 3 6h-3l-2-4-2 4z" fill="currentColor"/></svg>Kaskadérské výzvy</span> <small>skok, drift, slalom, zastavení</small></button>
+      </div>
+    </div>
+    <div class="pane pane-f1">
+      <p class="label">Tým</p>
+      <div class="f1-teams" id="f1Teams"></div>
+      <p class="label">Okruh Velké ceny</p>
+      <div class="stages" id="f1List"></div>
+      <div class="actions">
+        <div class="row2">
+          <button class="btn ghost" id="f1Long"><span class="t">Dlouhý závod</span> <small>10 kol · déšť · odměna 2,5×</small></button>
+          <button class="btn ghost" id="f1Career"><span class="t">Kariéra</span> <small>sezóna 5 Velkých cen</small></button>
+        </div>
+        <div class="row2">
+          <button class="btn ghost" id="f1More"><span class="t">Nastavení závodu</span> <small>soupeři, strategie, kvalifikace</small></button>
+          <button class="btn ghost" id="f1Shop"><span class="t">Dílna formule</span> <small>díly ve 3D garáži</small></button>
+        </div>
+      </div>
+    </div>
+    <div class="pane pane-rx">
+      <p class="help rx-help">Krátké okruhy s asfaltem a šotolinou, 4 soupeři, kontaktní souboje a povinný joker. Pohár se odemyká postupně (další trať za 1. nebo 2. místo).</p>
+      <div class="rx-info" id="rxInfo"></div>
+    </div>
+    <div class="actions start-bar">
+      <button class="btn" id="f1Go"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Velká cena</span> <small id="f1GoSub"></small></button>
+      <button class="btn" id="bRx"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15l2-5a3 3 0 0 1 2.8-2h8.4A3 3 0 0 1 19 10l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3zm4.5-5L6.3 13h11.4l-1.2-3z" fill="currentColor"/></svg>Otevřít rallycross</span> <small>garáž · pohár · rychlý závod</small></button>
+      <button class="btn" id="bStart"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg>Odstartovat</span> <small id="bStartSub"></small></button>
     </div>
   </div>
 </div>
@@ -11221,6 +11228,7 @@ function startDemo() {
   G.cine.fixed = null; camS.init = false;
   overlay.hud.hidden = true; overlay.touch.hidden = true; overlay.menu.hidden = false;
   Sound.silence(); Voice.stop();
+  HUB.view = menuDefView(); overlay.menu.dataset.view = HUB.view;   // záložka podle načtené trati a auta (i po závodě)
   renderMenu();
 }
 
@@ -13447,6 +13455,8 @@ const RX_DIFF = {
   normal: { name: 'Rychlí', desc: 'dobrý jezdec, občas chybuje', pace: [1.16, 1.21], mist: 0.03, react: [0.25, 0.45], accK: 0.94, aggr: 0.45 },
   hard: { name: 'Velmi rychlí', desc: 'na hraně, skoro bez chyb, tvrdě bojují', pace: [1.26, 1.3], mist: 0.012, react: [0.14, 0.28], accK: 1, aggr: 0.75 },
   champ: { name: 'Mistr světa', desc: 'ideální stopa, bleskový start, nechybuje', pace: [1.37, 1.4], mist: 0.002, react: [0.07, 0.15], accK: 1.03, aggr: 1 },
+  // nad Mistra světa: víc než stock Fabie zvládne (na vytuněné auto); vk = vyšší maximálka a delší zrychlení (43 → 47 m/s)
+  legend: { name: 'Legenda', desc: 'rychlejší než Mistr světa, na vytuněné auto', pace: [1.5, 1.54], mist: 0, react: [0.03, 0.08], accK: 1.12, aggr: 1, vk: 1.09 },
 };
 const rxDiff = () => (RX_DIFF[saved.rxDiff] ? saved.rxDiff : 'normal');
 const RX_LAPS_OPT = [3, 4, 6];
@@ -13459,16 +13469,16 @@ function rxAcc(v, gr) {
   for (let k = 1; k < RX_ACC_T.length; k++) { const [v1, a1] = RX_ACC_T[k], [v0, a0] = RX_ACC_T[k - 1]; if (v <= v1) { a = a0 + (a1 - a0) * clamp((v - v0) / (v1 - v0), 0, 1); break; } }
   return a * (gr ? 0.92 : 1);
 }
-function rxVt(td, i, v, pace, arr = td.V) {
+function rxVt(td, i, v, pace, arr = td.V, cap = 43) {
   let vt = 1e9; const ahead = Math.round((v * 1.4 + 12) / td.ds);
   for (let k = i; k < i + ahead && k < td.n; k++) vt = Math.min(vt, arr[k]);
-  return Math.min(43, vt * pace);
+  return Math.min(cap, vt * pace);
 }
 // cílová rychlost podle brzdné dráhy (brzdí až tak, aby na pomalé místo dojel právě jeho rychlostí; 10 m/s²)
-function rxVtBrake(td, i, v, pace, arr) {
+function rxVtBrake(td, i, v, pace, arr, cap = 43) {
   let vt = 1e9; const m = Math.round((v * v / 20 + 8) / td.ds) + 2;
   for (let k = i; k < i + m && k < td.n; k++) vt = Math.min(vt, Math.sqrt((arr[k] * pace) ** 2 + 2 * 10 * (k - i) * td.ds));
-  return Math.min(43, vt);
+  return Math.min(cap, vt);
 }
 // stopa soupeřů: v zatáčce k vnitřnímu okraji (vrchol), mezi zatáčkami plynule zpět; kladné = strana +N
 function rxRacingLine(td) {
@@ -13837,11 +13847,11 @@ function rxJokerW(J, r) { if (!J.chic || J.wC <= J.wJ) return J.wJ; const sm = (
 function inJoker(td, s, lat) { const j = td.joker; if (!j) return false; const r = rxRel(td, s); if (r < j.from || r > j.to) return false; return Math.abs(lat * j.side - rxJokerC(j, r)) <= rxJokerW(j, r) + 0.3; }
 const rxGravel = (td, s) => !!td.mix && td.mix.some(([a, b]) => { const r = rxRel(td, s); return r >= a && r <= b; });
 // průjezdní čas kola soupeře z jeho rychlostního profilu (stejný model jako v závodě, bez provozu, z místa)
-function rxSimLap(td, skill, accK = 1) {
+function rxSimLap(td, skill, accK = 1, vk = 1) {
   const lap = td.length, dt = 1 / 30; let v = 0, d = 0, t = 0;
   while (d < lap && t < 600) {
     const i = clamp(td.startIdx + Math.round(d / td.ds), 0, td.n - 1);
-    v += clamp(rxVt(td, i, v, skill) - v, -11 * dt, rxAcc(v, rxGravel(td, td.S[i])) * accK * dt); d += Math.max(0, v) * dt; t += dt;
+    v += clamp(rxVt(td, i, v, skill, td.V, 43 * vk) - v, -11 * dt, rxAcc(v / vk, rxGravel(td, td.S[i])) * accK * dt); d += Math.max(0, v) * dt; t += dt;
   }
   return t;
 }
@@ -13891,7 +13901,7 @@ function rxStart(pc0, id = 'rx', opts = {}) {
     for (let k = 0; k < 4; k++) {
       const [name, model, liv] = pick[k], [back, lat] = grid[ord[k]];
       const a = { name, model, d: back, lat, lat0: lat, v: 0, skill: skills[k], jokerLap: 1 + ((rr() * (RX_LAPS - 1)) | 0), joker: false, finishT: null, c3: null, spin: 0, off: 0,
-        react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1, accK: D.accK, aggr: D.aggr,
+        react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1, accK: D.accK, aggr: D.aggr, vk: D.vk || 1,
         vl: 0, vp: 0, yaw: 0, wy: 0, spinT: 0, passSide: 0, passT: 0, slide: 0, sc: rxScaleOf(CAR_TYPES[model]), col: LIVERIES[liv % 10].body, ts: [] };
       G.rx.ai.push(a);
       ensureCarModel(CAR_TYPES[model].model).then(() => {
@@ -13979,7 +13989,8 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   const lap = td.length, j = td.joker;
   const i = clamp(td.startIdx + Math.round((((a.d % lap) + lap) % lap) / td.ds), 0, td.n - 1), alap = Math.floor(a.d / lap);
   const gr = rxGravel(td, td.S[i]), line = td.rxLine ? td.rxLine[i] : 0, r = rxRel(td, td.S[i]), fin = a.finishT != null;
-  let vt = rxVt(td, i, a.v, a.skill);
+  const vk = a.vk || 1;
+  let vt = rxVt(td, i, a.v, a.skill, td.V, 43 * vk);
   if (fin) vt = Math.min(vt, 14);   // po cíli volné dojezdové kolo
   const takeJ = !fin && j && !a.joker && alap >= a.jokerLap - 1 && alap <= RX_LAPS - 1, JP = j ? rxJokerPath(td) : null;
   // joker: soupeř do něj vjede v kole, kdy ho má v plánu, a jede jím až do konce (i když už ho má započítaný)
@@ -13988,7 +13999,7 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   const inJ = !!(JP && a.jz), exact = inJ && r > j.from && r < j.to;
   // stopa: z místa na roštu plynule na ideální stopu (vnitřek zatáček)
   let latT = lerp(a.lat0, line + a.lat0 * 0.12, clamp(a.d / 110, 0, 1));
-  if (inJ) { latT = JP.L[i]; vt = rxVtBrake(td, i, a.v, a.skill, JP.V); if (r > j.mid - 5 && r < j.mid + 5) a.joker = true; }   // v jokeru jen rychlost podle jeho stopy
+  if (inJ) { latT = JP.L[i]; vt = rxVtBrake(td, i, a.v, a.skill, JP.V, 43 * vk); if (r > j.mid - 5 && r < j.mid + 5) a.joker = true; }   // v jokeru jen rychlost podle jeho stopy
   // chyba: v nové zatáčce občas vyjede do široka a ztratí rychlost
   if (Math.abs(td.K[i]) > 0.03) { const cid = Math.round(td.S[i] / 25); if (cid !== a.corner) { a.corner = cid; if (alap >= 0 && !fin && Math.random() < a.mist) a.err = 1.2 + Math.random(); } }
   if (a.err > 0) { a.err -= dt; vt *= 0.82; latT = -Math.sign(line || 1) * (HW - 1.2); }
@@ -14040,7 +14051,7 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   // start: reakce na zelenou
   if (a.react > 0) { a.react -= dt; vt = 0; }
   const off = Math.abs(a.lat) > HW + 0.4 && !inJ;
-  a.v += clamp(vt * (off ? 0.8 : 1) - a.v, -11 * dt, rxAcc(a.v, gr) * a.accK * (off ? 0.6 : 1) * dt);
+  a.v += clamp(vt * (off ? 0.8 : 1) - a.v, -11 * dt, rxAcc(a.v / vk, gr) * a.accK * (off ? 0.6 : 1) * dt);
   if (exact) {
     // šikana v jokeru: jede přesně po stopě; postup po trati podle skutečné délky dráhy (vůči ideální stopě)
     const k1 = 1 + td.K[i] * JP.L[i], fac = Math.sqrt(k1 * k1 + JP.dn[i] * JP.dn[i]) / (RXJ.fac ? Math.max(0.5, 1 + td.K[i] * line) : 1);
@@ -14374,7 +14385,7 @@ function rxQuali(myT) {
   const R = G.rx, td = W.td; R.done = true;
   G.phase = 'done'; G.finishAt = performance.now(); G.result = myT;
   const rows = [{ key: 'me', name: saved.netName || 'Ty', car: CAR_TYPES[saved.car] ? CAR_TYPES[saved.car].name : '', t: myT, me: true }]
-    .concat(R.pick.map(([name, model], k) => ({ key: k, name, car: CAR_TYPES[model].name, t: rxSimLap(td, R.skills[k], RX_DIFF[R.diff] ? RX_DIFF[R.diff].accK : 1) * (1 + (Math.random() - 0.5) * 0.02) })))
+    .concat(R.pick.map(([name, model], k) => ({ key: k, name, car: CAR_TYPES[model].name, t: rxSimLap(td, R.skills[k], RX_DIFF[R.diff] ? RX_DIFF[R.diff].accK : 1, RX_DIFF[R.diff] ? RX_DIFF[R.diff].vk || 1 : 1) * (1 + (Math.random() - 0.5) * 0.02) })))
     .sort((a, b) => a.t - b.t);
   const pos = rows.findIndex((r) => r.me) + 1, order = rows.map((r) => r.key);
   hud.center.innerHTML = `P${pos}<span class="sub">kvalifikace</span>`; hud.center.className = 'hud-center';
@@ -14458,7 +14469,7 @@ function rxCarStats(id) {
   return [['Rychlost', f(ct.vmax, 0.8, 1.2)], ['Výkon', f(ct.power, 0.8, 1.4)], ['Přilnavost', f(ct.grip, 0.9, 1.15)], ['Brzdy', f(ct.brakeK || 1, 0.85, 1.25)], ['Stabilita', f(-(ct.rearBias || 0), -0.15, 0.1)]];
 }
 const RX_CUP = () => STAGES.filter((x) => x.rx).map((x) => x.id);
-const RX_CUP_BONUS = { easy: 1000, normal: 2000, hard: 3500, champ: 5000 };
+const RX_CUP_BONUS = { easy: 1000, normal: 2000, hard: 3500, champ: 5000, legend: 8000 };
 const rxCupRes = (diff) => ((saved.rxCup || {})[diff] || {});   // nejlepší umístění ve finále: { idTrati: pořadí }
 const rxCupOpen = (diff, k) => k === 0 || (rxCupRes(diff)[RX_CUP()[k - 1]] || 9) <= 2;
 const rxCupStars = (pos) => (pos === 1 ? 3 : pos === 2 ? 2 : pos === 3 ? 1 : 0);
@@ -17327,135 +17338,79 @@ function recSubmit(st, t) {
   REC.db.doc('records/' + st.id).set(rec).catch(() => { if (REC.map[st.id] === rec) { if (cur) REC.map[st.id] = cur; else delete REC.map[st.id]; } });
   return true;
 }
-// ---------------------------------------------------------------- lobby z dlaždic a garáž
-// Lobby: velké dlaždice Rally / Formule / Rallycross, menší Garáž / Okruhy / Proti sobě / Kaskadérské výzvy, nahoře hráč
-// (úroveň podle úspěchů), trofeje, zlaté medaile a peníze. Rally a Okruhy otevřou panel s tratěmi a auty své kategorie,
-// Formule výběr týmu a Velkou cenu, Rallycross svou garáž. Obrázky dlaždic se kreslí z modelů aut (renderCarShot).
-const HUB = { view: 'hub', q: [], busy: false };
+// ---------------------------------------------------------------- menu: záložky Rally / Okruhy / Formule / Rallycross a garáž
+// Boční panel nad jedoucím autem: nahoře logo a nástroje (Garáž, Proti sobě, Trofeje, Editor, Nastavení), řádek hráče
+// (úroveň podle úspěchů, trofeje, zlata, peníze), Jet znovu a záložky. Rally a Okruhy ukazují jen své tratě a silniční
+// auta se startem, Formule tým, okruh Velké ceny a její závody, Rallycross pohár a vstup do jeho garáže.
+const HUB = { view: null };
 const menuInCat = (st, cat) => (cat === 'circ' ? !!st.circuit && !st.rx : !st.circuit);
-function menuView(v) {
-  HUB.view = v; overlay.menu.dataset.view = v;
-  renderMenu();
-  if (v !== 'hub') { const sh = overlay.menu.querySelector('.sheet'); if (sh) sh.scrollTop = 0; }
-}
 const roadCarId = () => (CAR_TYPES[saved.car] && !CAR_TYPES[saved.car].formula ? saved.car : CAR_TYPES[saved.roadCar] && !CAR_TYPES[saved.roadCar].formula ? saved.roadCar : 'bmw');
 function useCar(id) {
   if (saved.car === id) return;
   const ct = CAR_TYPES[id]; saved.car = id; if (!ct.formula) saved.roadCar = id; persist(); UIS.rev(!!ct.formula);
   ensureCarModel(ct.model).then(() => { if (saved.car === id) setLivery(saved.livery); });
 }
-function menuCat(cat) {
+// výchozí záložka podle toho, co je zrovna vybrané (formule → Formule, okruh → Okruhy)
+const menuDefView = () => (saved.car === 'f1' ? 'f1' : STAGES[G.sel] && STAGES[G.sel].rx ? 'rx' : STAGES[G.sel] && menuInCat(STAGES[G.sel], 'circ') ? 'circ' : 'rally');
+function menuView(v) {
+  HUB.view = v; overlay.menu.dataset.view = v;
+  renderMenu();
+}
+// přepnutí záložky: k Rally a Okruhům patří silniční auto a trať z kategorie, k Formuli formule na okruhu Velké ceny
+function menuTab(v) {
   UIS.click('main');
-  useCar(roadCarId());   // formule do rally a na okruhy nejezdí
-  menuView(cat);
-  const ok = (st) => menuInCat(st, cat);
-  if (!ok(STAGES[G.sel])) {
-    let k = STAGES.findIndex((x) => x.id === saved[cat + 'Sel'] && ok(x));
-    if (k < 0) k = STAGES.findIndex(ok);
-    if (k >= 0) loadStage(k, startDemo);
+  menuView(v);
+  const sh = overlay.menu.querySelector('.sheet'); if (sh) sh.scrollTop = 0;
+  if (v === 'rally' || v === 'circ') {
+    useCar(roadCarId());
+    const ok = (st) => menuInCat(st, v);
+    if (!ok(STAGES[G.sel])) { let k = STAGES.findIndex((x) => x.id === saved[v + 'Sel'] && ok(x)); if (k < 0) k = STAGES.findIndex(ok); if (k >= 0) loadStage(k, startDemo); }
+  } else if (v === 'f1') {
+    if (saved.car !== 'f1') { saved.roadCar = roadCarId(); useCar('f1'); }
+    const k = STAGES.findIndex((x) => x.id === gpTrackId()); if (k >= 0 && k !== G.sel) loadStage(k, startDemo);
   }
 }
-function hubF1() {
-  UIS.click('main');
-  if (saved.car !== 'f1') { if (CAR_TYPES[saved.car]) saved.roadCar = roadCarId(); useCar('f1'); }
-  const k = STAGES.findIndex((x) => x.id === gpTrackId());
-  if (k >= 0 && k !== G.sel) loadStage(k, () => { startDemo(); openTeams(); }); else openTeams();
-}
+// řádek hráče a souhrny na záložkách
 function hubRender() {
   const n = achCount();
   $('hubName').textContent = netName(); $('hubAva').textContent = netName().slice(0, 1).toUpperCase();
-  $('hubLvl').textContent = 1 + Math.floor(n / 4); $('hubLvlBar').style.width = ((n % 4) * 25) + '%';
+  $('hubLvl').textContent = 1 + Math.floor(n / 4);
   $('hubTro').textContent = `${n}/${ACH.length}`; $('hubGold').textContent = `${achGolds()}/${RALLY_STAGES().length}`;
   $('hubMoney').textContent = moneyStr(saved.money | 0).replace(/ \$$/, '');
-  $('hubRallyN').textContent = `${STAGES.filter((x) => !x.circuit).length} etap · zlato ${achGolds()}/${RALLY_STAGES().length}`;
-  $('hubF1N').textContent = `${Object.keys(GP_TRACKS).length} okruhů · ${F1_TEAMS[f1Team()].name}`;
-  const d = rxDiff(), N = RX_CUP().length; $('hubRxN').textContent = `★ ${rxCupTotal(d)}/${N * 3} · ${N} tratě`;
-  $('hubGarN').textContent = `${achShop()} dílů · ${Object.keys(CAR_TYPES).length} aut`;
+  $('hubRallyN').textContent = `${STAGES.filter((x) => !x.circuit).length} etap`;
   $('hubCircN').textContent = `${STAGES.filter((x) => x.circuit && !x.rx).length} okruhů`;
-  $('hubStuntN').textContent = 'skok · drift · slalom · zastavení';
-  hubArt();
-}
-// pozadí dlaždic (vlastní kresba) a auto z modelu hry; auto se dokreslí, až je model načtený
-const HUB_ART = { hubRally: ['rally', roadCarId], hubF1: ['f1', () => 'f1'], bRx: ['rx', () => rxCarId()], hubGarage: ['garage', () => (CAR_TYPES[saved.car] ? saved.car : 'bmw')], hubCirc: ['circ', () => (roadCarId() === 'p911' ? 'bmw' : 'p911')], bNet: ['net', null], bStunts: ['stunt', null] };
-function hubBg(g, kind, w, h) {
-  const lin = (stops, x0 = 0, y0 = 0, x1 = 0, y1 = h) => { const gr = g.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => gr.addColorStop(o, c)); return gr; };
-  const rad = (x, y, r, c0, c1) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.fillRect(x - r, y - r, 2 * r, 2 * r); };
-  const rnd = mulberry32(kind.length * 977 + w);
-  const hills = (y, amp, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += w / 12) g.lineTo(x, y - amp * (0.4 + 0.6 * Math.abs(Math.sin(x / w * 7 + rnd() * 0.6)))); g.lineTo(w, h); g.fill(); };
-  if (kind === 'rally') {
-    g.fillStyle = lin([[0, '#f7c27a'], [0.45, '#e98a3c'], [0.62, '#8a4c25'], [1, '#3a2416']]); g.fillRect(0, 0, w, h);
-    hills(h * 0.58, h * 0.12, 'rgba(60,34,20,.75)');
-    for (let k = 0; k < 9; k++) rad(w * (0.15 + rnd() * 0.5), h * (0.55 + rnd() * 0.35), h * (0.18 + rnd() * 0.22), 'rgba(236,200,150,.45)', 'rgba(236,200,150,0)');
-  } else if (kind === 'f1') {
-    g.fillStyle = lin([[0, '#0b1636'], [0.55, '#3a0f2a'], [1, '#12060a']]); g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(255,80,60,.35)'; for (let k = 0; k < 26; k++) { const y = rnd() * h, x = rnd() * w; g.lineWidth = 1 + rnd() * 2; g.beginPath(); g.moveTo(x, y); g.lineTo(x - w * (0.2 + rnd() * 0.3), y); g.stroke(); }
-    for (let x = 0; x < w; x += 22) { g.fillStyle = (x / 22) % 2 ? '#e10600' : '#f4f4f4'; g.fillRect(x, h * 0.86, 22, h * 0.05); }
-    rad(w * 0.72, h * 0.35, h * 0.6, 'rgba(255,60,40,.35)', 'rgba(255,60,40,0)');
-  } else if (kind === 'rx') {
-    g.fillStyle = lin([[0, '#9fc4da'], [0.5, '#d8e4ea'], [0.56, '#6b5a47'], [1, '#2e241b']]); g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(40,46,54,.6)'; g.lineWidth = 1; for (let x = 0; x < w; x += 9) { g.beginPath(); g.moveTo(x, h * 0.36); g.lineTo(x, h * 0.55); g.stroke(); }
-    g.fillStyle = 'rgba(30,34,40,.7)'; g.fillRect(0, h * 0.35, w, 3);
-    for (let k = 0; k < 14; k++) rad(w * rnd(), h * (0.6 + rnd() * 0.4), h * (0.06 + rnd() * 0.12), 'rgba(40,28,18,.6)', 'rgba(40,28,18,0)');
-  } else if (kind === 'garage') {
-    g.fillStyle = lin([[0, '#20242c'], [0.6, '#14161b'], [1, '#0b0c10']]); g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,255,255,.04)'; for (let x = 0; x < w; x += w / 6) g.fillRect(x, 0, 3, h * 0.6);
-    g.fillStyle = 'rgba(255,240,200,.10)'; g.beginPath(); g.moveTo(w * 0.42, 0); g.lineTo(w * 0.62, 0); g.lineTo(w * 0.95, h); g.lineTo(w * 0.15, h); g.fill();
-    rad(w * 0.55, h * 0.85, w * 0.4, 'rgba(255,196,25,.22)', 'rgba(255,196,25,0)');
-  } else if (kind === 'circ') {
-    g.fillStyle = lin([[0, '#2a1d4f'], [0.5, '#6b3b7a'], [0.6, '#3a3d45'], [1, '#1d1f24']]); g.fillRect(0, 0, w, h);
-    g.save(); g.translate(0, h * 0.82); g.rotate(-0.06); for (let x = -40; x < w + 40; x += 26) { g.fillStyle = (x / 26) % 2 ? '#e10600' : '#f4f4f4'; g.fillRect(x, 0, 26, h * 0.06); } g.restore();
-    rad(w * 0.25, h * 0.3, h * 0.5, 'rgba(255,170,90,.3)', 'rgba(255,170,90,0)');
-  } else if (kind === 'net') {
-    g.fillStyle = '#16181d'; g.fillRect(0, 0, w, h);
-    g.fillStyle = '#ffd200'; g.beginPath(); g.moveTo(w * 0.58, 0); g.lineTo(w, 0); g.lineTo(w, h); g.lineTo(w * 0.42, h); g.fill();
-    g.font = `italic 900 ${Math.round(h * 0.56)}px "Saira Condensed", Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = '#ffffff'; g.fillText('V', w * 0.43, h * 0.46); g.fillStyle = '#16181d'; g.fillText('S', w * 0.6, h * 0.46);
-  } else if (kind === 'stunt') {
-    g.fillStyle = lin([[0, '#3b0f4a'], [0.6, '#b0306f'], [1, '#2a0d1e']]); g.fillRect(0, 0, w, h);
-    g.fillStyle = '#16090f'; g.beginPath(); g.moveTo(w * 0.05, h); g.lineTo(w * 0.45, h * 0.62); g.lineTo(w * 0.48, h * 0.62); g.lineTo(w * 0.48, h); g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.5)'; g.setLineDash([6, 8]); g.lineWidth = 2; g.beginPath(); g.moveTo(w * 0.48, h * 0.6); g.quadraticCurveTo(w * 0.7, h * 0.02, w * 0.95, h * 0.55); g.stroke(); g.setLineDash([]);
-    for (let k = 0; k < 20; k++) { g.fillStyle = `rgba(255,255,255,${0.2 + rnd() * 0.5})`; g.fillRect(rnd() * w, rnd() * h * 0.5, 2, 2); }
+  $('hubF1N').textContent = F1_TEAMS[f1Team()].name;
+  const d = rxDiff(), N = RX_CUP().length; $('hubRxN').textContent = `★ ${rxCupTotal(d)}/${N * 3}`;
+  for (const b of document.querySelectorAll('.mode-tabs [role="tab"]')) b.setAttribute('aria-selected', String(b.dataset.v === HUB.view));
+  // formule: týmy, okruhy Velké ceny
+  const tl = $('f1Teams'); tl.innerHTML = '';
+  for (const [key, tm] of Object.entries(F1_TEAMS)) {
+    const b = document.createElement('button'); b.setAttribute('aria-pressed', String(f1Team() === key));
+    b.innerHTML = `<i style="background:linear-gradient(135deg, ${tm.body} 0 58%, ${tm.a1} 58% 74%, ${tm.a2} 74%)"></i><span></span>`; b.querySelector('span').textContent = tm.name;
+    b.onclick = () => { saved.team = key; persist(); UIS.rev(true); if (car3d && saved.car === 'f1') setLivery(saved.livery); renderMenu(); };
+    tl.appendChild(b);
   }
-  g.fillStyle = lin([[0, 'rgba(0,0,0,0)'], [0.65, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,.45)']]); g.fillRect(0, 0, w, h);
-}
-function hubArt() {
-  if (overlay.menu.hidden || HUB.view !== 'hub') return;
-  for (const [id, [kind, carF]] of Object.entries(HUB_ART)) {
-    const el = $(id), cv = el && el.querySelector('.tile-art'); if (!cv || !el.clientWidth) continue;
-    const r = Math.min(1.5, window.devicePixelRatio || 1), w = Math.round(el.clientWidth * r), h = Math.round(el.clientHeight * r), car = carF && carF();
-    const key = [kind, w, h, car || '', car ? JSON.stringify(shopLevels(car)) + decalOf(car) + saved.livery + f1Team() : ''].join('|');
-    if (cv.dataset.key === key) continue;
-    cv.dataset.key = key; cv.width = w; cv.height = h;
-    hubBg(cv.getContext('2d'), kind, w, h);
-    if (car) HUB.q.push({ cv, key, car });
+  const fl = $('f1List'); fl.innerHTML = '';
+  for (const [id] of Object.entries(GP_TRACKS)) {
+    const k = STAGES.findIndex((x) => x.id === id), td = tracks[k]; if (k < 0) continue;
+    const b = document.createElement('button'); b.className = 'stage'; b.dataset.gp = id; b.setAttribute('aria-pressed', String(gpTrackId() === id));
+    b.innerHTML = `${thumbSvg(td)}<span><span class="nm"></span><span class="meta"></span></span><span class="bt"><i class="go">›</i></span>`;
+    b.querySelector('.nm').textContent = STAGES[k].name.replace(' GP', ''); b.querySelector('.meta').textContent = STAGES[k].region.split(' · ')[0] + ` · ${(td.length / 1000).toFixed(1)} km`;
+    b.onclick = () => { saved.gpTrack = id; persist(); if (k !== G.sel) loadStage(k, startDemo); else renderMenu(); };
+    fl.appendChild(b);
   }
-  hubPump();
+  $('f1GoSub').textContent = `${GP_TRACKS[gpTrackId()]} · 3 kola · zastávka v boxech`;
+  // rallycross: pohár (hvězdy po tratích na vybrané obtížnosti)
+  $('rxInfo').innerHTML = RX_CUP().map((id, k) => { const st = STAGES.find((x) => x.id === id), pos = rxCupRes(d)[id], st3 = rxCupStars(pos), open = rxCupOpen(d, k);
+    return `<div><b>${st.name.replace('Rallycross ', '')}</b><small>${'★'.repeat(st3)}<span style="opacity:.3">${'★'.repeat(3 - st3)}</span></small><em>${open ? (pos ? 'nejlépe ' + pos + '.' : 'odemčeno') : '🔒 zamčeno'}</em></div>`; }).join('');
 }
-function hubPump() {
-  if (HUB.busy || !HUB.q.length) return;
-  const job = HUB.q.shift();
-  if (job.cv.dataset.key !== job.key) { hubPump(); return; }
-  HUB.busy = true;
-  const ct = CAR_TYPES[job.car];
-  ensureCarModel(ct.model).then(() => {
-    if (job.cv.dataset.key !== job.key) return;
-    if (overlay.menu.hidden || G.mode !== 'menu') { job.cv.dataset.key = ''; return; }   // za jízdy se nekreslí
-    const shot = renderCarShot(job.car, { ...shopLevels(job.car), decal: ct.formula ? undefined : decalOf(job.car) }, 'icon', 560, 350), g = job.cv.getContext('2d');
-    const W2 = job.cv.width, H2 = job.cv.height, s2 = Math.min(H2 * 1.12 / shot.height, W2 * 0.95 / shot.width), dw = shot.width * s2, dh = shot.height * s2;
-    g.drawImage(shot, W2 - dw * 0.98, H2 - dh * 0.97, dw, dh);
-  }).catch((e) => console.error('hub art', e)).finally(() => { HUB.busy = false; setTimeout(hubPump, 50); });
-}
-window.addEventListener('resize', () => { if (!overlay.menu.hidden && HUB.view === 'hub') setTimeout(hubArt, 120); });
-$('hubRally').onclick = () => menuCat('rally');
-$('hubCirc').onclick = () => menuCat('circ');
-$('hubF1').onclick = () => hubF1();
+for (const b of document.querySelectorAll('.mode-tabs [role="tab"]')) b.onclick = () => { if (HUB.view !== b.dataset.v) menuTab(b.dataset.v); };
 $('hubGarage').onclick = () => openGarage();
-$('catBack').onclick = () => { UIS.click('back'); menuView('hub'); };
-document.addEventListener('keydown', (e) => {
-  if (e.code !== 'Escape' || G.mode !== 'menu' || overlay.menu.hidden || HUB.view === 'hub') return;
-  if ([...document.querySelectorAll('.modal')].some((m) => !m.hidden)) return;
-  menuView('hub');
-});
+$('f1Go').onclick = () => $('bGp').click();
+$('f1Long').onclick = () => $('bGpLong').click();
+$('f1Career').onclick = () => $('bCareer').click();
+$('f1More').onclick = () => openTeams();
+$('f1Shop').onclick = () => openGarage('f1');
 
 // Garáž: všechna auta na otočném podiu (scéna garáže rallycrossu), kamera jde tažením kolem auta dokola a nahoru/dolů,
 // kolečkem nebo dvěma prsty blíž a dál. Tuning, lak a polepy se koupí/nasadí a auto se hned přestaví; kamera se
@@ -17588,6 +17543,7 @@ for (const b of $('garTabs').children) b.onclick = () => { UIS.click(); GAR.tab 
   });
 }
 function renderMenu() {
+  if (!HUB.view) { HUB.view = menuDefView(); overlay.menu.dataset.view = HUB.view; }
   const list = $('stageList'), cat = HUB.view === 'circ' ? 'circ' : 'rally';
   list.innerHTML = '';
   tracks.forEach((td, i) => {
@@ -17601,10 +17557,8 @@ function renderMenu() {
     b.onclick = () => { if (menuInCat(st, cat)) { saved[cat + 'Sel'] = st.id; persist(); } if (i !== G.sel) loadStage(i, startDemo); };
     list.appendChild(b);
   });
-  $('catTitle').textContent = cat === 'circ' ? 'OKRUHY' : 'RALLY';
-  $('catSub').textContent = cat === 'circ' ? 'okruhy se silničními auty' : 'rychlostní zkoušky · mistrovství · výzva týdne';
   $('lblStages').textContent = cat === 'circ' ? 'Okruhy' : 'Rychlostní zkoušky';
-  $('bChamp').hidden = cat === 'circ'; $('bWeekly').hidden = cat === 'circ';
+  $('raceModes').hidden = cat === 'circ';   // mistrovství, výzva týdne a kaskadérské výzvy jsou na rallyových tratích
   const td = tracks[G.sel];
   const nTurns = td.notes.filter((n) => n.kind === 'turn').length, nJumps = td.crests.length;
   $('stageDetail').innerHTML =
@@ -17653,7 +17607,7 @@ function renderMenu() {
   $('tHandlingVal').textContent = HP().name;
   $('tTiltSensVal').textContent = (TILT_SENS[saved.tiltSens] || TILT_SENS.mid).n; $('tTiltDzVal').textContent = (TILT_DZ[saved.tiltDz] || TILT_DZ.mid).n; $('tMirrorVal').textContent = saved.mirror === false ? 'vypnuté' : 'zapnuté';
   $('tScaleVal').textContent = saved.paceScale === 'mild1' ? '1 rychlá · 6 ostrá (McRae)' : '1 ostrá · 6 rychlá';
-  if (HUB.view === 'hub') hubRender();
+  hubRender();
 }
 $('tVoice').onclick = () => { saved.voice = Voice.on = !saved.voice; persist(); renderMenu(); if (saved.voice) Voice.say('pravá čtyři do levá dva'); };
 $('tSound').onclick = () => { saved.sound = !saved.sound; Sound.setOn(saved.sound); persist(); renderMenu(); };
@@ -18347,7 +18301,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { HUB, GAR, menuView, menuCat, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
