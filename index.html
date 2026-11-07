@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw63krs1';
+window.__BUILD = 'mw674n64';
 (function () {
   function check() {
     try {
@@ -7448,6 +7448,12 @@ CAR_TYPES.fabia = {
   look: { metal: 0.25, rough: 0.32 },
   parts: { wheel: /^Wheel_/, caliper: null, tire: /_tire/, paint: /^Car_body$/, head: /^mat_7$/, tail: /^mat_7$/, rim: /^mat_14$/, noShadow: /Wheel_|mat_7|mat_24|mat_25|mat_1[358]$|mat_17/ },
 };
+// Škoda Fabia RS: vyladěná Fabie – o 20 % silnější motor, o 30 % lepší brzdy (silnější i na hranici přilnavosti),
+// o 15 % víc se naklání při brzdění a v driftu; z výroby se závodními pruhy
+CAR_TYPES.fabiars = {
+  ...CAR_TYPES.fabia, name: 'Škoda Fabia RS', desc: 'raketa: o 20 % silnější, o 30 % lépe brzdí, víc se naklání v driftu',
+  power: CAR_TYPES.fabia.power * 1.2, vmax: CAR_TYPES.fabia.vmax * 1.08, brakeK: 1.3, brakeGrip: 1.3, lean: 1.15, decal0: 'stripes',
+};
 CAR_TYPES.senna = {
   name: 'McLaren Senna', desc: 'hypersport, nejrychlejší a nejostřejší', model: 'senna', power: 1.25, vmax: 1.14, rearBias: 0.04, grip: 1.05,
   look: { metal: 0.35, rough: 0.28 },
@@ -7561,7 +7567,7 @@ const DECALS = [
   { id: 'wings', name: 'Křídla', price: 0, ach: 'jump' },
   { id: 'lightning', name: 'Blesk', price: 0, ach: 'drift' },
 ];
-const decalOf = (carId) => ((saved.decals || {})[carId]) || 'none';
+const decalOf = (carId) => ((saved.decals || {})[carId]) || (CAR_TYPES[carId] && CAR_TYPES[carId].decal0) || 'none';
 const decalOwned = (carId, id) => { const dc = DECALS.find((d) => d.id === id); if (dc && dc.ach) return !!(saved.ach && saved.ach[dc.ach]); return id === 'none' || SHOP_FREE || !!((saved.decalsOwned || {})[carId + ':' + id]); };
 const clearEdge = (g, w, h) => { g.clearRect(0, 0, w, 2); g.clearRect(0, h - 2, w, 2); g.clearRect(0, 0, 2, h); g.clearRect(w - 2, 0, 2, h); };
 // textura boku (délka 1024 × výška 256, x = 0 je předek auta)
@@ -7747,7 +7753,7 @@ function roadShopCar(ct, carId) {
   if (!Object.values(L).some((v) => v > 0)) return dc === 'none' ? ct : { ...ct, decal: dc };
   if (roadCache.has(sig)) return roadCache.get(sig);
   const car = { ...ct, power: ct.power * (1 + 0.06 * L.engine + 0.02 * L.exhaust + 0.01 * L.wheels), vmax: ct.vmax * (1 + 0.02 * L.engine),
-    grip: ct.grip * (1 + 0.01 * L.wheels + 0.025 * L.susp + 0.015 * L.aero + 0.01 * L.front + 0.025 * L.tyres), brakeK: 1 + 0.06 * L.brakes, shop: L, decal: dc };
+    grip: ct.grip * (1 + 0.01 * L.wheels + 0.025 * L.susp + 0.015 * L.aero + 0.01 * L.front + 0.025 * L.tyres), brakeK: (ct.brakeK || 1) * (1 + 0.06 * L.brakes), shop: L, decal: dc };
   roadCache.set(sig, car);
   return car;
 }
@@ -8243,6 +8249,7 @@ const ENGINE_CHAR = {
   g63: { pitch: 0.62, lp: 0.7, f: 110, g: 8, vol: 1.15 },   // V8 biturbo: hluboké dunění
   audi: { pitch: 0.92, lp: 1.05, f: 480, g: 5, vol: 1.05 }, // řadový pětiválec: typický vrčivý zvuk
   fabia: { pitch: 1.08, lp: 1.1, f: 380, g: 4, vol: 1.05 },  // turbo čtyřválec 1,6 l: vyšší a ostrý
+  fabiars: { pitch: 1.03, lp: 1.25, f: 330, g: 6, vol: 1.15 }, // vyladěná Fabia RS: hlubší a hlasitější, ostřejší výšky
   senna: { pitch: 1.18, lp: 1.25, f: 900, g: 4, vol: 1.1 }, // V8 hypersport: vysoký a kovový
   f1: { pitch: 1, lp: 1, f: 200, g: 0, vol: 1 },
 };
@@ -9376,7 +9383,7 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   const longDem = (Fx, cap, latUse) => {
     // trakční kontrola: v zatáčce pustí do kol jen tolik tahu, aby zadek ujel mírně, ne do hodin
     const lim = cap * (1 - Math.min(0.6, tire.tc * h.tc) * clamp(latUse, 0, 1));
-    return clamp(Fx, -cap * 0.95 * h.brake, lim);
+    return clamp(Fx, -cap * 0.95 * h.brake * (cs.brakeGrip || 1), lim);
   };
   let Fxf = longDem(drive * (1 - driveRear) - brk * 0.66, capF, Math.abs(Fyf) / capF);
   let Fxr = longDem(drive * driveRear - brk * 0.34, capR, Math.abs(Fyr) / capR);
@@ -9389,7 +9396,7 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   // řízení (při brzdění v zatáčce auto zatáčí), rovně brzdí stejně silně jako dřív
   const abs = brk > 0 && !inp.hb;
   if (abs) {
-    const lim = (Fy, cap) => cap * 0.95 * h.brake * Math.sqrt(Math.max(0.12, 1 - (Fy / cap) ** 2));
+    const lim = (Fy, cap) => cap * 0.95 * h.brake * (cs.brakeGrip || 1) * Math.sqrt(Math.max(0.12, 1 - (Fy / cap) ** 2));
     if (Fxf < 0) Fxf = Math.max(Fxf, -lim(Fyf, capF));
     if (Fxr < 0) Fxr = Math.max(Fxr, -lim(Fyr, capR));
   }
@@ -9413,7 +9420,7 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   // tlumení změny skluzu: ustálený drift nechá být, ale rychlé rozhoupání zadku (slalom, prudké ubrání) zklidní
   if (u > 6) wR += (Fy / (m * u) - wR) * Math.min(1, h.damp * (slick ? 1.6 : 1) * (1 - 0.45 * worn) * dt);
   // při malé rychlosti přechází do jednoduchého modelu (bez skluzu), jinak by byl numericky nestabilní
-  const kin = 1 - smooth(2.5, 6, Math.abs(u));
+  const kin = 1 - smooth(2.5, 6, rxDriftOn() ? Math.hypot(u, v) : Math.abs(u));   // v rallycrossu podle celkové rychlosti: auto bokem nezastaví skokem
   if (kin > 0) {
     const wK = (u * Math.tan(delta)) / WHEELBASE;
     wR = lerp(wR, wK, kin);
@@ -9422,9 +9429,10 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
   // stabilizace: drift do ~20° nechá být, nad tím ho čím dál víc srovnává (mírný drift ano, hodiny ne);
   // s ruční brzdou slabší, aby šly vracáky
   const b2 = Math.atan2(v, Math.max(1, Math.abs(u)));
+  let rxBT = false;   // rallycross: brzda a volant do zatáčky (bez plynu) – auto se stáčí dál, nic ho nesrovnává
   // rallycross: držení driftu – směr podle toho, kam auto zatáčí, velikost podle volantu a plynu (na asfaltu menší);
   // při protivolantu se drift drží mírný (řidič ho chytá)
-  if (rxDriftOn() && u > 7) {
+  if (rxDriftOn() && (u > 7 || (inp.brake > 0.2 && !inp.throttle && u > 0.5 && Math.hypot(u, v) > 4))) {   // při brzdění i pomaleji (auto bokem)
     const gk = tire === TIRE.tarmac ? 0.6 : 1, sI = c.steer, gas = inp.throttle > 0.15 || inp.hb;
     const turn = Math.abs(wR) > 0.18 ? Math.sign(wR) : Math.abs(sI) > 0.06 ? Math.sign(sI) : 0;
     // puštěný volant: auto se srovná (i když už skoro nezatáčí a jen klouže bokem)
@@ -9444,12 +9452,23 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
       const hold = into ? car.rxHold || 0 : 0;
       if (hold > mag) mag = hold;
       const holding = !gas && hold > 0.13, bT = -turn * mag, over = Math.abs(b2) > mag + (holding ? 0.03 : 0.08);
-      if (gas || over || holding) wR += -(bT - b2) * (over ? (free ? 10 : holding ? 32 : 8) : gas ? 5.5 : 4) * gk * dt;
+      // brzda a volant do zatáčky: auto se stáčí tam, kam hráč drží volant, a nesrovná se; pojistka jen proti
+      // otočení do protisměru (úhel driftu nad ~70°)
+      rxBT = into && !gas && inp.brake > 0.2;
+      if (rxBT) {
+        // auto se otáčí stejnou rychlostí, jakou se stáčí směr jízdy, a k tomu dotáčí úhel bokem na ~25° podle volantu;
+        // proti volantu se nestočí
+        const V = Math.hypot(u, v), aK = Math.min(1, Math.abs(sI) * 1.25);
+        const wT = turn * Math.max(0, (RXT.turn * 0.9 * aK * gk) / Math.max(V, 6) + 3 * (0.45 * aK - bIn));
+        wR += (wT - wR) * Math.min(1, 8 * dt);
+      }
+      else if (gas || over || holding) wR += -(bT - b2) * (over ? (free ? 10 : holding ? 32 : 8) : gas ? 5.5 : 4) * gk * dt;
       // drift musí zatáčet: rallycrossové auto v driftu pod plynem opisuje ostrý oblouk (tah zadních kol míří do
       // zatáčky). Směr jízdy se proto otáčí k zatáčce navíc až o ~6 m/s² příčného zrychlení podle volantu;
       // úhel driftu drží výše uvedené přitahování, takže auto zatáčí ostřeji a zůstává bokem
-      if (into && gas) {
-        const V = Math.hypot(u, v), ay = RXT.turn * Math.min(1, Math.abs(sI) * 1.25) * Math.max(inp.throttle, inp.hb ? 0.7 : 0) * gk * clamp((V - 5) / 6, 0, 1);
+      // i při brzdění s volantem do zatáčky auto zatáčí (směr jízdy se stáčí s ním), jen o něco méně než pod plynem
+      if (into && (gas || rxBT)) {
+        const V = Math.hypot(u, v), ay = RXT.turn * Math.min(1, Math.abs(sI) * 1.25) * (gas ? Math.max(inp.throttle, inp.hb ? 0.7 : 0) : 0.9) * gk * clamp((V - 5) / 6, 0, 1);
         const dth = (turn * ay / Math.max(V, 6)) * dt, cs2 = Math.cos(dth), sn2 = Math.sin(dth), u2 = u * cs2 - v * sn2;
         v = u * sn2 + v * cs2; u = u2;
       }
@@ -9460,7 +9479,7 @@ function carDynamics(c, inp, mu, tire, rollRes, dt) {
 
   // formule na slicích: smyk nad ~4° (se sjetými pneumatikami nad ~10°) se rychle srovná
   const bx = Math.abs(b2) - (slick ? 0.07 + 0.1 * worn + 0.6 * blown : h.stab + 0.12 * worn);
-  if (bx > 0 && u > 4) wR += Math.sign(b2) * (bx * 5 + bx * bx * 12) * (slick ? 4 : h.stabK) * (inp.hb ? 0.3 : 1) * (1 - 0.4 * worn - 0.5 * blown) * dt;
+  if (bx > 0 && u > 4 && !rxBT) wR += Math.sign(b2) * (bx * 5 + bx * bx * 12) * (slick ? 4 : h.stabK) * (inp.hb ? 0.3 : 1) * (1 - 0.4 * worn - 0.5 * blown) * dt;
   if (absHold) {
     // auto jede tam, kam míří kola: natáčení podle rejdu (jen tolik, kolik pneumatiky udrží), skluz do boku zmizí
     const wK = (u * Math.tan(delta)) / WHEELBASE, wMax = (mu * 9.81 * 0.95) / Math.max(1, u);
@@ -9511,7 +9530,7 @@ function physics0(dt, inp) {
   // omezovač: plyn se u hranice plynule ubírá (dřív se zapínal a vypínal každých pár snímků a auto se klepalo dopředu a dozadu)
   if (car.limiter) inp = { ...inp, throttle: inp.throttle * clamp((PIT_LIMIT - 0.25 - vf) / 1.8, 0, 1), nos: false };
   // zpátečka: auto skoro stojí a brzda se drží déle než 0,6 s → couvá (ruční brzda ani stání v boxech necouvá)
-  if (inp.brake > 0 && !inp.throttle && !inp.hb) { if (vf < 0.8) car.revT = (car.revT || 0) + dt; }
+  if (inp.brake > 0 && !inp.throttle && !inp.hb) { if (vf < 0.8 && (Math.abs(vr) < 1.5 || !rxDriftOn())) car.revT = (car.revT || 0) + dt; }   // ne když auto ještě klouže bokem
   else car.revT = 0;
   if (car.revT > 0.6) inp = { ...inp, rev: true };
   if (!flying) {
@@ -10521,8 +10540,9 @@ function updateCarVisual(dt, inp) {
   const lonAcc = (car.vf - car.prevVf) / Math.max(dt, 1e-3);
   car.prevVf = car.vf;
   const latAcc = car.vf * car.omega;
-  car.bPitch += (clamp(-lonAcc * 0.0045, -0.07, 0.07) - car.bPitch) * Math.min(1, dt * 7);
-  car.bRoll += (clamp(latAcc * 0.0042, -0.085, 0.085) - car.bRoll) * Math.min(1, dt * 6);
+  const lk = carType().lean || 1;   // Fabia RS se naklání víc (brzdění, drift)
+  car.bPitch += (clamp(-lonAcc * 0.0045 * lk, -0.07 * lk, 0.07 * lk) - car.bPitch) * Math.min(1, dt * 7);
+  car.bRoll += (clamp(latAcc * 0.0042 * lk, -0.085 * lk, 0.085 * lk) - car.bRoll) * Math.min(1, dt * 6);
   car.bounce += (0 - car.bounce) * Math.min(1, dt * 9);
   const jit = car.surf === 'off' && !flying ? (Math.random() - 0.5) * Math.min(0.06, Math.abs(car.vf) / 300) : 0;
 
@@ -14531,9 +14551,9 @@ const rxTrack = () => { const ids = STAGES.filter((x) => x.rx).map((x) => x.id);
 // vlevo jeho parametry, vpravo nabídka Pohár / Rychlý závod / Auto. Menu je jen na ležato: na telefonu drženém na výšku
 // se celé (nabídka i 3D obraz) otočí o 90°, takže stačí telefon otočit. Pohár: tratě jdou po sobě, na začátku je odemčená
 // jen první, další se odemkne za 1. nebo 2. místo ve finále té předchozí; každá obtížnost soupeřů má svůj pohár.
-const RX_DRIVE = { fabia: '4×4', audi: '4×4', g63: '4×4', bmw: 'zadní kola', p911: 'zadní kola', senna: 'zadní kola' };
-const RX_SHORT = { fabia: 'Fabia R5', bmw: 'M3 E30', p911: '911 Turbo', senna: 'Senna', g63: 'G 63', audi: 'RS 5' };
-const RX_CARS = () => ['fabia'].concat(Object.keys(CAR_TYPES).filter((k) => k !== 'fabia' && !CAR_TYPES[k].formula && !CAR_TYPES[k].custom));
+const RX_DRIVE = { fabia: '4×4', fabiars: '4×4', audi: '4×4', g63: '4×4', bmw: 'zadní kola', p911: 'zadní kola', senna: 'zadní kola' };
+const RX_SHORT = { fabia: 'Fabia R5', fabiars: 'Fabia RS ⚡', bmw: 'M3 E30', p911: '911 Turbo', senna: 'Senna', g63: 'G 63', audi: 'RS 5' };
+const RX_CARS = () => ['fabia', 'fabiars'].concat(Object.keys(CAR_TYPES).filter((k) => k !== 'fabia' && k !== 'fabiars' && !CAR_TYPES[k].formula && !CAR_TYPES[k].custom));
 // auto do rallycrossu: vybrané v garáži (dřív „own“ = auto z hlavní garáže, formule se nahradí BMW)
 function rxCarId() {
   const c = saved.rxCar;
@@ -14544,7 +14564,7 @@ function rxCarId() {
 // parametry auta pro pruhy (0–1) podle skutečných hodnot fyziky včetně úprav z dílny
 function rxCarStats(id) {
   const ct = roadShopCar(CAR_TYPES[id], id), f = (v, a, b) => clamp((v - a) / (b - a), 0.06, 1);
-  return [['Rychlost', f(ct.vmax, 0.8, 1.2)], ['Výkon', f(ct.power, 0.8, 1.4)], ['Přilnavost', f(ct.grip, 0.9, 1.15)], ['Brzdy', f(ct.brakeK || 1, 0.85, 1.25)], ['Stabilita', f(-(ct.rearBias || 0), -0.15, 0.1)]];
+  return [['Rychlost', f(ct.vmax, 0.8, 1.2)], ['Výkon', f(ct.power, 0.8, 1.4)], ['Přilnavost', f(ct.grip, 0.9, 1.15)], ['Brzdy', f(ct.brakeK || 1, 0.85, 1.4)], ['Stabilita', f(-(ct.rearBias || 0), -0.15, 0.1)]];
 }
 const RX_CUP = () => STAGES.filter((x) => x.rx).map((x) => x.id);
 const RX_CUP_BONUS = { easy: 1000, normal: 2000, hard: 3500, champ: 5000, legend: 8000 };
