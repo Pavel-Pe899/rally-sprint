@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw674n64';
+window.__BUILD = 'mw692ifi';
 (function () {
   function check() {
     try {
@@ -124,6 +124,11 @@ window.__BUILD = 'mw674n64';
   .stage .bt.has { color: var(--accent); }
   .medal { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
   .m-gold { background: #ffcf3a; } .m-silver { background: #c9d3de; } .m-bronze { background: #d08a4e; }
+  .my-track { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0 2px; }
+  .my-track small { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; flex-basis: 100%; }
+  .my-track button { font: inherit; font-size: 14px; font-weight: 700; color: #fff; padding: 7px 12px; flex: 1; border-radius: 10px; border: 2px solid #050608; background: linear-gradient(180deg, #2b2f38, #1b1e24); box-shadow: 0 2px 0 #050608; cursor: pointer; }
+  .my-track button.del { background: linear-gradient(180deg, #8a2020, #5c1212); }
+  .my-track button.del.sure { background: linear-gradient(180deg, #e0302a, #a3160f); animation: none; }
   .detail { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .stat { padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .035); border: 1px solid var(--line); min-width: 0; }
   .stat small { display: block; color: var(--muted); font-size: 12px; letter-spacing: .04em; }
@@ -1234,10 +1239,11 @@ window.__BUILD = 'mw674n64';
     <div class="pane pane-race">
       <p class="label" id="lblStages">Rychlostní zkoušky</p>
       <div class="stages" id="stageList"></div>
+      <div class="my-track" id="myTrackBar" hidden><small>Vlastní trať</small><button id="myTrackEdit">Upravit v editoru</button><button id="myTrackDel" class="del">Smazat trať</button></div>
       <div class="detail" id="stageDetail"></div>
-      <p class="label" id="lblCars">Auto</p>
-      <div class="cars" id="carList"></div>
-      <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Garáž</span> <small>tuning, lak a polepy · auto ve 3D</small></button>
+      <!-- výběr auta je v garáži (3D náhled, tuning, „Jet s tímhle autem“); seznam tu zůstává skrytý -->
+      <div class="cars" id="carList" hidden></div>
+      <button class="btn shop-top" id="bShopTop"><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 6.3a6 6 0 0 1-7.6 7.6L6.4 21.6a2.4 2.4 0 0 1-3.4-3.4l7.7-7.7a6 6 0 0 1 7.6-7.6L14.6 6.6l.7 2.1 2.1.7z" fill="currentColor"/></svg>Garáž</span> <small id="bShopTopSub">výběr auta, tuning, lak a polepy</small></button>
       <div class="actions modes" id="raceModes">
         <button class="btn gp" id="bGpMenu" hidden><span class="t"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg>Velká cena F1</span> <small>7 okruhů · 3 kola · výběr týmu</small></button>
         <div class="row2">
@@ -15511,7 +15517,7 @@ function edUi() {
     row.querySelector('b').textContent = d.name;
     row.querySelector('[data-a=edit]').onclick = () => { Object.assign(ED, { ...d, raw: d.pts.slice(), undo: [] }); edUi(); edDraw(); };
     row.querySelector('[data-a=go]').onclick = () => edGo(d);
-    row.querySelector('[data-a=del]').onclick = () => { saved.myTracks = (saved.myTracks || []).filter((x) => x.id !== d.id); persist(); edUi(); };
+    row.querySelector('[data-a=del]').onclick = () => { edDelete(d.id); edUi(); };
     list.appendChild(row);
   }
   if (!(saved.myTracks || []).length) list.innerHTML = '<small class="ed-empty">zatím žádné uložené tratě</small>';
@@ -15526,6 +15532,24 @@ function edGo(d) {
   $('editorModal').hidden = true;
   G.champ = null;
   loadStage(idx, startRace);
+}
+// smazání vlastní trati: zmizí z uložených tratí, ze seznamu tratí v menu (zůstane jen jako skrytá položka do
+// příštího spuštění, aby se neposunula čísla ostatních tratí) i její časy; byla-li načtená, načte se jiná trať
+function edDelete(id) {
+  saved.myTracks = (saved.myTracks || []).filter((x) => x.id !== id);
+  for (const k of ['best', 'splits']) if (saved[k]) delete saved[k][id];
+  if (saved.lastRun && saved.lastRun.id === id) saved.lastRun = null;
+  for (const k of ['rallySel', 'circSel']) if (saved[k] === id) delete saved[k];
+  persist();
+  if (ED.id === id) Object.assign(ED, { id: null, name: '' });
+  const i = STAGES.findIndex((x) => x.id === id);
+  if (i < 0) return;
+  STAGES[i].removed = true;
+  if (G.sel === i) {
+    const cat = STAGES[i].circuit ? 'circ' : 'rally';
+    let j = STAGES.findIndex((x) => !x.removed && !x.custom && menuInCat(x, cat)); if (j < 0) j = 0;
+    loadStage(j, G.mode === 'menu' ? startDemo : () => {});
+  } else if (G.mode === 'menu') renderMenu();
 }
 {
   const cv = $('edCanvas');
@@ -17459,7 +17483,7 @@ function recSubmit(st, t) {
 // (úroveň podle úspěchů, trofeje, zlata, peníze), Jet znovu a záložky. Rally a Okruhy ukazují jen své tratě a silniční
 // auta se startem, Formule tým, okruh Velké ceny a její závody, Rallycross pohár a vstup do jeho garáže.
 const HUB = { view: null };
-const menuInCat = (st, cat) => (cat === 'circ' ? !!st.circuit && !st.rx : !st.circuit);
+const menuInCat = (st, cat) => !st.removed && (cat === 'circ' ? !!st.circuit && !st.rx : !st.circuit);
 const roadCarId = () => (CAR_TYPES[saved.car] && !CAR_TYPES[saved.car].formula ? saved.car : CAR_TYPES[saved.roadCar] && !CAR_TYPES[saved.roadCar].formula ? saved.roadCar : 'bmw');
 function useCar(id) {
   if (saved.car === id) return;
@@ -17493,8 +17517,8 @@ function hubRender() {
   $('hubLvl').textContent = 1 + Math.floor(n / 4);
   $('hubTro').textContent = `${n}/${ACH.length}`; $('hubGold').textContent = `${achGolds()}/${RALLY_STAGES().length}`;
   $('hubMoney').textContent = moneyStr(saved.money | 0).replace(/ \$$/, '');
-  $('hubRallyN').textContent = `${STAGES.filter((x) => !x.circuit).length} etap`;
-  $('hubCircN').textContent = `${STAGES.filter((x) => x.circuit && !x.rx).length} okruhů`;
+  $('hubRallyN').textContent = `${STAGES.filter((x) => !x.circuit && !x.removed).length} etap`;
+  $('hubCircN').textContent = `${STAGES.filter((x) => menuInCat(x, 'circ')).length} okruhů`;
   $('hubF1N').textContent = F1_TEAMS[f1Team()].name;
   const d = rxDiff(), N = RX_CUP().length; $('hubRxN').textContent = `★ ${rxCupTotal(d)}/${N * 3}`;
   for (const b of document.querySelectorAll('.mode-tabs [role="tab"]')) b.setAttribute('aria-selected', String(b.dataset.v === HUB.view));
@@ -17674,6 +17698,19 @@ function renderMenu() {
     list.appendChild(b);
   });
   $('lblStages').textContent = cat === 'circ' ? 'Okruhy' : 'Rychlostní zkoušky';
+  // vybraná vlastní trať: upravit v editoru nebo smazat (smazání chce druhé klepnutí)
+  { const st = STAGES[G.sel], mine = st && st.custom && !st.removed && menuInCat(st, cat), d = mine && (saved.myTracks || []).find((x) => x.id === st.id);
+    const bar = $('myTrackBar'), del = $('myTrackDel'); bar.hidden = !d;
+    clearTimeout(del._t); del.classList.remove('sure'); del.textContent = 'Smazat trať';
+    if (d) {
+      bar.querySelector('small').textContent = `Vlastní ${d.loop ? 'okruh' : 'trať'} · ${d.name}`;
+      $('myTrackEdit').onclick = () => { Object.assign(ED, { ...d, raw: d.pts.slice(), undo: [] }); openEditor(); requestAnimationFrame(edDraw); };
+      del.onclick = () => {
+        if (!del.classList.contains('sure')) { del.classList.add('sure'); del.textContent = 'Opravdu smazat?'; del._t = setTimeout(() => { del.classList.remove('sure'); del.textContent = 'Smazat trať'; }, 3500); return; }
+        clearTimeout(del._t); edDelete(d.id); toast(`Trať „${d.name}“ smazaná`, 1.8);
+      };
+    } }
+  { const ct = CAR_TYPES[roadCarId()]; $('bShopTopSub').textContent = `${ct ? ct.name + ' · ' : ''}výběr auta, tuning, lak a polepy`; }
   $('raceModes').hidden = cat === 'circ';   // mistrovství, výzva týdne a kaskadérské výzvy jsou na rallyových tratích
   const td = tracks[G.sel];
   const nTurns = td.notes.filter((n) => n.kind === 'turn').length, nJumps = td.crests.length;
@@ -18417,7 +18454,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
