@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw5wwjoq';
+window.__BUILD = 'mw61e44y';
 (function () {
   function check() {
     try {
@@ -1618,6 +1618,7 @@ window.__BUILD = 'mw5wwjoq';
         <div class="net-series" id="netSeries" hidden></div>
         <div class="net-go">
           <button class="btn" id="bNetGo"><span>Závod</span><small id="bNetGoSub"></small></button>
+          <button class="btn" id="bNetRx"><span>Rallycross se soupeři</span><small id="bNetRxSub"></small></button>
           <button class="btn gp" id="bNetGp"><span>Velká cena F1</span><small id="bNetGpSub"></small></button>
           <button class="btn gp" id="bNetDuo"><span>Týmový závod 10 kol · jeden tým</span><small id="bNetDuoSub"></small></button>
         </div>
@@ -13867,6 +13868,60 @@ function rxGate(td) {
   W.group.add(g);
   return { g, piv, up: 0 };
 }
+// soupeř v rallycrossu: stav (stopa, tempo, joker, reakce) a model auta v jeho barvách (načte se, až je model)
+const RX_GRID = [[-6, -3.6], [-6, 0], [-6, 3.6], [-16, -1.8], [-16, 1.8]];
+function rxAddAi([name, model, liv], skill, [back, lat], D, rr) {
+  const a = { name, model, d: back, lat, lat0: lat, v: 0, skill, jokerLap: 1 + ((rr() * (RX_LAPS - 1)) | 0), joker: false, finishT: null, c3: null, spin: 0, off: 0,
+    react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1, accK: D.accK, aggr: D.aggr, vk: D.vk || 1,
+    vl: 0, vp: 0, yaw: 0, wy: 0, spinT: 0, passSide: 0, passT: 0, slide: 0, sc: rxScaleOf(CAR_TYPES[model]), col: LIVERIES[liv % 10].body, ts: [] };
+  G.rx.ai.push(a);
+  ensureCarModel(CAR_TYPES[model].model).then(() => {
+    if (!G.rx || !G.rx.ai.includes(a)) return;
+    const c = buildModelCar({ ...LIVERIES[liv % 10] }, CAR_TYPES[model]);
+    c.beams.visible = false; c.pod.visible = false; if (c.flame) c.flame.visible = false;
+    { const sc = rxScaleOf(CAR_TYPES[model]); c.root.scale.setScalar(sc); c.blob.scale.setScalar(sc); }
+    scene.add(c.root, c.blob); a.c3 = c;
+    rxDirtSetup(c, rxMudCol(W.td.st)); rxGlowSetup(c);
+  });
+  return a;
+}
+// ---- rallycross po síti: hráči + počítačoví soupeři do 5 aut. Soupeře, rošt a jména určí náhoda ze stejného
+// semínka (id závodu) na všech telefonech; soupeře řídí jen zakladatel a posílá jejich polohy (rxai), ostatní je
+// jen zobrazují (rxNetApplyAI). Každý si počítá svá kola a joker, v cíli se pořadí skládá z času hráčů a soupeřů.
+const rxSeed = (id) => { let h = 2166136261; for (const ch of String(id)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+function rxNetStart(pend) {
+  const rr = mulberry32(rxSeed(pend.id)), td = W.td, devs = (G.net.devs || [netDev()]).slice().sort();
+  const nAi = clamp(5 - devs.length, 0, 4), D = RX_DIFF[pend.diff] || RX_DIFF.normal;
+  RX_LAPS = pend.laps || 4;
+  const pick = RX_RIVALS.slice().sort(() => rr() - 0.5).slice(0, nAi), skills = pick.map(() => lerp(D.pace[0], D.pace[1], rr()));
+  // rošt: hráči a soupeři zamíchaní stejně všude
+  const ents = devs.map((d) => 'p:' + d).concat(pick.map((_, k) => 'a:' + k)).sort(() => rr() - 0.5);
+  G.rx = { lap: 0, lapStart: 0, joker: false, prevCar: NET.rxPrev || null, ai: [], pos: 5, done: false, lapsT: [], id: td.st.id, diff: pend.diff, net: true, host: G.net.host === netDev() };
+  NET.rxPrev = null;
+  rxRacingLine(td);
+  startRace();
+  const me = Math.max(0, ents.indexOf('p:' + netDev())), slot = (k) => RX_GRID[Math.min(k, RX_GRID.length - 1)];
+  G.rx.gridPos = me + 1;
+  G.rx.gate = rxGate(td);
+  { const [back, lat] = slot(me), i = clamp(td.startIdx + Math.round(back / td.ds), 0, td.n - 1); placeCar(i); car.x += td.NX[i] * lat; car.z += td.NZ[i] * lat; car.lat = lat; }
+  pick.forEach((pk, k) => rxAddAi(pk, skills[k], slot(ents.indexOf('a:' + k)), D, rr));
+  hud.stage.textContent = `Rallycross · kolo 1/${RX_LAPS}`;
+}
+// ostatní telefony: soupeři podle zprávy zakladatele, dopočítaní do teď a s plynulou opravou skoků
+function rxNetApplyAI(dt) {
+  const sn = NET.rxSnap; if (!sn) return;
+  const age = clamp((netOneWay(sn.dev) + performance.now() - sn.recv) / 1000, 0, 1.5);
+  G.rx.ai.forEach((a, k) => {
+    const r = sn.src[k]; if (!r) return;
+    const [d, lat, v, vl, yaw, jk, finT, jz, spin] = r, target = d + v * age;
+    if (sn.fresh) a.eD = Math.abs(a.d - target) < 40 && a.synced ? a.d - target : 0;
+    a.eD = (a.eD || 0) * Math.exp(-dt * 4);
+    a.d = target + a.eD; a.synced = true;
+    a.lat += (lat + vl * age - a.lat) * Math.min(1, dt * 8); a.v = v; a.vl = vl; a.vp = 0;
+    a.yaw += wrapAngle(yaw - a.yaw) * Math.min(1, dt * 8); a.joker = !!jk; a.finishT = finT >= 0 ? finT : null; a.jz = !!jz; a.spinT = spin ? 0.2 : 0;
+  });
+  sn.fresh = false;
+}
 function rxStart(pc0, id = 'rx', opts = {}) {
   const idx = Math.max(0, STAGES.findIndex((x) => x.id === id));
   G.champ = null; G.weekly = null; G.stunt = null;
@@ -13898,21 +13953,7 @@ function rxStart(pc0, id = 'rx', opts = {}) {
     G.rx.gridPos = me + 1;
     G.rx.gate = rxGate(td);
     { const [back, lat] = grid[me], i = clamp(td.startIdx + Math.round(back / td.ds), 0, td.n - 1); placeCar(i); car.x += td.NX[i] * lat; car.z += td.NZ[i] * lat; car.lat = lat; }
-    for (let k = 0; k < 4; k++) {
-      const [name, model, liv] = pick[k], [back, lat] = grid[ord[k]];
-      const a = { name, model, d: back, lat, lat0: lat, v: 0, skill: skills[k], jokerLap: 1 + ((rr() * (RX_LAPS - 1)) | 0), joker: false, finishT: null, c3: null, spin: 0, off: 0,
-        react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1, accK: D.accK, aggr: D.aggr, vk: D.vk || 1,
-        vl: 0, vp: 0, yaw: 0, wy: 0, spinT: 0, passSide: 0, passT: 0, slide: 0, sc: rxScaleOf(CAR_TYPES[model]), col: LIVERIES[liv % 10].body, ts: [] };
-      G.rx.ai.push(a);
-      ensureCarModel(CAR_TYPES[model].model).then(() => {
-        if (!G.rx || !G.rx.ai.includes(a)) return;
-        const c = buildModelCar({ ...LIVERIES[liv % 10] }, CAR_TYPES[model]);
-        c.beams.visible = false; c.pod.visible = false; if (c.flame) c.flame.visible = false;
-        { const sc = rxScaleOf(CAR_TYPES[model]); c.root.scale.setScalar(sc); c.blob.scale.setScalar(sc); }
-        scene.add(c.root, c.blob); a.c3 = c;
-        rxDirtSetup(c, rxMudCol(W.td.st)); rxGlowSetup(c);
-      });
-    }
+    for (let k = 0; k < 4; k++) rxAddAi(pick[k], skills[k], grid[ord[k]], D, rr);
     hud.stage.textContent = `Rallycross · kolo 1/${RX_LAPS}`;
     if (opts.intro) rxIntroStart();
     void lap;
@@ -14007,6 +14048,7 @@ function rxAiDrive(a, dt, td, R, myP, myV) {
   const others = [];
   for (const b of R.ai) if (b !== a) others.push({ g: b.d - a.d, l: b.lat, v: b.v });
   others.push({ g: myP - a.d, l: car.lat, v: myV, me: true });
+  if (G.net) for (const o of NET.others.values()) if (!o.gone && o.snap && o.snap.tp && o.progNow != null) others.push({ g: o.progNow - a.d, l: o.dL != null ? o.dL : o.snap.tp[1], v: o.v || 0 });   // kamarád po síti
   // auto před sebou ve stopě: když jede pomaleji, objede ho z volnější strany (vnitřek příští zatáčky má přednost);
   // strana se vybere jednou a drží se, dokud předjíždění neskončí
   let ahead = null;
@@ -14123,23 +14165,30 @@ function rxContacts(td, R) {
     const i = a.i0, tx = td.TX[i], tz = td.TZ[i], nx = td.NX[i], nz = td.NZ[i], vl = (a.vl || 0) + (a.vp || 0);
     bodies.push({ a, x: a.x, z: a.z, h: a.hd, vx: tx * a.v + nx * vl, vz: tz * a.v + nz * vl, w: a.wy || 0, L: RX_COL.L * a.sc, r: RX_COL.r * a.sc, I: RX_COL.I * a.sc * a.sc, px: 0, pz: 0 });
   }
+  if (G.net && R.host !== false) for (const o of NET.others.values()) {
+    if (o.gone || !o.c3d || o.x == null) continue;
+    const h = o.c3d.root.rotation.y, sc = rxScaleOf(CAR_TYPES[o.pres && o.pres.car] || CAR_TYPES.fabia);
+    bodies.push({ kin: true, x: o.x, z: o.z, h, vx: Math.sin(h) * (o.v || 0), vz: Math.cos(h) * (o.v || 0), w: 0, L: RX_COL.L * sc, r: RX_COL.r * sc, I: 1e6, px: 0, pz: 0 });
+  }
   if (bodies.length < 2) return;
   for (const b of bodies) { b.vx0 = b.vx; b.vz0 = b.vz; b.w0 = b.w; }
   let hit = 0, hx = 0, hz = 0, hy = 0, meHit = 0, aiHit = 0, ax = 0, az = 0;
   for (let it = 0; it < 2; it++) {
     for (let p = 0; p < bodies.length; p++) for (let q = p + 1; q < bodies.length; q++) {
       const A = bodies[p], B = bodies[q];
+      if ((A.kin && (B.kin || B.me)) || (B.kin && A.me)) continue;   // hráč s kamarádem se odstrkují v netTick
       if (Math.abs(A.x - B.x) > 6 || Math.abs(A.z - B.z) > 6) continue;
       const c = rxCollide(A, B);
       if (!c) continue;
-      if (c.vn > hit) { hit = c.vn; hx = c.cx; hz = c.cz; hy = A.me ? car.y : td.Y[A.a.i0]; }
+      if (c.vn > hit) { hit = c.vn; hx = c.cx; hz = c.cz; hy = A.me || A.kin ? car.y : td.Y[A.a.i0]; }
       if ((A.me || B.me) && c.vn > meHit) meHit = c.vn;
       if (!A.me && !B.me && c.vn > aiHit) { aiHit = c.vn; ax = c.cx; az = c.cz; }
       // posun hned, aby další dvojice počítaly s rozdělenými auty
-      for (const b of [A, B]) { b.x += b.px; b.z += b.pz; if (b.me) { car.x += b.px; car.z += b.pz; } else { const i = b.a.i0; b.a.d += b.px * td.TX[i] + b.pz * td.TZ[i]; b.a.lat += b.px * td.NX[i] + b.pz * td.NZ[i]; } b.px = b.pz = 0; }
+      for (const b of [A, B]) { if (b.kin) { b.px = b.pz = 0; continue; } b.x += b.px; b.z += b.pz; if (b.me) { car.x += b.px; car.z += b.pz; } else { const i = b.a.i0; b.a.d += b.px * td.TX[i] + b.pz * td.TZ[i]; b.a.lat += b.px * td.NX[i] + b.pz * td.NZ[i]; } b.px = b.pz = 0; }
     }
   }
   for (const b of bodies) {
+    if (b.kin) continue;
     if (b.me) { car.vx = b.vx; car.vz = b.vz; car.omega = b.w; continue; }
     const a = b.a, i = a.i0, dvx = b.vx - b.vx0, dvz = b.vz - b.vz0;
     a.v += dvx * td.TX[i] + dvz * td.TZ[i]; a.vp = (a.vp || 0) + dvx * td.NX[i] + dvz * td.NZ[i]; a.wy = (a.wy || 0) + (b.w - b.w0);
@@ -14307,8 +14356,9 @@ function rxTick(dt) {
   if (car3d) { const U = car3d.dirtU || rxDirtSetup(car3d, rxMudCol(td.st)); if (U) { if (run && rxGravel(td, car.s)) R.dirtM = (R.dirtM || 0) + Math.abs(car.vf || 0) * dt; U.uDirt.value = rxDirtOf(R.dirtM || 0); } }
   // soupeři jedou i po dojetí (dojezdové kolo), ať v cíli nestojí jako sloupy
   const live = run || G.phase === 'done';
+  if (R.net && !R.host && live) rxNetApplyAI(dt);   // po síti řídí soupeře jen zakladatel
   for (const a of R.ai) {
-    if (live) rxAiDrive(a, dt, td, R, myP, myV);
+    if (live && !(R.net && !R.host)) rxAiDrive(a, dt, td, R, myP, myV);
     rxAiPose(td, a);
   }
   // srážky: auta se do sebe opřou a odstrčí (rallycross je kontaktní sport, žádné tresty)
@@ -14367,6 +14417,9 @@ function rxRows() {
   const R = G.rx, lap = W.td.length;
   const rows = R.ai.map((a) => ({ name: a.name, car: CAR_TYPES[a.model].name, p: a.d, t: a.finishT, joker: a.joker, ts: a.ts, col: a.col }));
   rows.push({ me: true, name: netName(), car: carType().name, p: R.done ? RX_LAPS * lap : rxProg(), t: R.done ? G.result : null, joker: R.joker, ts: R.ts, col: car3d && car3d.baseColor ? '#' + car3d.baseColor.getHexString() : '#ffc419' });
+  if (G.net) for (const o of NET.others.values()) if (o.pres && (!o.gone || o.pres.fin != null)) {   // kamarádi po síti
+    const pr = o.pres; rows.push({ remote: true, name: o.name, car: CAR_TYPES[pr.car] ? CAR_TYPES[pr.car].name : '', p: pr.fin != null ? RX_LAPS * lap : o.progNow != null ? o.progNow : pr.prog || 0, t: pr.fin != null ? pr.fin : null, joker: !!pr.jk, col: (LIVERIES[clamp(pr.livery | 0, 0, LIVERIES.length - 1)] || LIVERIES[0]).body });
+  }
   return rows.sort((a, b) => (a.t != null && b.t != null ? a.t - b.t : a.t != null ? -1 : b.t != null ? 1 : b.p - a.p));
 }
 function rxLap() {
@@ -14414,6 +14467,7 @@ function rxFinish() {
   if (pos === 1) achUnlock('rx');
   { const id = W.td.st.id, rb = { ...(saved.rxBest || {}) }; if (!rb[id] || pos < rb[id]) { rb[id] = pos; saved.rxBest = rb; persist(); } }
   if (G.rxCup) rxCupResult(pos);
+  if (G.net) netFinish();
   Sound.fanfare(pos === 1);
   hud.center.innerHTML = `P${pos}<span class="sub">${fmt(G.result)}${R.joker ? '' : ' · bez jokeru +30 s'}</span>`; hud.center.className = 'hud-center';
   setTimeout(() => rxResults(), 2200);
@@ -14421,6 +14475,7 @@ function rxFinish() {
 }
 function rxResults() {
   const R = G.rx; if (!R || G.mode !== 'race') return;
+  if (G.net) { R.final.rows = rxRows(); R.final.pos = R.final.rows.findIndex((r) => r.me) + 1; }   // kamarádi dojíždějí
   const { rows, pos, prize } = R.final, best = Math.min(...R.lapsT);
   let html = `<h2>Rallycross <em>${pos === 1 ? 'vítězství!' : 'P' + pos}</em></h2>`;
   html += `<div class="res-top"><div class="bigtime">P${pos}</div><span class="badge ${pos === 1 ? 'gold' : pos === 2 ? 'silver' : pos === 3 ? 'bronze' : 'none'}">${fmt(G.result)}</span></div><div class="rows compact">`;
@@ -14435,6 +14490,16 @@ function rxResults() {
     if (C.won) html += `<div class="rrow me"><span>🏆 Pohár vyhrán${C.bonus ? '' : ' (už podruhé)'}</span><b>${C.bonus ? '+ ' + moneyStr(C.bonus) : '★'}</b></div>`;
     if (!C.next && !C.won) html += `<div class="rrow"><span>Na další trať potřebuješ 1. nebo 2. místo</span><b>🔒</b></div>`;
     nextId = C.next; again = 'Zkusit znovu';
+  }
+  if (G.net) {   // po síti: další závod (stejná trať, všichni znovu), až dojedou všichni; nebo do menu
+    const wait = rows.some((r) => r.remote && r.t == null), key = rows.map((r) => `${r.name}|${r.t}`).join(';') + wait;
+    if (key === R.resKey && !overlay.results.hidden) return;
+    R.resKey = key;
+    html += `</div><div class="actions"><button class="btn" id="xNetAgain" ${wait ? 'disabled' : ''}>Další závod <small>${wait ? 'až dojedou všichni' : 'stejná trať, všichni znovu'}</small></button><button class="btn ghost" id="xNetMenu">Do menu</button></div>`;
+    $('resultsCard').innerHTML = html; overlay.results.hidden = false; overlay.touch.hidden = true;
+    $('xNetAgain').onclick = () => { R.resKey = null; netOffer('rx'); };
+    $('xNetMenu').onclick = () => { overlay.results.hidden = true; startDemo(); };
+    return;
   }
   html += `</div><div class="actions">${nextId ? `<button class="btn" id="xNext">Další trať <small>${nm(nextId)}</small></button>` : ''}<button class="btn${nextId ? ' ghost' : ''}" id="xAgain">${again}</button><button class="btn ghost" id="xMenu">Do garáže</button></div>`;
   $('resultsCard').innerHTML = html; overlay.results.hidden = false; overlay.touch.hidden = true;
@@ -16701,6 +16766,7 @@ function netRender() {
   const td = tracks[G.sel], laps = td.st.circuit ? NET_LAPS : 1;
   $('bNetGoSub').textContent = `${td.st.name}${laps > 1 ? ` · ${laps} kola` : ''}`;
   $('bNetGpSub').textContent = `${GP_TRACKS[GP_TRACKS[td.st.id] ? td.st.id : gpTrackId()]} · soupeři ${GP_DIFF[gpDiff()].name.toLowerCase()}`;
+  { const rs = STAGES.find((x) => x.id === (td.st.rx ? td.st.id : rxTrack())); $('bNetRxSub').textContent = `${rs.name.replace('Rallycross ', '')} · ${rxLapsSet()} kola · soupeři ${RX_DIFF[rxDiff()].name.toLowerCase()}`.replace('6 kola', '6 kol'); }
   $('bNetDuoSub').textContent = `${GP_TRACKS[GP_TRACKS[td.st.id] ? td.st.id : gpTrackId()]} · ${GP_LONG} kol · jeden tým · déšť`;
   p2pRender();
   const online = netOnline();
@@ -16715,7 +16781,7 @@ function netRender() {
   }
   if (!online) {
     st.textContent = !NET.tried ? 'Připojuji…' : window.claude ? 'Spojení přes claude.ai se nepodařilo – zkus to s kódem hry vpravo.' : 'Hrajte přes kód hry: jeden ťukne na „Založit hru“, druhý napíše kód a ťukne na „Připojit“.';
-    $('bNetGo').disabled = true; $('bNetGp').disabled = true; $('bNetDuo').disabled = true; $('netDiag').textContent = '';
+    $('bNetGo').disabled = true; $('bNetGp').disabled = true; $('bNetDuo').disabled = true; $('bNetRx').disabled = true; $('netDiag').textContent = '';
     return;
   }
   // diagnostika: kolik otevřených stránek hry spojení vidí (a kolik z nich poslalo svůj stav)
@@ -16727,6 +16793,7 @@ function netRender() {
     : window.claude ? 'Druhý hráč otevře stejný odkaz na claude.ai (přihlášený stejným účtem) a ťukne na „Proti sobě“. Kamarád bez Clauda se připojí kódem.' : 'Založ hru a řekni kamarádovi kód, nebo napiš jeho kód a ťukni na „Připojit“.';
   $('bNetGo').disabled = !others;
   $('bNetGp').disabled = !others;
+  $('bNetRx').disabled = !others;
   $('bNetDuo').disabled = others !== 1; // týmový závod: přesně dva hráči
 }
 // nabídka závodu: trať podle menu, okruh na 3 kola
@@ -16736,6 +16803,12 @@ function netOffer(gp) {
   const duo = gp === 'duo', td = tracks[G.sel];
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const gpStage = GP_TRACKS[td.st.id] ? G.sel : STAGES.findIndex((x) => x.id === gpTrackId());
+  if (gp === 'rx') {   // rallycross: trať, kola a obtížnost z nastavení rallycrossu zakladatele
+    const k = td.st.rx ? G.sel : STAGES.findIndex((x) => x.id === rxTrack());
+    const offer = { id, stage: k, laps: rxLapsSet(), rx: true, diff: rxDiff(), host: netDev() };
+    NET.mine = offer; netPresence({ race: offer, go: null, ack: null, lobby: true }); netAdopt(offer, true);
+    return;
+  }
   const offer = gp ? { id, stage: gpStage, laps: duo ? GP_LONG : GP_LAPS, gp: true, duo, rain: duo, team: duo ? f1Team() : null, diff: gpDiff(), host: netDev() } : { id, stage: G.sel, laps: td.st.circuit ? NET_LAPS : 1, host: netDev() };
   NET.mine = offer;
   netPresence({ race: offer, go: null, ack: null, lobby: true });
@@ -16746,14 +16819,20 @@ function netAdopt(offer, mine) {
   NET.seen.add(offer.id);
   NET.pending = { ...offer, mine, t0: performance.now() };
   if (G.net) { G.net = null; netClear(); } // z výsledků předchozího závodu
-  gpEnd(); G.champ = null;
+  if (G.rx) { if (offer.rx) { NET.rxPrev = G.rx.prevCar || NET.rxPrev; G.rx.prevCar = null; } rxClear(); }
+  gpEnd(); G.champ = null; G.rxCup = null;   // závod po síti se do poháru nepočítá
   duoTeam = offer.duo && F1_TEAMS[offer.team] ? offer.team : null;
   $('netModal').hidden = true; overlay.results.hidden = true;
-  const ack = () => { if (NET.pending && NET.pending.id === offer.id) NET.pending.tAck = performance.now(); netPresence({ ack: offer.id, rid: null, fin: null, dsq: null, svc: null, ai: null, car: saved.car, team: f1Team() }); toast(mine ? 'Čekám, až si trať načtou ostatní…' : offer.duo ? 'Týmový závod! Jedete oba za jeden tým…' : offer.gp ? 'Velká cena! Připrav se…' : 'Závod! Připrav se…', 2); };
+  const ack = () => { if (NET.pending && NET.pending.id === offer.id) NET.pending.tAck = performance.now(); netPresence({ ack: offer.id, rid: null, fin: null, dsq: null, svc: null, ai: null, car: saved.car, team: f1Team() }); toast(mine ? 'Čekám, až si trať načtou ostatní…' : offer.duo ? 'Týmový závod! Jedete oba za jeden tým…' : offer.rx ? 'Rallycross se soupeři! Připrav se…' : offer.gp ? 'Velká cena! Připrav se…' : 'Závod! Připrav se…', 2); };
   const load = () => { if (G.sel !== offer.stage) loadStage(offer.stage, ack); else ack(); };
   // Velká cena se jede formulí (svého týmu)
   // model formule se stahuje souběžně se stavbou trati (dřív se čekalo na jedno, pak na druhé)
-  if (offer.gp) {
+  if (offer.rx) {   // rallycross: každý jede autem z garáže rallycrossu
+    const target = rxCarId(); if (saved.car !== target) { if (!NET.rxPrev) NET.rxPrev = saved.car; saved.car = target; persist(); }
+    let n = 2; const done = () => { if (--n === 0) { setLivery(saved.livery); ack(); } };
+    ensureCarModel(CAR_TYPES[target].model).then(done, done);
+    if (G.sel !== offer.stage) loadStage(offer.stage, done); else done();
+  } else if (offer.gp) {
     if (saved.car !== 'f1') { saved.car = 'f1'; persist(); }
     let n = 2; const done = () => { if (--n === 0) { setLivery(saved.livery); ack(); } };
     ensureCarModel('f1').then(done, done);
@@ -16797,7 +16876,8 @@ function netOnPeers() {
   }
   if (G.net) netCollect(ps);
   if (G.net && G.phase === 'done' && !overlay.results.hidden) {
-    if (!G.gp) netResults();
+    if (G.rx) { if (G.rx.final) rxResults(); }
+    else if (!G.gp) netResults();
     else { // Velká cena: dojel další hráč → přepočítat pořadí
       const rows = gpRows(), key = rows.map((r) => `${r.name}|${r.running}|${r.dsq}|${Math.round(r.t * 10)}`).join(';');
       if (key !== NET.resKey) { NET.resKey = key; G.gp.result = rows; G.gp.pos = rows.findIndex((r) => r.me) + 1; gpResults(); }
@@ -16832,9 +16912,9 @@ function netStart(pend) {
   G.net = { id: pend.id, laps: pend.laps, lap: 0, lapStart: 0, fin: null, at, gp: !!pend.gp, duo: !!pend.duo, host: pend.host || (pend.mine ? netDev() : null), devs: Object.keys(teams).sort(), teams }; NET.resKey = null;
   NET.aiSnap = null;
   if (pend.gp) { G.gp = { V: null, net: true, host: !!pend.mine, diff: pend.diff, total: pend.laps || GP_LAPS, rainOn: !!pend.rain, duo: !!pend.duo }; document.body.classList.add('gp'); $('hGp').hidden = false; }
-  NET.said = {};
-  netPresence({ rid: pend.id, fin: null, lap: 0, lobby: true });
-  startRace();
+  NET.said = {}; NET.rxSnap = null;
+  netPresence({ rid: pend.id, fin: null, lap: 0, lobby: true, jk: 0, rxai: null });
+  if (pend.rx) rxNetStart(pend); else startRace();
   // společný okamžik startu: odpočet dojede v čase „at“ (kdo dostal zprávu pozdě, má kratší odpočet)
   if (at) { G.countdown = clamp((at - Date.now()) / 1000 + 0.6, 0.6, 6); G.lastBeep = 4; }
 }
@@ -16844,7 +16924,7 @@ function netGridLat() {
   const k = Math.max(0, ids.indexOf(netDev()));
   return { lat: k % 2 ? 1.8 : -1.8, back: Math.floor(k / 2) * 7 };
 }
-function netProg() { const td = W.td; return (G.gp ? G.gp.lap : G.net ? G.net.lap : 0) * td.length + (car.s - td.S[td.startIdx]); }
+function netProg() { if (G.rx) return rxProg(); const td = W.td; return (G.gp ? G.gp.lap : G.net ? G.net.lap : 0) * td.length + (car.s - td.S[td.startIdx]); }
 // projetí cílem na okruhu: další kolo (auto pokračuje začátkem trati, tatáž místa jako za cílem)
 function netLap() {
   const n = G.net, td = W.td;
@@ -16904,6 +16984,7 @@ function netCollect(ps) {
     o.pres = pr; o.name = pr.name || o.name;
     // zakladatel Velké ceny posílá polohy počítačových aut
     if (G.gp && !G.gp.host && pr.dev === G.net.host && Array.isArray(pr.ai) && pr.ai !== (NET.aiSnap && NET.aiSnap.src)) NET.aiSnap = { src: pr.ai, recv: now, dev: pr.dev, fresh: true };
+    if (G.rx && G.rx.net && !G.rx.host && pr.dev === G.net.host && Array.isArray(pr.rxai) && pr.rxai !== (NET.rxSnap && NET.rxSnap.src)) NET.rxSnap = { src: pr.rxai, recv: now, dev: pr.dev, fresh: true };
     // mechanici u boxu druhého hráče
     if (G.gp && W.pit && pr.svc !== o.svc) { if (o.svc != null) gpCrew(o.svc, false); if (pr.svc != null) gpCrew(pr.svc, true); o.svc = pr.svc; }
     if (pr === o.last || !Array.isArray(pr.s)) continue;
@@ -16923,6 +17004,7 @@ function netTick(dt) {
   if (NET.sendT <= 0) {
     NET.sendT = NET_SEND;
     // poloha ve světě i po trati (vzdálenost, boční odstup, natočení vůči trati) – soupeř podle ní dopočítá polohu do teď
+    if (G.rx) netPresence({ jk: G.rx.joker ? 1 : 0, rxai: G.rx.host ? G.rx.ai.map((a) => [+a.d.toFixed(1), +a.lat.toFixed(2), +a.v.toFixed(1), +((a.vl || 0) + (a.vp || 0)).toFixed(2), +(a.yaw || 0).toFixed(3), a.joker ? 1 : 0, a.finishT != null ? +a.finishT.toFixed(2) : -1, a.jz ? 1 : 0, a.spinT > 0 ? 1 : 0]) : null });
     if (G.gp) netPresence({ svc: G.gp.service > 0 ? G.gp.myBox : null, dsq: G.gp.finished ? !!G.gp.dsq : null, ai: G.gp.host ? G.gp.ai.map((a) => [+a.d.toFixed(1), +a.lat.toFixed(2), +a.v.toFixed(1), a.pit, a.done ? 1 : 0, a.finishT != null ? +a.finishT.toFixed(2) : -1, a.best != null ? +a.best.toFixed(2) : -1, a.gone ? 1 : 0, +(a.latV || 0).toFixed(2)]) : null });
     netPresence({ rid: n.id, s: [+car.x.toFixed(2), +car.y.toFixed(2), +car.z.toFixed(2), +car.h.toFixed(3), +car.pitch.toFixed(3), +car.roll.toFixed(3), +car.vf.toFixed(1)], tp: [+netProg().toFixed(1), +car.lat.toFixed(2), +wrapAngle(car.h - td.HD[car.idx]).toFixed(3)], prog: Math.round(netProg()), lap: n.lap, fin: n.fin });
   }
@@ -17287,15 +17369,16 @@ function netFromUrl() {
 }
 function netLeave() {
   $('bChat').hidden = true; $('chatBar').hidden = true;
-  G.net = null; NET.pending = null; NET.lobby = false; NET.aiSnap = null;
+  G.net = null; NET.pending = null; NET.lobby = false; NET.aiSnap = null; NET.rxSnap = null;
   netClear();
-  netPresence({ lobby: false, rid: null, race: null, go: null, ack: null, s: null, tp: null, ai: null, svc: null });
+  netPresence({ lobby: false, rid: null, race: null, go: null, ack: null, s: null, tp: null, ai: null, svc: null, rxai: null, jk: null });
 }
 $('bNet').onclick = () => openNet();
 netChatInit();
 $('bNetClose').onclick = () => closeNet();
 $('bNetGo').onclick = () => { if (!$('bNetGo').disabled) netOffer(false); };
 $('bNetGp').onclick = () => { if (!$('bNetGp').disabled) netOffer(true); };
+$('bNetRx').onclick = () => { if (!$('bNetRx').disabled) netOffer('rx'); };
 $('bNetDuo').onclick = () => { if (!$('bNetDuo').disabled) netOffer('duo'); };
 $('bP2pHost').onclick = () => { NET.lobby = true; p2pHost(); };
 $('bP2pJoin').onclick = () => { NET.lobby = true; p2pJoin($('p2pCode').value); };
