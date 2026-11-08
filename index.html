@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw7jxpbx';
+window.__BUILD = 'mw7kbkpm';
 (function () {
   function check() {
     try {
@@ -13975,9 +13975,18 @@ function rxGate(td) {
 }
 // soupeř v rallycrossu: stav (stopa, tempo, joker, reakce) a model auta v jeho barvách (načte se, až je model)
 const RX_GRID = [[-6, -3.6], [-6, 0], [-6, 3.6], [-16, -1.8], [-16, 1.8]];
-function rxAddAi([name, model, liv], skill, [back, lat], D, rr) {
+// soupeři jedou stejným autem jako hráč (i s tuningem z dílny): tempo obtížnosti je naladěné na Fabii R5, pro jiné
+// auto se zrychlení, maximálka a rychlost v zatáčkách přepočítají poměrem výkonu, maximálky a přilnavosti
+function rxAiPerf(id) {
+  const base = CAR_TYPES.fabia, ct = CAR_TYPES[id] && !CAR_TYPES[id].formula ? roadShopCar(CAR_TYPES[id], id) : base;
+  const pw = ct.power / base.power;   // Fabia RS má v zatáčce výkon ubraný (steerPowCut): soupeř dostane jen ~¾ přidaného výkonu
+  return { pw: 1 + (pw - 1) * (ct.steerPowCut ? 0.75 : 1), vm: ct.vmax / base.vmax, gr: Math.sqrt(ct.grip / base.grip) };
+}
+function rxAddAi([name, model0, liv], skill, [back, lat], D, rr) {
+  const model = G.rx.aiCar && CAR_TYPES[G.rx.aiCar] ? G.rx.aiCar : model0, P = rxAiPerf(model);
+  skill *= P.gr;
   const a = { name, model, d: back, lat, lat0: lat, v: 0, skill, jokerLap: 1 + ((rr() * (RX_LAPS - 1)) | 0), joker: false, finishT: null, c3: null, spin: 0, off: 0,
-    react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1, accK: D.accK, aggr: D.aggr, vk: D.vk || 1,
+    react: lerp(D.react[0], D.react[1], rr()), mist: D.mist, err: 0, corner: -1, accK: D.accK * P.pw, aggr: D.aggr, vk: (D.vk || 1) * P.vm,
     vl: 0, vp: 0, yaw: 0, wy: 0, spinT: 0, passSide: 0, passT: 0, slide: 0, sc: rxScaleOf(CAR_TYPES[model]), col: LIVERIES[liv % 10].body, ts: [] };
   G.rx.ai.push(a);
   ensureCarModel(CAR_TYPES[model].model).then(() => {
@@ -14001,7 +14010,7 @@ function rxNetStart(pend) {
   const pick = RX_RIVALS.slice().sort(() => rr() - 0.5).slice(0, nAi), skills = pick.map(() => lerp(D.pace[0], D.pace[1], rr()));
   // rošt: hráči a soupeři zamíchaní stejně všude
   const ents = devs.map((d) => 'p:' + d).concat(pick.map((_, k) => 'a:' + k)).sort(() => rr() - 0.5);
-  G.rx = { lap: 0, lapStart: 0, joker: false, prevCar: NET.rxPrev || null, ai: [], pos: 5, done: false, lapsT: [], id: td.st.id, diff: pend.diff, net: true, host: G.net.host === netDev() };
+  G.rx = { lap: 0, lapStart: 0, joker: false, prevCar: NET.rxPrev || null, ai: [], pos: 5, done: false, lapsT: [], id: td.st.id, diff: pend.diff, net: true, host: G.net.host === netDev(), aiCar: CAR_TYPES[pend.car] ? pend.car : rxCarId() };
   NET.rxPrev = null;
   rxRacingLine(td);
   startRace();
@@ -14049,7 +14058,7 @@ function rxStart(pc0, id = 'rx', opts = {}) {
       toast('Kvalifikace: jedno měřené kolo · čas určí místo na startu finále', 3);
       return;
     }
-    G.rx = { lap: 0, lapStart: 0, joker: false, prevCar, ai: [], pos: 5, done: false, lapsT: [], id, diff };
+    G.rx = { lap: 0, lapStart: 0, joker: false, prevCar, ai: [], pos: 5, done: false, lapsT: [], id, diff, aiCar: target };
     startRace();
     const td = W.td, lap = td.length, grid = [[-6, -3.6], [-6, 0], [-6, 3.6], [-16, -1.8], [-16, 1.8]];
     // pořadí na roštu podle kvalifikace (bez ní náhodně)
@@ -16928,7 +16937,7 @@ function netOffer(gp) {
   const gpStage = GP_TRACKS[td.st.id] ? G.sel : STAGES.findIndex((x) => x.id === gpTrackId());
   if (gp === 'rx') {   // rallycross: trať, kola a obtížnost z nastavení rallycrossu zakladatele
     const k = td.st.rx ? G.sel : STAGES.findIndex((x) => x.id === rxTrack());
-    const offer = { id, stage: k, laps: rxLapsSet(), rx: true, diff: rxDiff(), host: netDev() };
+    const offer = { id, stage: k, laps: rxLapsSet(), rx: true, diff: rxDiff(), host: netDev(), car: rxCarId() };   // soupeři jedou autem zakladatele
     NET.mine = offer; netPresence({ race: offer, go: null, ack: null, lobby: true }); netAdopt(offer, true);
     return;
   }
@@ -18525,7 +18534,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
