@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mw7kbkpm';
+window.__BUILD = 'mw9aixsc';
 (function () {
   function check() {
     try {
@@ -262,6 +262,11 @@ window.__BUILD = 'mw7kbkpm';
 
   /* ---------- HUD ---------- */
   #hud { position: fixed; inset: 0; pointer-events: none; font-family: var(--display); }
+  #perfHud { position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(96px + env(safe-area-inset-top, 0px)); z-index: 60; pointer-events: none; width: min(460px, 62vw); background: rgba(6, 9, 14, .82); border: 1px solid rgba(255, 255, 255, .18); border-radius: 10px; padding: 6px 10px 8px; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; color: #e6ebf3; }
+  #perfHud[hidden] { display: none; }
+  #perfGraph { display: block; width: 100%; height: 46px; margin-bottom: 4px; }
+  #perfText b { color: #fff; font-size: 14px; } #perfText em { font-style: normal; font-weight: 700; }
+  #perfText em.ok { color: #3fdc86; } #perfText em.cpu { color: #ffc419; } #perfText em.gpu { color: #4db8ff; } #perfText em.wait { color: #c9ced6; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
   /* za jízdy panely bez rozmazání pozadí: iPhone by ho musel každý snímek počítat znovu pro každý panel
      (scéna za nimi se pořád hýbe); o kousek tmavší pozadí vypadá skoro stejně */
@@ -1346,6 +1351,8 @@ window.__BUILD = 'mw7kbkpm';
   <span id="loadingText">Načítám hru…</span>
 </div></div>
 
+<!-- měřič výkonu (F8): plynulost, čas procesoru po částech, čas grafické karty, verdikt -->
+<div id="perfHud" hidden><canvas id="perfGraph" width="300" height="46"></canvas><div id="perfText"></div></div>
 <div id="pause" class="modal" hidden>
   <div class="card">
     <h2>Pauza</h2>
@@ -1478,6 +1485,7 @@ window.__BUILD = 'mw7kbkpm';
         <button class="tog touch-only" id="tTiltSens">Citlivost náklonu: <b id="tTiltSensVal"></b></button>
         <button class="tog touch-only" id="tTiltDz">Mrtvá zóna náklonu: <b id="tTiltDzVal"></b></button>
         <button class="tog" id="tMirror">Zrcátko v kokpitu: <b id="tMirrorVal"></b></button>
+        <button class="tog" id="tPerf">Měřič výkonu: <b id="tPerfVal"></b></button>
         <button class="tog" id="tTut">Návod k ovládání…</button>
         <button class="tog touch-only" id="tLayout">Rozložení tlačítek…</button>
     </div>
@@ -17838,7 +17846,7 @@ function renderMenu() {
   renderVoiceInfo();
   $('tQualityVal').textContent = Q().name;
   $('tHandlingVal').textContent = HP().name;
-  $('tTiltSensVal').textContent = (TILT_SENS[saved.tiltSens] || TILT_SENS.mid).n; $('tTiltDzVal').textContent = (TILT_DZ[saved.tiltDz] || TILT_DZ.mid).n; $('tMirrorVal').textContent = saved.mirror === false ? 'vypnuté' : 'zapnuté';
+  $('tTiltSensVal').textContent = (TILT_SENS[saved.tiltSens] || TILT_SENS.mid).n; $('tTiltDzVal').textContent = (TILT_DZ[saved.tiltDz] || TILT_DZ.mid).n; $('tMirrorVal').textContent = saved.mirror === false ? 'vypnuté' : 'zapnuté'; $('tPerfVal').textContent = PERF.on ? 'zapnutý (F8)' : 'vypnutý (F8)';
   $('tScaleVal').textContent = saved.paceScale === 'mild1' ? '1 rychlá · 6 ostrá (McRae)' : '1 ostrá · 6 rychlá';
   hubRender();
 }
@@ -17851,6 +17859,7 @@ $('tLine').onclick = () => { saved.rline = saved.rline === false; persist(); ren
 $('tTiltSens').onclick = () => { const ks = Object.keys(TILT_SENS), cur = TILT_SENS[saved.tiltSens] ? saved.tiltSens : 'mid'; saved.tiltSens = ks[(ks.indexOf(cur) + 1) % ks.length]; persist(); renderMenu(); };
 $('tTiltDz').onclick = () => { const ks = Object.keys(TILT_DZ), cur = TILT_DZ[saved.tiltDz] ? saved.tiltDz : 'mid'; saved.tiltDz = ks[(ks.indexOf(cur) + 1) % ks.length]; persist(); renderMenu(); };
 $('tMirror').onclick = () => { saved.mirror = saved.mirror === false; persist(); renderMenu(); };
+$('tPerf').onclick = () => { perfSet(!PERF.on); renderMenu(); };
 $('tTut').onclick = () => { $('settingsModal').hidden = true; tutShow(true); };
 // návod k ovládání: při první jízdě (a kdykoli z Nastavení) tři kroky s tím, co kde je
 function tutShow(force) {
@@ -17962,6 +17971,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyB') gpPitMenu();
   if (G.gp && !$('gpTyrePick').hidden && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) gpTyreChoose(['soft', 'medium', 'wet'][+e.code.slice(5) - 1]);
   if (e.code === 'KeyM') { saved.sound = !saved.sound; Sound.setOn(saved.sound); persist(); }
+  if (e.code === 'F8') { e.preventDefault(); perfSet(!PERF.on); if (G.mode === 'menu') renderMenu(); }
   if (e.code === 'Enter' && G.mode === 'menu' && !overlay.menu.hidden && document.activeElement === document.body) $('bStart').click();
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
@@ -18276,8 +18286,83 @@ function updateTerrainLod() {
 let last = performance.now();
 let perfT = 0, perfN = 0;
 const HOLD = { steer: 0, throttle: 0, brake: 1, hb: true };
+// ---------------------------------------------------------------- měřič výkonu (Nastavení → Měřič výkonu, klávesa F8)
+// Každý snímek se změří: výpočet hry (fyzika, soupeři, kamera, LOD), stíny (příprava kreslení do stínové mapy),
+// kreslení (příprava všech ostatních průchodů včetně filmového obrazu) a – kde to prohlížeč umí (Chrome, Edge,
+// ne Safari) – skutečný čas grafické karty (časovač WebGL). Z posledních ~2 s se spočítá plynulost a verdikt, co brzdí.
+const PERF = { on: false, n: 0, ring: [], gl: null, ext: null, q: [], gpuLast: null, sh: 0, t: 0, el: null, cv: null, txt: null, hz: 60 };
+function perfInit() {
+  if (PERF.el) return;
+  PERF.el = $('perfHud'); PERF.cv = $('perfGraph'); PERF.txt = $('perfText');
+  const sm = renderer.shadowMap, orig = sm.render.bind(sm);
+  sm.render = (...a) => { if (!PERF.on) return orig(...a); const t = performance.now(); orig(...a); PERF.sh += performance.now() - t; };
+  try { PERF.gl = renderer.getContext(); PERF.ext = PERF.gl.getExtension('EXT_disjoint_timer_query_webgl2'); } catch (e) { PERF.ext = null; }
+}
+function perfSet(on) {
+  perfInit(); PERF.on = !!on; saved.perfHud = PERF.on; persist();
+  PERF.el.hidden = !PERF.on; PERF.ring.length = 0; PERF.q.length = 0; PERF.gpuLast = null;
+  renderer.info.autoReset = !PERF.on;   // součet kreslení za celý snímek (filmový obraz kreslí víc průchodů)
+}
+function perfGpuBegin() {
+  const { gl, ext } = PERF; if (!ext || PERF.q.length > 4) return null;
+  try { const q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); return q; } catch (e) { return null; }
+}
+function perfGpuEnd(q) {
+  const { gl, ext } = PERF; if (!q) return;
+  try { gl.endQuery(ext.TIME_ELAPSED_EXT); PERF.q.push(q); } catch (e) { /* nic */ }
+  // výsledky přicházejí se zpožděním několika snímků
+  while (PERF.q.length) {
+    const q0 = PERF.q[0];
+    if (!gl.getQueryParameter(q0, gl.QUERY_RESULT_AVAILABLE)) break;
+    const bad = gl.getParameter(ext.GPU_DISJOINT_EXT), ns = gl.getQueryParameter(q0, gl.QUERY_RESULT);
+    if (!bad) PERF.gpuLast = ns / 1e6;
+    gl.deleteQuery(q0); PERF.q.shift();
+  }
+}
+function perfFrame(f) {
+  const R = PERF.ring; R.push(f); if (R.length > 150) R.shift();
+  PERF.t += f.dt; if (PERF.t < 0.4 && (PERF.txt.textContent || R.length < 5)) return; PERF.t = 0;   // první údaje hned po zapnutí
+  const n = R.length, avg = (k) => R.reduce((a, x) => a + (x[k] || 0), 0) / n, dts = R.map((x) => x.dt * 1000).sort((a, b) => a - b);
+  const frame = avg('dt') * 1000, fps = 1000 / frame, worst = dts[Math.min(n - 1, Math.floor(n * 0.99))];
+  // obnovovací frekvence monitoru: nejkratší ustálený odstup snímků (10. percentil), zaokrouhlený na běžné hodnoty
+  const p10 = dts[Math.floor(n * 0.1)], hzRaw = p10 > 22 ? 60 : 1000 / Math.max(1, p10),   // pomalé snímky obnovovací frekvenci neprozradí: počítá se s 60 Hz
+    hz = [30, 50, 60, 75, 90, 100, 120, 144, 165, 240].reduce((b, h) => (Math.abs(h - hzRaw) < Math.abs(b - hzRaw) ? h : b), 60);
+  PERF.hz = hz; const budget = 1000 / hz;
+  const upd = avg('upd'), sh = avg('sh'), ren = avg('ren'), mir = avg('mir'), cpu = upd + sh + ren + mir;
+  const gR = R.filter((x) => x.gpu != null), gpu = gR.length ? gR.reduce((a, x) => a + x.gpu, 0) / gR.length : null;
+  const hitch = R.filter((x) => x.dt * 1000 > budget * 2.2).length;
+  const parts = [['výpočet hry', upd], ['stíny', sh], ['příprava kreslení', ren + mir]].sort((a, b) => b[1] - a[1]);
+  // verdikt: pomalé snímky → podle naměřeného času grafické karty, nebo (kde ho prohlížeč neměří) podle toho, kolik
+  // ze snímku zabral procesor; rychlé snímky s občasnými špičkami → záseky
+  let verdict, cls; const slow = frame > budget * 1.12, cpuTop = `nejvíc ${parts[0][0]} ${parts[0][1].toFixed(1)} ms`;
+  if (!slow && hitch <= 1) { verdict = `Plynulé – stíhá monitor ${hz} Hz`; cls = 'ok'; }
+  else if (!slow) { verdict = `Občasné záseky (${hitch}× za 2 s) – úklid paměti, načítání nebo překlad shaderů`; cls = 'cpu'; }
+  else if (gpu != null) {
+    if (gpu >= cpu) { verdict = `Brzdí GRAFICKÁ KARTA (${gpu.toFixed(1)} ms na snímek, procesor ${cpu.toFixed(1)} ms)`; cls = 'gpu'; }
+    else { verdict = `Brzdí PROCESOR – ${cpuTop} (grafická karta ${gpu.toFixed(1)} ms)`; cls = 'cpu'; }
+  } else if (cpu > frame * 0.6) { verdict = `Brzdí PROCESOR – ${cpuTop}`; cls = 'cpu'; }
+  else { verdict = `Brzdí nejspíš GRAFICKÁ KARTA – procesor má hotovo za ${cpu.toFixed(1)} ms, snímek trvá ${frame.toFixed(0)} ms`; cls = 'gpu'; }
+  const inf = renderer.info, mem = performance.memory ? ` · paměť ${Math.round(performance.memory.usedJSHeapSize / 1e6)} MB` : '';
+  const bs = renderer.getDrawingBufferSize(new T.Vector2()), q = Q();
+  PERF.txt.innerHTML =
+    `<b>${fps.toFixed(0)} snímků/s</b> · snímek ${frame.toFixed(1)} ms (nejhorší 1 %: ${worst.toFixed(0)} ms) · monitor ~${hz} Hz<br>` +
+    `procesor ${cpu.toFixed(1)} ms: hra ${upd.toFixed(1)} · stíny ${sh.toFixed(1)} · kreslení ${(ren + mir).toFixed(1)}` +
+    ` · grafická karta ${gpu != null ? gpu.toFixed(1) + ' ms' : 'neměřitelné v tomto prohlížeči'}<br>` +
+    `${Math.round(avg('calls'))} kreslení · ${(avg('tris') / 1e6).toFixed(2)} M trojúhelníků · ${inf.memory.textures} textur · ${inf.programs ? inf.programs.length : '?'} shaderů${mem}<br>` +
+    `kvalita ${q.name} · rozlišení ${bs.x}×${bs.y} (×${pixelRatio}) · stíny ${q.shadow || 'vypnuté'}${q.post ? ' · filmový obraz' : ''}<br>` +
+    `<em class="${cls}">${verdict}</em>`;
+  // graf: délka snímků (sloupce), čára = rozpočet monitoru; žlutě procesor, modře grafika
+  const cv = PERF.cv, g = cv.getContext('2d'), W2 = cv.width, H2 = cv.height, sc = H2 / (budget * 3);
+  g.clearRect(0, 0, W2, H2); const bw = W2 / 150;
+  R.forEach((x, k) => { const xx = k * bw, h = Math.min(H2, x.dt * 1000 * sc), c = Math.min(H2, (x.upd + x.sh + x.ren + x.mir) * sc);
+    g.fillStyle = x.dt * 1000 > budget * 2.2 ? '#ff4d4d' : 'rgba(255,255,255,.35)'; g.fillRect(xx, H2 - h, bw * 0.8, h);
+    g.fillStyle = '#ffc419'; g.fillRect(xx, H2 - c, bw * 0.8, 2); if (x.gpu != null) { g.fillStyle = '#4db8ff'; g.fillRect(xx, H2 - Math.min(H2, x.gpu * sc), bw * 0.8, 2); } });
+  g.strokeStyle = '#3fdc86'; g.beginPath(); g.moveTo(0, H2 - budget * sc); g.lineTo(W2, H2 - budget * sc); g.stroke();
+}
 function tick(now) {
   requestAnimationFrame(tick);
+  const pf = PERF.on ? performance.now() : 0;
+  if (PERF.on) { PERF.sh = 0; renderer.info.reset(); }
   // krok nejvýš 0,1 s: i při 10 snímcích za sekundu běží hra skutečným časem (dřív se pod 20 snímků zpomalila –
   // po síti pak pomalejší telefon v depu ztrácel); fyzika se dělí na kroky po 1/120 s
   const rawDt = (now - last) / 1000, dt = Math.min(0.1, Math.max(0.001, rawDt));
@@ -18293,6 +18378,7 @@ function tick(now) {
   }
   // chyba v kterékoli části snímku (zvuk, hlas, síť…) nesmí přeskočit vykreslení: iOS by místo něj ukázal černé plátno
   try { tickUpdate(dt); } catch (e) { tickErrors++; if (tickErrors < 4) console.error(e); }
+  const pfSh0 = PERF.sh;   // stíny se kreslí až v renderu; co se naměřilo dřív (nic), se odečte
   if (!(window.__rally && window.__rally.freezeCam)) updateCamera(G.paused ? 0 : dt);
   try { glassTick(G.paused ? 0 : dt); } catch (e) { tickErrors++; }
   W.sky.position.copy(camera.position);
@@ -18310,13 +18396,21 @@ function tick(now) {
   camGuard();
   if (PODIUM.on) { try { podiumTick(dt); } catch (e) { tickErrors++; } renderer.render(PODIUM.scene, PODIUM.cam); if (DIAG.on) diagProbe(rawDt); return; }
   const mirOn = mirrorWanted();
+  const pU = PERF.on ? performance.now() : 0, gq = PERF.on ? perfGpuBegin() : null;
   if (mirOn) try { mirrorRender(); } catch (e) { tickErrors++; }
+  const pM = PERF.on ? performance.now() : 0;
   if (post) {
     if (post.blur) post.grade.uniforms.uBlur.value = (smooth(26, 52, Math.abs(car.vf)) * 0.05 + car.nosFx * 0.04) * (G.mode === 'race' ? 1 : 0);
     post.grade.uniforms.uTime.value = (performance.now() % 1000) * 0.37; { const sz = renderer.getDrawingBufferSize(tmpV2 || (tmpV2 = new T.Vector2())); post.grade.uniforms.uTexel.value.set(1 / sz.x, 1 / sz.y); }
     post.composer.render(dt);
   } else renderer.render(scene, camera);
   if (!mirOn && MIR.cabMesh && MIR.cabMesh.userData.mirOn) mirrorCab(false);
+  if (PERF.on) try {
+    const pR = performance.now(); perfGpuEnd(gq);
+    const sh = PERF.sh - pfSh0;
+    perfFrame({ dt: rawDt, upd: pU - pf, mir: pM - pU, ren: Math.max(0, pR - pM - sh), sh, gpu: PERF.gpuLast, calls: renderer.info.render.calls, tris: renderer.info.render.triangles });
+    PERF.gpuLast = null;
+  } catch (e) { tickErrors++; }   // měření nesmí shodit hru
   if (DIAG.on) diagProbe(rawDt);
   perfCheck(dt, now);
 }
@@ -18526,6 +18620,7 @@ async function boot(data) {
   for (const d of saved.myTracks || []) { try { edRegister(d); } catch (e) { console.error('vlastní trať', e); } }
   loadStage(idx, () => { startDemo(); if (!edFromUrl() && !wkFromUrl() && !netFromUrl()) duelFromUrl(); });
   recConnect(); wkConnect();
+  if (saved.perfHud) try { perfSet(true); } catch (e) { /* měřič není nutný */ }
   requestAnimationFrame(tick);
   Sound.prepare();
 }
@@ -18534,7 +18629,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
