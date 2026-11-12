@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwchymri';
+window.__BUILD = 'mwde9vw4';
 (function () {
   function check() {
     try {
@@ -266,6 +266,35 @@ window.__BUILD = 'mwchymri';
   #perfHud[hidden] { display: none; }
   /* ---- drift: HUD, karty porotců, pavouk ---- */
   body.drift #hNote, body.drift #hSplit { display: none !important; }
+  /* ovládání driftu (z Drift Battle 2): volant na obrazovce vlevo, vpravo plynulý pedál plynu, brzda a ruční brzda */
+  #dTouch { position: fixed; inset: 0; pointer-events: none; display: none; }
+  body.drift #touch { display: none !important; }
+  body.drift #touch:not([hidden]) + #dTouch { display: block; }
+  body.cine-on #dTouch { visibility: hidden; }
+  #dTouch .tbtn, #dTouch .dgas { position: absolute; pointer-events: auto; border-radius: 18px; border: 2px solid rgba(255, 255, 255, .28); background: rgba(10, 18, 32, .55); color: #fff; font-family: var(--display); font-weight: 800; letter-spacing: .05em; display: grid; place-items: center; touch-action: none; backdrop-filter: none; -webkit-backdrop-filter: none; -webkit-user-select: none; user-select: none; }
+  #dTouch .tbtn.on { background: rgba(255, 255, 255, .35); }
+  #dTouch .dsteer { bottom: max(14px, env(safe-area-inset-bottom, 0px)); width: 21vmin; height: 27vmin; }
+  #dTouch .dsteer.dl { left: max(14px, env(safe-area-inset-left, 0px)); }
+  #dTouch .dsteer.dr { left: calc(max(14px, env(safe-area-inset-left, 0px)) + 23vmin); }
+  #dTouch .dbrake, #dTouch .dhb { font-size: 14px; letter-spacing: 0; }
+  #dTouch .dbrake { right: calc(max(14px, env(safe-area-inset-right, 0px)) + 26vmin); bottom: max(14px, env(safe-area-inset-bottom, 0px)); width: 17vmin; height: 20vmin; background: rgba(255, 91, 61, .2); border-color: rgba(255, 91, 61, .55); }
+  #dTouch .dhb { right: calc(max(14px, env(safe-area-inset-right, 0px)) + 26vmin); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 22vmin); width: 17vmin; height: 17vmin; }
+  #dTouch .dgas { right: max(14px, env(safe-area-inset-right, 0px)); bottom: max(14px, env(safe-area-inset-bottom, 0px)); width: 24vmin; height: 34vmin; font-size: 22px; overflow: hidden; grid-template-rows: auto auto; align-content: center; gap: 2px; background: rgba(63, 220, 134, .16); border-color: rgba(63, 220, 134, .6); }
+  #dTouch .dgas i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: linear-gradient(0deg, rgba(255, 90, 54, .75), rgba(255, 196, 25, .75)); }
+  #dTouch .dgas span, #dTouch .dgas small { position: relative; }
+  #dTouch .dgas small { font-size: 13px; letter-spacing: 0; opacity: .9; min-height: 14px; }
+  #dWheel { position: absolute; pointer-events: auto; left: max(14px, env(safe-area-inset-left, 0px)); bottom: max(8px, env(safe-area-inset-bottom, 0px)); width: 40vmin; height: 40vmin; max-width: 300px; max-height: 300px; touch-action: none; }
+  #dWheel svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .55)); opacity: .9; }
+  body.dnowheel #dWheel, body:not(.dnowheel) #dTouch .dsteer, body.tilt #dWheel, body.tilt #dTouch .dsteer { display: none; }
+  #dTiltMeter { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); bottom: max(14px, env(safe-area-inset-bottom, 0px)); pointer-events: auto; display: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  body.tilt #dTiltMeter { display: flex; }
+  @media (orientation: portrait) { #dWheel { width: 44vmin; height: 44vmin; } #dTouch .dgas { width: 26vmin; height: 38vmin; } #dTouch .dbrake { right: calc(max(14px, env(safe-area-inset-right, 0px)) + 28vmin); width: 20vmin; height: 20vmin; } #dTouch .dhb { right: calc(max(14px, env(safe-area-inset-right, 0px)) + 28vmin); bottom: calc(max(14px, env(safe-area-inset-bottom, 0px)) + 22vmin); width: 20vmin; height: 17vmin; } }
+  /* telefon: nápověda při odpočtu mezi volantem a tlačítky (na šířku), nad volantem (na výšku); na úzkém displeji
+     panel driftu na místě panelu s časem (čas se v driftu neboduje), název jízdy je v panelu */
+  #driftHud .dtitle { display: none; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (orientation: landscape) { body.touch #driftHud .dhint { width: min(560px, calc(100vw - 2 * (44vmin + 24px))); } }
+  @media (orientation: portrait) { body.touch #driftHud .dhint { bottom: calc(46vmin + 16px + env(safe-area-inset-bottom, 0px)); } }
+  @media (max-width: 600px) { body.drift .hud-tl { visibility: hidden; } body.drift #driftHud .dtop { left: calc(12px + env(safe-area-inset-left, 0px)); transform: none; max-width: calc(100% - 104px); align-items: flex-start; } #driftHud .dtitle { display: block; } body.drift #dVs { display: none; } body.drift #dScore { font-size: 28px; min-width: 1.8em; } body.drift .dminis { width: 92px; } body.drift .dmini { grid-template-columns: 28px 1fr; gap: 4px; } body.drift .dnum { min-width: 38px; } body.drift .dnum b { font-size: 16px; } body.drift #driftHud .dline { gap: 8px; } body.drift #driftHud .dtop { padding: 5px 10px 6px; } }
   #driftHud[hidden] { display: none; }
   #driftHud .dtop { position: absolute; left: 50%; transform: translateX(-50%); top: calc(10px + env(safe-area-inset-top, 0px)); padding: 6px 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; max-width: min(520px, 62vw); }
   #driftHud .dhead { display: flex; align-items: center; gap: 8px; max-width: 100%; }
@@ -1200,6 +1229,7 @@ window.__BUILD = 'mwchymri';
   <!-- drift: role, body porotců za jízdy, úhel, odstup od soupeře -->
   <div id="driftHud" hidden>
     <div class="dtop panel">
+      <div class="dtitle" id="dTitle"></div>
       <div class="dhead"><span id="dRole"></span><span id="dVs"></span></div>
       <div class="dline">
         <div id="dScore">0<small>/100</small></div>
@@ -1292,6 +1322,15 @@ window.__BUILD = 'mwchymri';
     <button class="tbtn gas" data-k="gas" id="tbGas">PLYN</button>
     <button class="tbtn nos" data-k="nos" aria-label="Nitro">NOS</button>
   </div>
+</div>
+<div id="dTouch">
+  <div id="dWheel" aria-label="Volant"><svg viewBox="-100 -100 200 200"><circle r="86" fill="none" stroke="#14161f" stroke-width="22"/><circle r="86" fill="none" stroke="#3a3f55" stroke-width="16"/><g stroke="#14161f" stroke-width="14" stroke-linecap="round"><path d="M-80 0H-26M80 0H26M0 80V26"/></g><g stroke="#3a3f55" stroke-width="9" stroke-linecap="round"><path d="M-80 0H-26M80 0H26M0 80V26"/></g><circle r="26" fill="#1c1f2e" stroke="#ff5a36" stroke-width="5"/><path d="M0 -97V-72" stroke="#ff5a36" stroke-width="9" stroke-linecap="round"/></svg></div>
+  <button class="tbtn dsteer dl" data-k="left" aria-label="Doleva"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <button class="tbtn dsteer dr" data-k="right" aria-label="Doprava"><svg viewBox="0 0 24 24"><path d="m9 4 8 8-8 8" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  <button class="tilt-meter" id="dTiltMeter" aria-label="Srovnat střed náklonu"><span class="tm-bar"><i id="dTiltDot"></i></span>klepni = rovně</button>
+  <button class="tbtn dbrake" data-k="brake">BRZDA</button>
+  <button class="tbtn dhb" data-k="hb">RUČKA</button>
+  <div class="dgas" id="dGas" role="slider" aria-label="Plyn"><i id="dGasFill"></i><span>PLYN</span><small id="dGasPct"></small></div>
 </div>
 
 <div id="menu" data-view="rally">
@@ -1554,6 +1593,8 @@ window.__BUILD = 'mwchymri';
         <button class="tog touch-only" id="tTilt"><i></i>Zatáčení náklonem</button>
         <button class="tog touch-only" id="tTiltSens">Citlivost náklonu: <b id="tTiltSensVal"></b></button>
         <button class="tog touch-only" id="tTiltDz">Mrtvá zóna náklonu: <b id="tTiltDzVal"></b></button>
+        <button class="tog touch-only" id="tDriftWheel"><i></i>Drift: volant na obrazovce</button>
+        <button class="tog" id="tDriftPedal"><i></i>Drift: plynulý plyn</button>
         <button class="tog" id="tMirror">Zrcátko v kokpitu: <b id="tMirrorVal"></b></button>
         <button class="tog" id="tPerf">Měřič výkonu: <b id="tPerfVal"></b></button>
         <button class="tog" id="tTut">Návod k ovládání…</button>
@@ -2110,6 +2151,10 @@ const DB = (() => {
     p911: { acc: 10.6, vtop: 53, ay: 11.6, betaMax: 0.9, spring: 20, damp: 6.4, hbKick: 2.9, driftLoss: 7.2, minR: 6.8 },
     audi: { acc: 10.8, vtop: 54, ay: 12.4, betaMax: 0.78, spring: 26, damp: 8.8, hbKick: 2.1, driftLoss: 7.8, minR: 6.8 },
   };
+  // v Rally Sprint jsou auta pro drift silnější než v Drift Battle: víc zrychlení (plyn udrží úhel i rychlost v driftu
+  // a auto se ze zatáčky rychle rozjede) a vyšší maximálka; platí pro hráče i soupeře, jen v drift módu
+  const BOOST = { acc: 1.4, vtop: 1.12 };
+  const boost = (s) => ({ ...s, acc: s.acc * BOOST.acc, vtop: s.vtop * BOOST.vtop });
   function newCar(x, z, h) {
     return { x, z, h, course: h, V: 0, hv: 0, wc: 0, sIn: 0, d: 0, hbPrev: false, lastDir: 1, vx: 0, vz: 0, u: 0, v: 0, beta: 0, delta: 0, slipR: 0, gear: 1, axS: 0, w: 0, thr: 0 };
   }
@@ -2502,7 +2547,7 @@ const DB = (() => {
   // středová čára trati jako [[x, z], …] pro stavbu okruhu v Rally (stejné souřadnice jako buildTrack)
   const TRACK = buildTrack();
   const PATH = TRACK.pts.map((p) => [+p.x.toFixed(2), +p.z.toFixed(2)]);
-  return { wrapPi, SPECS, newCar, stepCar, SEQ, HW, STEP, buildTrack, project, trackAt, latPoint, progress, Scorer, speedProfile, rng, newDriver, driveAI, LEVELS, assist, DRIVERS, CARS, simRun, seedBracket, ROUND_NAMES, Tour, TRACK, PATH };
+  return { wrapPi, SPECS, BOOST, boost, newCar, stepCar, SEQ, HW, STEP, buildTrack, project, trackAt, latPoint, progress, Scorer, speedProfile, rng, newDriver, driveAI, LEVELS, assist, DRIVERS, CARS, simRun, seedBracket, ROUND_NAMES, Tour, TRACK, PATH };
 })();
 
 const STAGES = [
@@ -9466,7 +9511,7 @@ let tiltShown = false;
 function updateTiltUi(v) {
   const show = v != null;
   if (show !== tiltShown) { tiltShown = show; document.body.classList.toggle('tilt', show); }
-  if (show) $('tiltDot').style.transform = `translateX(${(v * 66).toFixed(1)}px)`;
+  if (show) { const tr = `translateX(${(v * 66).toFixed(1)}px)`; $('tiltDot').style.transform = tr; $('dTiltDot').style.transform = tr; }
 }
 
 let lastInputT = performance.now();
@@ -10195,9 +10240,9 @@ function physics0(dt, inp) {
       { const vt = Math.hypot(car.vx - nx * vn, car.vz - nz * vn);
         if (vt > 3) { Sound.scrape(Math.min(1, vt / 35)); car.scrT = (car.scrT || 0) + dt;
           if (car.scrT > 0.05) { car.scrT = 0; sparkBurst(car.x + nx * 1.05, car.y + 0.25, car.z + nz * 1.05, Math.min(14, 2 + vt * 0.25), Math.min(1.2, vt / 40)); }
-          car.vx *= 1 - Math.min(0.5, 0.6 * dt); car.vz *= 1 - Math.min(0.5, 0.6 * dt); } }
-      if (vn > 0) {
-        if (G.drift && vn > 2.2) G.drift.wallHit = true;   // drift: porotci strhnou body za zeď
+          if (!G.drift) { car.vx *= 1 - Math.min(0.5, 0.6 * dt); car.vz *= 1 - Math.min(0.5, 0.6 * dt); } } }   // ve driftu klouže podél zdi bez tření (jako v Drift Battle 2)
+      if (vn > 0 && G.drift) driftWallHit(vn, nx, nz);
+      else if (vn > 0) {
         car.vx -= nx * vn * 1.3; car.vz -= nz * vn * 1.3;
         const keep = 1 - Math.min(0.35, vn * 0.02); car.vx *= keep; car.vz *= keep;
         car.omega *= 0.6;
@@ -10910,9 +10955,9 @@ function updateCamera(dt) {
   if (mode === 'cine') { cinematic(dt, speed); return; }
 
   const velYaw = speed > 4 ? Math.atan2(car.vx, car.vz) : car.h;
-  const tYaw = car.h + wrapAngle(velYaw - car.h) * 0.45;
+  const tYaw = G.drift ? velYaw + wrapAngle(car.h - velYaw) * 0.35 : car.h + wrapAngle(velYaw - car.h) * 0.45;
   if (!camS.init) { camS.yaw = tYaw; }
-  camS.yaw += wrapAngle(tYaw - camS.yaw) * Math.min(1, dt * 4.2);
+  camS.yaw += wrapAngle(tYaw - camS.yaw) * (G.drift ? 1 - Math.exp(-dt * 3.4) : Math.min(1, dt * 4.2));
   const far = mode === 1;
   const wide = camera.aspect > 1.8;
   const dist = (far ? 9.5 : wide ? 4.9 : 5.7) + speed * 0.026;
@@ -13579,7 +13624,7 @@ function trackLimits(dt) {
 // podvozek (táhne do strany). Poškozené auto je pomalejší a hůř drží. V mistrovství zůstává poškození mezi etapami;
 // na servisu je 30 minut na opravy, za každou minutu navíc +10 s (jako v rally).
 const RD = { front: 0, rear: 0, left: 0, right: 0, susp: 0, pull: 0, lights: false, glass: false, dents: [], ver: 0 };
-const rdOn = () => saved.damage !== false && !G.gp && !G.net && car3d && !car3d.formula && G.mode === 'race';
+const rdOn = () => saved.damage !== false && !G.gp && !G.net && !G.drift && car3d && !car3d.formula && G.mode === 'race';
 const rdAny = () => RD.front + RD.rear + RD.left + RD.right + RD.susp > 0.08 || RD.lights || RD.glass;
 const rdPull = () => (rdOn() ? RD.pull * RD.susp * 0.12 : 0);
 let rdMemo = null;
@@ -14389,6 +14434,8 @@ function driftSpec(id) {
     if (rb > 0.03) Object.assign(s, { betaMax: s.betaMax + 0.06, spring: s.spring - 3, damp: s.damp - 1.4, hbKick: s.hbKick + 0.4 });
     else if (rb < -0.01) Object.assign(s, { betaMax: s.betaMax - 0.03, spring: s.spring + 2, damp: s.damp + 0.6 });
   }
+  // i slabé auto z garáže musí ve driftu udržet úhel: výkon a maximálka aspoň jako BMW z Drift Battle
+  s.acc = Math.max(s.acc, DB.SPECS.bmw.acc); s.vtop = Math.max(s.vtop, DB.SPECS.bmw.vtop);
   return s;
 }
 // kouř z pneumatik: velké pomalé obláčky (v Rally je prach drobný)
@@ -14414,7 +14461,7 @@ function driftDynamics(c, inp, dt) {
   P.course = V > 0.8 ? (back ? Math.atan2(-car.vx, -car.vz) : Math.atan2(car.vx, car.vz)) : car.h;
   P.V = back ? -V : V;
   const mu = car.surf === 'road' ? 1 : car.surf === 'shoulder' ? 0.85 : 0.6;
-  DB.stepCar(P, inp, D.spec, dt, mu);
+  DB.stepCar(P, inp, D.lv === 'easy' && !D.userGas ? D.spec0 : D.spec, dt, mu);
   const dh = wrapAngle(P.h - car.h), b = wrapAngle(P.h - P.course);
   return { u: P.V * Math.cos(b), v: P.V * Math.sin(b), wR: -dh / dt, axS: P.axS, nos: c.nos, nosOn: false, spin: Math.max(0, P.slipR - 4) / 3, beta: Math.abs(P.V) > 2 ? b : 0, delta: P.delta, af: 0, ar: 0 };
 }
@@ -14423,8 +14470,103 @@ function driftInput(p, dt) {
   const D = G.drift; if (!D || D.lv === 'hard' || !D.prog) return p;
   const st = { x: car.x, z: car.z, h: car.h, vx: car.vx, vz: car.vz, u: car.vf, beta: car.beta || 0 };
   const gap = D.role === 'chase' && D.ai && D.ai.rp ? D.ai.rp.sU - D.prog.sU : null;
-  const g = DB.driveAI(D.guide, DTR, st, D.prog, dt, { gap });
-  return { ...DB.assist(D.lv, { ...p, gas: p.throttle > 0 }, g), nos: false };
+  const g = DB.driveAI(D.guide, DTR, st, D.prog, dt, { gap }), gas = p.gas != null ? !!p.gas : p.throttle > 0;
+  D.userGas = gas;
+  return { ...DB.assist(D.lv, { ...p, gas }, g), nos: false };
+}
+
+// ---- ovládání ve driftu (převzato z Drift Battle 2): volant na obrazovce (tahem prstu po kruhu se otáčí, po puštění
+// se sám vrací do středu), plynulý plyn (pedál: první dotek 65 %, posun prstu nahoru přidá, dolů ubere), klávesy
+// s postupným plynem (podržená ↑ přidává, Shift = plný), BRZDA a RUČKA. Asistenti z Rally (automatický plyn,
+// stabilizace, ABS) se ve driftu nepoužívají – drift by zabíjeli.
+const DW = { LOCK: 1.75, angle: 0, active: false, last: 0, id: null };   // volant
+const DP = { value: 0, active: false, y0: 0, id: null, key: 0 };          // pedál plynu (key = plyn z klávesnice)
+const driftWheelOn = () => saved.driftWheel !== false;
+const driftPedalOn = () => saved.driftPedal !== false;
+function driftPedalDraw() { $('dGasFill').style.height = (DP.value * 100).toFixed(0) + '%'; $('dGasPct').textContent = DP.active ? Math.round(DP.value * 100) + ' %' : ''; }
+{
+  const el = $('dWheel'), ang = (e) => { const r = el.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
+  el.addEventListener('pointerdown', (e) => { e.preventDefault(); DW.active = true; DW.id = e.pointerId; DW.last = ang(e); try { el.setPointerCapture(e.pointerId); } catch (x) { /* nic */ } });
+  el.addEventListener('pointermove', (e) => {
+    if (!DW.active || e.pointerId !== DW.id) return;
+    const a = ang(e); let d = a - DW.last;
+    if (d > Math.PI) d -= 2 * Math.PI; else if (d < -Math.PI) d += 2 * Math.PI;
+    DW.last = a; DW.angle = clamp(DW.angle + d, -DW.LOCK * 1.15, DW.LOCK * 1.15);
+  });
+  const up = (e) => { if (e.pointerId === DW.id) { DW.active = false; DW.id = null; } };
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, up);
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+  const g = $('dGas');
+  g.addEventListener('pointerdown', (e) => { e.preventDefault(); DP.active = true; DP.id = e.pointerId; DP.y0 = e.clientY; DP.value = driftPedalOn() ? 0.65 : 1; try { g.setPointerCapture(e.pointerId); } catch (x) { /* nic */ } driftPedalDraw(); });
+  g.addEventListener('pointermove', (e) => {
+    if (!DP.active || e.pointerId !== DP.id || !driftPedalOn()) return;
+    DP.value = clamp(0.65 + (DP.y0 - e.clientY) / (0.45 * g.getBoundingClientRect().height), 0, 1); driftPedalDraw();
+  });
+  const gUp = (e) => { if (e.pointerId === DP.id) { DP.active = false; DP.id = null; DP.value = 0; driftPedalDraw(); } };
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) g.addEventListener(ev, gUp);
+  g.addEventListener('contextmenu', (e) => e.preventDefault());
+  $('dTiltMeter').addEventListener('pointerdown', (e) => { e.preventDefault(); Tilt.calibrate(); toast('Střed srovnán', 1); });
+}
+// volant: −1..1, kolem středu jemnější (křivka); bez prstu se vrací do středu
+function driftWheelRead(dt) {
+  if (!DW.active) DW.angle *= Math.exp(-dt * 7);
+  if (Math.abs(DW.angle) < 0.002) DW.angle = 0;
+  $('dWheel').firstElementChild.style.transform = `rotate(${(DW.angle * 57.3).toFixed(1)}deg)`;
+  const x = clamp(DW.angle / DW.LOCK, -1, 1);
+  return Math.sign(x) * Math.pow(Math.abs(x), 1.15);
+}
+function driftCtlReset() { DW.angle = 0; DW.active = false; DW.id = null; DP.value = 0; DP.active = false; DP.id = null; DP.key = 0; driftPedalDraw(); document.body.classList.toggle('dnowheel', !driftWheelOn()); }
+let dLastT = performance.now();
+function driftReadInput() {
+  const nowT = performance.now(), idt = Math.min(0.1, (nowT - dLastT) / 1000);
+  dLastT = nowT;
+  let steer = 0, brake = 0, hb = false;
+  if (keys.has('ArrowLeft') || keys.has('KeyA')) steer -= 1;
+  if (keys.has('ArrowRight') || keys.has('KeyD')) steer += 1;
+  const gasKey = keys.has('ArrowUp') || keys.has('KeyW'), shift = keys.has('ShiftLeft') || keys.has('ShiftRight');
+  DP.key = !driftPedalOn() ? (gasKey || shift ? 1 : 0) : shift ? 1 : gasKey ? Math.min(1, DP.key + idt * 2.6) : Math.max(0, DP.key - idt * 6);
+  let throttle = DP.key;
+  if (keys.has('ArrowDown') || keys.has('KeyS')) brake = 1;
+  if (keys.has('Space')) hb = true;
+  if (touchKeys.left) steer -= 1;
+  if (touchKeys.right) steer += 1;
+  if (DP.active) throttle = Math.max(throttle, DP.value);
+  let gas = gasKey || shift || DP.active || DP.key > 0.02;
+  if (touchKeys.brake) brake = 1;
+  if (touchKeys.hb) hb = true;
+  const wv = driftWheelRead(idt);
+  if (DW.active || Math.abs(wv) > 0.01) steer = clamp(steer + wv, -1, 1);
+  if (gamepadIdx != null && navigator.getGamepads) {
+    const gp = navigator.getGamepads()[gamepadIdx];
+    if (gp) {
+      const ax = gp.axes[0] || 0;
+      if (Math.abs(ax) > 0.1) steer = clamp(steer + Math.sign(ax) * ((Math.abs(ax) - 0.1) / 0.9), -1, 1);
+      const rt = Math.max(gp.buttons[7] ? gp.buttons[7].value : 0, gp.buttons[0] && gp.buttons[0].pressed ? 1 : 0);
+      if (rt > 0.02) { throttle = Math.max(throttle, rt); gas = true; }
+      brake = Math.max(brake, gp.buttons[6] ? gp.buttons[6].value : 0);
+      if ((gp.buttons[2] && gp.buttons[2].pressed) || (gp.buttons[5] && gp.buttons[5].pressed)) hb = true;
+    }
+  }
+  const tv = Tilt.read(idt);
+  updateTiltUi(tv);
+  if (tv != null && !touchKeys.left && !touchKeys.right && !DW.active) steer = clamp(steer + tv, -1, 1);
+  return { steer: clamp(steer, -1, 1), throttle, brake, hb, gas, nos: false };
+}
+// zeď ve driftu (jako v Drift Battle 2): auto se neodrazí, směr jízdy se stočí podél zdi a ubere se část rychlosti
+function driftWallHit(vn, nx, nz) {
+  if (vn <= 0.3) return;   // jen se zdi dotýká (poloha se srovná), rychlost se nemění
+  const D = G.drift, V0 = Math.hypot(car.vx, car.vz);
+  let tx = -nz, tz = nx;
+  if ((tx * car.vx + tz * car.vz || tx * Math.sin(car.h) + tz * Math.cos(car.h)) < 0) { tx = -tx; tz = -tz; }
+  const a0 = Math.atan2(car.vx, car.vz), a1 = a0 + wrapAngle(Math.atan2(tx, tz) - a0) * Math.min(0.9, 0.2 + vn * 0.05);
+  const V = V0 * (1 - clamp(vn * 0.035, 0.03, 0.45));
+  car.vx = Math.sin(a1) * V; car.vz = Math.cos(a1) * V;
+  if (D && D.pc) D.pc.hv += (Math.random() - 0.5) * 1.2;
+  if (vn > 2.2) {
+    if (D) D.wallHit = true;   // porotci strhnou body za zeď
+    Sound.thump(Math.min(1, vn / 10), 'wall'); car.shake = Math.min(1, car.shake + vn / 30); rumble(Math.min(1, vn / 14), 120);
+    sparkBurst(car.x + nx * 1.1, car.y + 0.4, car.z + nz * 1.1, Math.min(30, 6 + vn * 2.5), Math.min(1.8, vn / 8));
+  }
 }
 
 // ---- soupeř: arkádové auto s řidičem AI, kreslené modelem z Rally (jmenovka nad autem, stopy, kouř)
@@ -14534,9 +14676,10 @@ function driftRun(opts) {
   driftAiFree(G.drift && G.drift.ai); G.drift = null;
   const go = async () => {
     if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
-    const lv = driftLv(), spec = driftSpec(target);
-    const D = G.drift = { ...opts, lv, spec, pc: DB.newCar(0, 0, 0), prog: null, sc: new DB.Scorer(DTR, opts.role), ai: null, phase: 'count', t: 0, finishWait: 0, me: { finished: false, finishT: 0 },
-      evN: 0, evAi: 0, contactT: -9, contactPts: 0, wallHit: false, hudT: 0, smoke: {}, guide: DB.newDriver(DTR, 0.9, 99, spec) };
+    const lv = driftLv(), spec0 = driftSpec(target), spec = DB.boost(spec0);
+    const D = G.drift = { ...opts, lv, spec, spec0, userGas: false, pc: DB.newCar(0, 0, 0), prog: null, sc: new DB.Scorer(DTR, opts.role), ai: null, phase: 'count', t: 0, finishWait: 0, me: { finished: false, finishT: 0 },
+      evN: 0, evAi: 0, contactT: -9, contactPts: 0, wallHit: false, hudT: 0, smoke: {}, guide: DB.newDriver(DTR, 0.9, 99, spec0) };
+    driftCtlReset();
     D.guide.guide = true;
     if (opts.opp) { D.ai = driftAiMake(opts.opp); D.ai.sc = new DB.Scorer(DTR, opts.role === 'lead' ? 'chase' : 'lead'); }
     startRace();
@@ -14560,11 +14703,14 @@ function driftRun(opts) {
 function driftHudInit() {
   const D = G.drift;
   $('driftHud').hidden = false;
+  $('dTitle').textContent = D.title || 'Drift';
   $('dRole').textContent = DRIFT_ROLE[D.role]; $('dRole').className = D.role;
   $('dVs').textContent = D.ai ? `${netName()}  vs  ${D.ai.name}` : DB.LEVELS[D.lv].name + ' pomoc';
   $('dGapBox').hidden = !D.ai;
-  $('dHint').innerHTML = D.lv === 'easy' ? '<b>Lehká:</b> auto jede po ideální stopě samo, volantem ho posouváš, brzdou zpomalíš, plynem převezmeš.'
-    : 'Před zatáčkou přidej plyn, zatoč a krátce zatáhni <b>ruční brzdu</b> (mezerník / RUČKA). Úhel drží volant a plyn, pustíš plyn = auto se srovná.';
+  const tch = IS_TOUCH, wh = driftWheelOn() ? 'Volantem' : 'Šipkami';
+  $('dHint').innerHTML = D.lv === 'easy' ? (tch ? `Auto jede po ideální stopě samo. <b>${wh}</b> ho posouváš, <b>BRZDOU</b> zpomalíš, <b>PLYN</b> převezmeš sám.` : '<b>Lehká:</b> auto jede po stopě samo. <b>← →</b> ho posouvají, <b>↓</b> brzda, <b>↑</b> plyn sám, <b>C</b> kamera')
+    : tch ? `<b>PLYN</b> je plynulý: palec výš = víc plynu = větší úhel driftu a rychlost. Před zatáčkou ťukni na <b>RUČKA</b>, zatoč ${driftWheelOn() ? 'volantem' : 'šipkami'} a plynem drž úhel. Pustíš plyn = auto se narovná.`
+      : '<b>↑</b> drž = plyn přibývá postupně (<b>Shift</b> = plný) · <b>← →</b> volant · <b>mezerník</b> ruční brzda · <b>↓</b> brzda · <b>C</b> kamera';
   $('dHint').hidden = false;
   driftHudUpdate();
 }
@@ -14669,7 +14815,10 @@ function driftHub() {
   }
   $('driftInfo').innerHTML = `<div><b>${S.best ? S.best.toFixed(1) : '–'}</b><small>nejlepší kvalifikace</small></div><div><b>${S.titles || 0}</b><small>tituly</small></div><div><b>${S.wins || 0}</b><small>vyhrané souboje</small></div>`;
   $('bDriftSub').textContent = `${CAR_TYPES[roadCarId()].name} · pomoc ${DB.LEVELS[lv].name.toLowerCase()}`;
+  $('tDriftWheel').setAttribute('aria-pressed', String(driftWheelOn())); $('tDriftPedal').setAttribute('aria-pressed', String(driftPedalOn()));
 }
+$('tDriftWheel').onclick = () => { UIS.click('main'); saved.driftWheel = !driftWheelOn(); persist(); document.body.classList.toggle('dnowheel', !driftWheelOn()); driftHub(); };
+$('tDriftPedal').onclick = () => { UIS.click('main'); saved.driftPedal = !driftPedalOn(); persist(); driftHub(); };
 $('bDrift').onclick = () => driftTour();
 $('bDriftTrain').onclick = () => driftTrain();
 $('bDriftDuel').onclick = () => driftDuel();
@@ -19473,7 +19622,7 @@ function tickUpdate(dt) {
     const td = W.td;
     if (G.phase === 'demo') inp = autopilot(0.86);
     else if (G.phase === 'countdown') {
-      const user = readInput();
+      const user = G.drift ? driftReadInput() : readInput();
       inp = { steer: 0, throttle: 0, brake: 1, hb: true };
       car.rpm += ((user.throttle ? 6500 : 1000) - car.rpm) * Math.min(1, dt * 6);
       if (G.rxIntro) rxIntroTick(dt);   // filmový úvod: odpočet čeká
@@ -19493,7 +19642,7 @@ function tickUpdate(dt) {
       if (G.countdown <= 0.6) { G.phase = 'run'; if (G.net && G.net.at) G.time = clamp((Date.now() - G.net.at) / 1000, 0, 5); Tilt.calibrate(); Chat.say('start'); W.clock.draw('GO', '#3fdc86', 5); Sound.beep(1040, 0.4); hud.center.textContent = 'START'; hud.center.className = 'hud-center small'; setTimeout(() => { if (G.phase === 'run') hud.center.textContent = ''; }, 900); }
       }
     } else if (G.phase === 'run') {
-      inp = window.__rally && window.__rally.auto ? autopilot(window.__rally.auto) : readInput();
+      inp = window.__rally && window.__rally.auto ? autopilot(window.__rally.auto) : G.drift ? driftReadInput() : readInput();
       if (G.drift) inp = driftInput(inp, dt);   // drift: pomocník podle úrovně (Lehká / Střední)
       else if (saved.autoBrake) inp = autoBrakeAssist(inp);
       if (G.gp) { const pi = gpPitPilot(); if (pi) inp = pi; }
@@ -19611,7 +19760,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { DB, DRIFT, DTR, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
