@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwde9vw4';
+window.__BUILD = 'mwp1l5c9';
 (function () {
   function check() {
     try {
@@ -1055,6 +1055,12 @@ window.__BUILD = 'mwde9vw4';
   .me-lvl { font-size: 12px; color: #c9ced6; white-space: nowrap; } .me-lvl em { font-style: normal; font-weight: 900; color: #fff; background: #1e7cf2; padding: 0 5px; border-radius: 4px; }
   .me-res { white-space: nowrap; } .me-res .medal { vertical-align: -3px; }
   .me-money { margin-left: auto; } .me-money i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #20c4e8; color: #062330; font-style: normal; font-weight: 900; font-size: 12px; margin-right: 4px; vertical-align: 1px; }
+  #menu .gpu-note { display: flex; align-items: center; gap: 8px; flex: none; width: 100%; border: 1px solid rgba(255, 196, 25, .55); border-radius: 12px; background: rgba(255, 196, 25, .12); color: #ffe7a3; font: inherit; font-size: 13px; line-height: 1.3; padding: 7px 10px; text-align: left; cursor: pointer; }
+  #menu .gpu-note[hidden] { display: none; } #menu .gpu-note .ic { font-size: 16px; } #menu .gpu-note .x { margin-left: auto; padding: 0 6px; font-size: 20px; line-height: 1; color: #c9ced6; }
+  .gpu-info.warn { color: #ffc419; }
+  .gpu-help { margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); font-size: 13px; line-height: 1.45; color: #dfe6f0; }
+  .gpu-help p { margin: 0 0 6px; } .gpu-help ol { margin: 4px 0 8px 18px; padding: 0; } .gpu-help li { margin: 4px 0; }
+  .gpu-help code { font-size: 12px; background: rgba(0, 0, 0, .35); padding: 1px 5px; border-radius: 5px; user-select: all; -webkit-user-select: all; }
   #menu .again { display: flex; align-items: center; gap: 8px; flex: none; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #2b2f38, #1b1e24); box-shadow: 0 3px 0 #050608; color: #fff; font-family: var(--display); font-size: 16px; padding: 7px 12px; cursor: pointer; text-align: left; }
   #menu .again[hidden] { display: none; }
   #menu .again .t { display: flex; align-items: center; gap: 6px; font-weight: 800; white-space: nowrap; } #menu .again svg { width: 18px; height: 18px; color: #ffc419; }
@@ -1346,6 +1352,7 @@ window.__BUILD = 'mwde9vw4';
       </div>
     </div>
     <div class="me-bar"><span class="me-ava" id="hubAva" aria-hidden="true">H</span><b id="hubName"></b><span class="me-lvl">úroveň <em id="hubLvl">1</em></span><span class="me-res" title="Úspěchy">🏆 <b id="hubTro"></b></span><span class="me-res" title="Zlaté medaile"><i class="medal m-gold"></i> <b id="hubGold"></b></span><span class="me-res me-money" title="Peníze"><i>$</i><b id="hubMoney"></b></span></div>
+    <button class="gpu-note" id="gpuNote" hidden><span class="ic" aria-hidden="true">⚠</span><span class="t"></span><span class="x" role="button" aria-label="Skrýt">×</span></button>
     <button class="again" id="bAgainLast" hidden><span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 1 1-7.4 5h2.2A6 6 0 1 0 12 6v3L7.5 5 12 1z" fill="currentColor"/></svg>Jet znovu</span> <small></small></button>
     <div class="mode-tabs" role="tablist">
       <button role="tab" id="tabRally" data-v="rally"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v20H5zM8 3h12l-2.5 4.5L20 12H8z" fill="currentColor"/></svg><b>Rally</b><small id="hubRallyN"></small></button>
@@ -1622,7 +1629,10 @@ window.__BUILD = 'mwde9vw4';
     <p class="label">Grafika</p>
     <div class="toggles">
         <button class="tog" id="tQuality">Grafika: <b id="tQualityVal"></b></button>
+        <button class="tog" id="tGpuHelp">Jak hrát na výkonné grafické kartě…</button>
     </div>
+    <p class="vinfo gpu-info" id="gpuInfo"></p>
+    <div class="gpu-help" id="gpuHelp" hidden></div>
     <p class="help">
       <kbd>↑</kbd> plyn · <kbd>↓</kbd> brzda/couvání · <kbd>←</kbd><kbd>→</kbd> zatáčení · <kbd>Mezerník</kbd> ruční brzda · <kbd>N</kbd> nebo <kbd>Shift</kbd> nitro (jedna nádrž na zkoušku) ·
       <kbd>C</kbd> kamera · <kbd>R</kbd> zpět na trať · <kbd>Esc</kbd> pauza. Funguje i herní ovladač.
@@ -3244,6 +3254,40 @@ try {
   return;
 }
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+// ---- grafická karta: na počítači se dvěma grafikami (integrovaná v procesoru a samostatná karta) vybírá kartu
+// prohlížeč podle nastavení Windows; přání stránky (powerPreference: 'high-performance') Edge a Chrome na Windows
+// nerespektují. Hra proto aspoň zjistí, na čem kreslí (název z WebGL), a u integrované nebo softwarové grafiky poradí,
+// jak prohlížeč přepnout na výkonnou kartu. Druh: dgpu (samostatná karta), igpu (integrovaná), soft (bez grafické
+// karty), apple, mobile, unknown.
+function gpuParse(raw) {
+  raw = String(raw || '').trim();
+  let name = raw;
+  const m = /^ANGLE \((.*)\)$/.exec(raw);
+  if (m) { const parts = m[1].split(/,\s*/); name = parts.length >= 2 ? parts[1] : parts[0]; }
+  name = name.replace(/^ANGLE Metal Renderer:\s*/i, '').replace(/\s*\(0x[0-9a-f]+\)/ig, '').replace(/\s+(Direct3D|D3D)\d.*$/i, '').replace(/\s+OpenGL.*$/i, '')
+    .replace(/\s*\((R|TM)\)/ig, '').replace(/^Mesa\s+/i, '').replace(/\s+\([A-Z0-9 ]+\)$/, '').replace(/\/PCIe\/SSE2$/i, '').replace(/\s+/g, ' ').trim();
+  if (/swiftshader/i.test(raw)) name = 'SwiftShader';
+  const s2 = raw.toLowerCase();
+  let kind = 'unknown';
+  if (!raw || /^webkit webgl$/.test(s2)) { kind = 'unknown'; name = ''; }
+  else if (/swiftshader|llvmpipe|softpipe|lavapipe|basic render|software/.test(s2)) kind = 'soft';
+  else if (/nvidia|geforce|quadro|tesla/.test(s2)) kind = 'dgpu';
+  else if (/radeon|amd|ati /.test(s2)) kind = /radeon(\(tm\))?\s*(\d{3}m\b|vega \d+ graphics|r\d graphics|graphics)/.test(s2) ? 'igpu' : /radeon(\(tm\))?\s*(rx|pro|r9|r7|vii|hd \d{4}|\d{4})|firepro/.test(s2) ? 'dgpu' : 'unknown';
+  else if (/intel/.test(s2)) kind = /arc(\(tm\))?\s*(pro\s*)?[ab]\d{2,3}/.test(s2) ? 'dgpu' : 'igpu';
+  else if (/apple/.test(s2)) kind = 'apple';
+  else if (/adreno|mali|powervr|qualcomm|immortalis/.test(s2)) kind = 'mobile';
+  return { raw, name, kind };
+}
+const GPU = (() => {
+  try {
+    const gl = renderer.getContext(); let raw = gl.getParameter(gl.RENDERER);
+    // Chrome a Edge skutečný název dají jen přes rozšíření (Firefox ho má přímo v RENDERER)
+    if (!raw || /^WebKit WebGL$/i.test(raw)) { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) raw = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL); }
+    return gpuParse(raw);
+  } catch (e) { return gpuParse(''); }
+})();
+const GPU_KIND = { dgpu: 'výkonná samostatná karta', igpu: 'integrovaná v procesoru (slabší)', soft: 'bez grafické karty, kreslí procesor (velmi pomalé)', apple: 'Apple', mobile: 'mobilní', unknown: '' };
+const IS_EDGE = /Edg\//.test(navigator.userAgent), IS_WIN = /Windows/.test(navigator.userAgent);
 // Ochrana proti neplatným číslům (NaN, nekonečno) v obraze. Jediný takový bod by efekt záře (bloom) rozmazal přes celou
 // obrazovku a na iPhonu/iPadu by na snímek zčernala (na počítači to grafika „vyléčí“, proto se to tam neukáže).
 // 1) půlvektor světla a pohledu se v osvětlení normalizuje bezpečně: když míří proti sobě, vyjde nula místo NaN
@@ -3292,7 +3336,7 @@ const QUALITY = {
   mid: { name: 'Střední', pr: 1.5, shadow: 1024, grass: 0.55, trees: 0.8, dust: 0.65, lod: IS_TOUCH ? 150 : 200,   /* telefon: podrobné stromy jen do 150 m */ post: { samples: 4, blur: false, bloomDiv: 4 } },
   low: { name: 'Nízká', pr: 1, shadow: 0, grass: 0, trees: 0.55, dust: 0.4, lod: 120, post: null },
 };
-if (!QUALITY[saved.quality]) saved.quality = IS_TOUCH ? 'mid' : 'high';
+if (!QUALITY[saved.quality]) saved.quality = IS_TOUCH ? 'mid' : GPU.kind === 'soft' ? 'low' : GPU.kind === 'igpu' ? 'mid' : 'high';   // počítač: s integrovanou grafikou střední
 const Q = () => QUALITY[saved.quality];
 let pixelRatio = Math.min(window.devicePixelRatio || 1, Q().pr), prDrops = 0, prDropAt = -1e9;
 renderer.setPixelRatio(pixelRatio);
@@ -16312,6 +16356,40 @@ function buildInfo() {
   el.textContent = `Verze hry: ${d.toLocaleDateString('cs-CZ')} ${d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })} (${b})`; el.hidden = false;
 }
 $('settingsClose').onclick = () => { $('settingsModal').hidden = true; renderMenu(); };
+// grafická karta v Nastavení, návod na přepnutí na výkonnou kartu a upozornění v lobby (jen počítač s integrovanou
+// nebo softwarovou grafikou; křížkem se pro danou grafiku skryje)
+const gpuWeak = () => !IS_TOUCH && (GPU.kind === 'igpu' || GPU.kind === 'soft');
+function gpuHelpHtml() {
+  const b = IS_EDGE ? 'edge' : 'chrome', app = IS_EDGE ? 'Microsoft Edge' : 'Google Chrome';
+  const soft = GPU.kind === 'soft' ? `<li>${app}: Nastavení → Systém a výkon → zapni <b>Použít hardwarovou akceleraci</b> a restartuj prohlížeč.</li>` : '';
+  return `<p>Na počítači se dvěma grafikami (integrovanou v procesoru a samostatnou kartou) vybírá kartu Windows, ne hra. Hra o výkonnou kartu žádá, ale ${IS_EDGE ? 'Edge' : 'prohlížeč'} to na Windows sám nezmění. Postup:</p><ol>${soft}
+    <li><b>Stolní počítač:</b> kabel monitoru patří do grafické karty (vodorovná řada konektorů níž na zadní straně skříně), ne do výstupu na základní desce.</li>
+    <li><b>Windows:</b> Start → Nastavení → Systém → Obrazovka → <b>Grafika</b>. Najdi ${app} (nebo přes „Procházet / Přidat aplikaci“ vyber ${IS_EDGE ? 'msedge.exe' : 'chrome.exe'}), klikni na něj a zvol <b>Vysoký výkon</b> (s názvem tvé karty). Ve Windows 10: Možnosti → Vysoký výkon → Uložit.</li>
+    <li>Prohlížeč úplně zavři: napiš do adresního řádku <code>${b}://restart</code> a potvrď Enter (zavření okna nestačí, prohlížeč může běžet na pozadí).</li>
+    <li>Když se karta nezmění: napiš do adresního řádku <code>${b}://flags/#force-high-performance-gpu</code>, nastav <b>Enabled</b> a klikni na Restartovat.</li>
+    <li><b>Karta NVIDIA:</b> Ovládací panel NVIDIA → Spravovat nastavení 3D → Nastavení programu → ${app} → Preferovaný grafický procesor: <b>Vysoce výkonný procesor NVIDIA</b> → Použít.</li>
+  </ol><p>Kontrola: tady nahoře se ukáže název karty, nebo v <code>${b}://gpu</code> řádek GPU s označením *ACTIVE*. Na výkonné kartě přepni Grafika na Vysoká.</p>`;
+}
+function gpuRender() {
+  const k = GPU_KIND[GPU.kind];
+  $('gpuInfo').innerHTML = `Hra kreslí na: <b>${escH(GPU.name || 'neznámé grafice (prohlížeč název neprozradí)')}</b>${k ? ` · ${k}` : ''}`;
+  $('gpuInfo').classList.toggle('warn', gpuWeak());
+  $('tGpuHelp').hidden = IS_TOUCH;
+  const n = $('gpuNote'), show = gpuWeak() && saved.gpuNoteOff !== GPU.raw && G.mode === 'menu';
+  n.hidden = !show;
+  if (show) n.querySelector('.t').innerHTML = GPU.kind === 'soft' ? `Hra kreslí <b>bez grafické karty</b> (${escH(GPU.name)}), proto se seká. Jak zapnout grafickou kartu ›`
+    : `Hra kreslí na integrované grafice <b>${escH(GPU.name)}</b>. Máš výkonnější kartu? Jak ji zapnout ›`;
+}
+function gpuHelpOpen() {
+  renderMenu(); buildInfo(); $('settingsModal').hidden = false;
+  const h = $('gpuHelp'); h.innerHTML = gpuHelpHtml(); h.hidden = false;
+  requestAnimationFrame(() => $('gpuInfo').scrollIntoView({ block: 'start' }));
+}
+$('tGpuHelp').onclick = () => { UIS.click('main'); const h = $('gpuHelp'); if (h.hidden) h.innerHTML = gpuHelpHtml(); h.hidden = !h.hidden; };
+$('gpuNote').onclick = (e) => {
+  if (e.target.closest('.x')) { UIS.click('back'); saved.gpuNoteOff = GPU.raw; persist(); gpuRender(); return; }
+  UIS.click('main'); gpuHelpOpen();
+};
 // ---------------------------------------------------------------- výzva týdne a žebříček
 // Každý týden (ISO týden, pondělí–neděle) má všude stejné zadání odvozené z čísla týdne: etapa, auto, počasí a
 // pravidlo (bez nitra / jen z kabiny / bez poškození / bez pravidla). Cíle na bronz, stříbro a zlato podle ideálního
@@ -18722,6 +18800,7 @@ function menuTab(v) {
 }
 // řádek hráče a souhrny na záložkách
 function hubRender() {
+  gpuRender();
   const n = achCount();
   $('hubName').textContent = netName(); $('hubAva').textContent = netName().slice(0, 1).toUpperCase();
   $('hubLvl').textContent = 1 + Math.floor(n / 4);
@@ -19478,6 +19557,7 @@ function perfFrame(f) {
     ` · grafická karta ${gpu != null ? gpu.toFixed(1) + ' ms' : 'neměřitelné v tomto prohlížeči'}<br>` +
     `${Math.round(avg('calls'))} kreslení · ${(avg('tris') / 1e6).toFixed(2)} M trojúhelníků · ${inf.memory.textures} textur · ${inf.programs ? inf.programs.length : '?'} shaderů${mem}<br>` +
     `kvalita ${q.name} · rozlišení ${bs.x}×${bs.y} (×${pixelRatio}) · stíny ${q.shadow || 'vypnuté'}${q.post ? ' · filmový obraz' : ''}<br>` +
+    `grafika: ${escH(GPU.name || 'neznámá')}${GPU_KIND[GPU.kind] ? ` (${GPU_KIND[GPU.kind]})` : ''}<br>` +
     `<em class="${cls}">${verdict}</em>`;
   // graf: délka snímků (sloupce), čára = rozpočet monitoru; žlutě procesor, modře grafika
   const cv = PERF.cv, g = cv.getContext('2d'), W2 = cv.width, H2 = cv.height, sc = H2 / (budget * 3);
@@ -19522,7 +19602,13 @@ function tick(now) {
   try { updateGlare(); updateTreeLod(); if (W.specLod) W.specLod(camera.position.x, camera.position.z); updateTerrainLod(); } catch (e) { tickErrors++; }
   applyPendingResize();
   camGuard();
-  if (PODIUM.on) { try { podiumTick(dt); } catch (e) { tickErrors++; } renderer.render(PODIUM.scene, PODIUM.cam); if (DIAG.on) diagProbe(rawDt); return; }
+  if (PODIUM.on) {   // pódium: kreslí se jen ono (měřič F8 měří i tyto snímky)
+    try { podiumTick(dt); } catch (e) { tickErrors++; }
+    const pU0 = PERF.on ? performance.now() : 0;
+    renderer.render(PODIUM.scene, PODIUM.cam);
+    if (PERF.on) try { perfFrame({ dt: rawDt, upd: pU0 - pf, mir: 0, ren: performance.now() - pU0, sh: 0, gpu: null, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }); } catch (e) { tickErrors++; }
+    if (DIAG.on) diagProbe(rawDt); return;
+  }
   const mirOn = mirrorWanted();
   const pU = PERF.on ? performance.now() : 0, gq = PERF.on ? perfGpuBegin() : null;
   if (mirOn) try { mirrorRender(); } catch (e) { tickErrors++; }
@@ -19760,7 +19846,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
