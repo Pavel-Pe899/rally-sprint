@@ -21,8 +21,6 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   méně materiálů) připravil Mohammed Benkhattab v repozitáři [1337Impact/bugatti-chiron-showroom](https://github.com/1337Impact/bugatti-chiron-showroom)
   na GitHubu (`public/models/chiron.glb`). Pro hru zjednodušený (`tools/prep-chiron.mjs`) a bez znaků a nápisů značky.
   Bugatti a Chiron jsou ochranné známky Bugatti; hra s nimi není nijak spojená.
-- **Škoda 130 RS:** vlastní model hry (`tools/s130-model.mjs`), protože volně použitelný model na GitHubu není: karoserie
-  poskládaná z příčných řezů podle skutečných rozměrů, bez log. Škoda a 130 RS jsou ochranné známky Škoda Auto a.s.
 - **Model auta:** [„[FREE] BMW M3 E30“](https://sketchfab.com/3d-models/free-bmw-m3-e30-ac3c7013434e403e8faff87948caf422)
   od Martina Trafase (Sketchfab), licence [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
   Stažený z repozitáře [Distinguish101/raj-garage](https://github.com/Distinguish101/raj-garage).
