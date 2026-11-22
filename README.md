@@ -15,13 +15,10 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   Stažený z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
   (`packages/asset-library-files/library/lowpoly/trex.glb`, tamtéž soubor NOTICE s původem a licencí).
   Ve hře převedený do JSON (`tools/trex-to-json.mjs`), větší a se světlejšími barvami. Zvuky T-rexe jsou vlastní syntéza.
-- **Toyota Yaris (tajné auto):** model „Hatchback Sports“ z balíčku [Car Kit](https://kenney.nl/assets/car-kit)
-  od [Kenney](https://kenney.nl), licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (volné dílo).
-  Stažený z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
-  (`packages/asset-library-files/library/lowpoly/hatchback_sports.glb`, v manifestu `kenney_car_kit`).
-  Převedený do JSON (`tools/kenney-car-to-json.mjs`): zvětšený na skutečnou velikost, lak, světla, skla a ráfky jako
-  samostatné materiály. Toyota a Yaris jsou ochranné známky Toyota Motor Corporation; hra s nimi není nijak spojená,
-  je to obecný malý hatchback pojmenovaný podle memu. Hudba k Yarisu je vlastní syntéza.
+- **Toyota Yaris (tajné auto):** vlastní model hry (`tools/yaris-model.mjs`), protože na GitHubu žádný volně použitelný
+  model Yarisu není. Karoserie Yarisu 2. generace (XP90) je poskládaná z příčných řezů podle skutečných rozměrů, skla,
+  světla a plasty podle polohy, kola, zrcátka a SPZ zvlášť. Toyota a Yaris jsou ochranné známky Toyota Motor
+  Corporation; hra s nimi není nijak spojená a auto nemá žádná loga. Hudba k Yarisu je vlastní syntéza.
 - **Model auta:** [„[FREE] BMW M3 E30“](https://sketchfab.com/3d-models/free-bmw-m3-e30-ac3c7013434e403e8faff87948caf422)
   od Martina Trafase (Sketchfab), licence [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
   Stažený z repozitáře [Distinguish101/raj-garage](https://github.com/Distinguish101/raj-garage).
