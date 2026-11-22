@@ -15,6 +15,12 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   Stažený z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
   (`packages/asset-library-files/library/lowpoly/trex.glb`, tamtéž soubor NOTICE s původem a licencí).
   Ve hře převedený do JSON (`tools/trex-to-json.mjs`), větší a se světlejšími barvami. Zvuky T-rexe jsou vlastní syntéza.
+- **Monster truck:** model [„Free Monster Truck Model“](https://sketchfab.com/3d-models/free-monster-truck-model-96d16754451d4ca3a0b4c5252452f0b5)
+  od steelcyclonestudios (Sketchfab), licence [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+  Stažený z GitHubu: [freaxnx01/game-rhyflitzer](https://github.com/freaxnx01/game-rhyflitzer)
+  (`assets/src/free_monster_truck_model.glb`, nezměněný originál je v `web/assets/src/monster.glb`).
+  Změny (`tools/prep-monster.mjs`): zvětšený na skutečnou velikost, kola rozdělená do čtyř uzlů, odstraněný znak
+  na bocích korby, materiály s kovem a leskem, zjednodušená geometrie (177 tisíc → 38 tisíc trojúhelníků).
 - **Bugatti Chiron:** model „Bugatti Chiron 2017“ od Boba Kimaniho (Kimz Auto), sdílený na
   [Blend Swap](https://blendswap.com/blend/32484) (apexmesh) pod licencí CC BY-NC (Creative Commons Uveďte původ – Neužívejte komerčně), jak ji uvádí Blend Swap:
   **jen nekomerční použití** (stejně jako u G 63). Webovou verzi (rovné auto ve skutečné velikosti, kola a křídlo zvlášť,
