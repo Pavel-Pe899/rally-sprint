@@ -10,6 +10,18 @@ Celá hra je v jednom souboru `index.html` (three.js, modely aut i textury uvnit
 repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční (některé modely mají licenci CC BY-NC).
 
 ## Autoři použitých děl
+- **T-rex (Džungle):** model „Trex“ od [Quaternius](https://quaternius.com) ([Poly Pizza](https://poly.pizza/m/UYtneO5FpF)),
+  licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (volné dílo), s kostrou a animacemi.
+  Stažený z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
+  (`packages/asset-library-files/library/lowpoly/trex.glb`, tamtéž soubor NOTICE s původem a licencí).
+  Ve hře převedený do JSON (`tools/trex-to-json.mjs`), větší a se světlejšími barvami. Zvuky T-rexe jsou vlastní syntéza.
+- **Toyota Yaris (tajné auto):** model „Hatchback Sports“ z balíčku [Car Kit](https://kenney.nl/assets/car-kit)
+  od [Kenney](https://kenney.nl), licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (volné dílo).
+  Stažený z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
+  (`packages/asset-library-files/library/lowpoly/hatchback_sports.glb`, v manifestu `kenney_car_kit`).
+  Převedený do JSON (`tools/kenney-car-to-json.mjs`): zvětšený na skutečnou velikost, lak, světla, skla a ráfky jako
+  samostatné materiály. Toyota a Yaris jsou ochranné známky Toyota Motor Corporation; hra s nimi není nijak spojená,
+  je to obecný malý hatchback pojmenovaný podle memu. Hudba k Yarisu je vlastní syntéza.
 - **Model auta:** [„[FREE] BMW M3 E30“](https://sketchfab.com/3d-models/free-bmw-m3-e30-ac3c7013434e403e8faff87948caf422)
   od Martina Trafase (Sketchfab), licence [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
   Stažený z repozitáře [Distinguish101/raj-garage](https://github.com/Distinguish101/raj-garage).
