@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mws39xlb';
+window.__BUILD = 'mws40w8c';
 (function () {
   function check() {
     try {
@@ -660,6 +660,11 @@ window.__BUILD = 'mws39xlb';
   .rp-bar[hidden] { display: none; }
   .rp-bar button { min-width: 42px; height: 38px; padding: 0 12px; border-radius: 10px; border: 2px solid #050608; background: linear-gradient(180deg, #3a3f4b, #22252d); color: #fff; font: 800 15px var(--display); cursor: pointer; touch-action: manipulation; }
   .rp-bar button.save { background: linear-gradient(180deg, #ffe46b, #ff9d00); color: #1d1500; }
+  .rp-bar button.rec { background: linear-gradient(180deg, #ff6a5f, #c8160e); color: #fff; box-shadow: 0 0 0 0 rgba(255, 59, 47, .6); animation: vidRec 1.2s ease-in-out infinite; font-variant-numeric: tabular-nums; }
+  .rp-bar button.ready { background: linear-gradient(180deg, #6dffa8, #11b35a); color: #032412; animation: vidReady 1.4s ease-in-out infinite; }
+  .rp-bar button:disabled { opacity: .6; }
+  @keyframes vidRec { 50% { box-shadow: 0 0 0 6px rgba(255, 59, 47, 0); } 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 47, .6); } }
+  @keyframes vidReady { 50% { transform: scale(1.06); } }
   .rp-bar .rp-rec { color: #ff3b2f; font-weight: 900; font-style: italic; letter-spacing: .06em; animation: rpBlink 1.2s steps(2) infinite; }
   .rp-bar.ph .rp-rec { color: #ffc419; animation: none; }
   .rp-bar small { color: var(--muted); font-size: 12px; }
@@ -1527,6 +1532,7 @@ window.__BUILD = 'mws39xlb';
   <button id="rpCam" aria-label="Kamera">TV kamery</button>
   <button id="rpSlow" aria-label="Zpomalení u skoků a nárazů">Zpomalení ✓</button>
   <button id="rpPhoto" aria-label="Fotorežim">📷 Foto</button>
+  <button id="rpVideo" class="save" aria-label="Nahrát video">🎬 Video</button>
   <button id="rpEnd" aria-label="Konec záznamu">✕</button>
 </div>
 <div id="photoBar" class="rp-bar ph" hidden>
@@ -18215,9 +18221,11 @@ function replayStart() {
   podiumHide(); $('hud').hidden = true;
   camS.init = false;
   replayUi();
+  VID.blob = null; vidUi();
   $('replayBar').hidden = false;
 }
 function replayEnd() {
+  if (VID.on) { VID.autoSave = true; vidStop(); }   // video rozpracované při zavření záznamu se uloží
   G.replay = null; G.photo = null;
   $('replayBar').hidden = true; $('photoBar').hidden = true;
   cockpitUpdate(0, false);
@@ -18347,6 +18355,117 @@ $('rpSpeed').onclick = () => { const R = G.replay; if (!R) return; R.speed = R.s
 const RP_CAMS = { tv: 'TV kamery', chase: 'Za autem', cockpit: 'Kokpit', heli: 'Helikoptéra', wheel: 'U kola', fan: 'Divák' };
 $('rpCam').onclick = () => { const R = G.replay; if (!R) return; const ks = Object.keys(RP_CAMS); R.cam = ks[(ks.indexOf(R.cam) + 1) % ks.length]; R.tvI = -1; R.fanAt = null; camS.init = false; setFov(1, baseFov()); replayUi(); };
 $('rpSlow').onclick = () => { const R = G.replay; if (!R) return; R.slow = !R.slow; saved.rpSlow = R.slow; persist(); replayUi(); };
+// ---------------------------------------------------------------- video z jízdy: záznam se nahraje do souboru (MediaRecorder)
+// Obraz hry se každý snímek hned po vykreslení překreslí do 2D plátna (nejvýš 1280 px na šířku) s nápisem hry, tratí,
+// autem, rychlostí a časem; zvuk hry se přidá z hlavní hlasitosti (Sound.master). Nahrávání skončí tlačítkem, na konci
+// záznamu nebo po 60 s. Hotové video (MP4, kde to prohlížeč umí, jinak WebM) se pak tlačítkem nabídne ke sdílení
+// (telefon), jinak se stáhne. Sdílení musí spustit klepnutí, proto až druhé tlačítko, ne hned po zastavení.
+const VID = { on: false, max: 60, blob: null, uiT: 0 };
+const vidType = () => {
+  if (typeof MediaRecorder === 'undefined') return null;
+  for (const t of ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']) {
+    try { if (MediaRecorder.isTypeSupported(t)) return t; } catch (e) { /* další typ */ }
+  }
+  return null;
+};
+const vidCanShare = () => { try { return !!(navigator.canShare && navigator.canShare({ files: [new File([new Blob(['x'])], 'v.mp4', { type: 'video/mp4' })] })); } catch (e) { return false; } };
+function vidStart() {
+  const R = G.replay; if (!R || VID.on) return;
+  const type = vidType(), src = renderer.domElement;
+  if (!type || !src.captureStream) { toast('Tento prohlížeč neumí nahrávat video', 2.4); return; }
+  const k = Math.min(1, 1280 / src.width), w = Math.max(2, Math.round((src.width * k) / 2) * 2), h = Math.max(2, Math.round((src.height * k) / 2) * 2);
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d'), stream = cv.captureStream(30);
+  let aDest = null;
+  try { Sound.init(); if (Sound.ctx && Sound.master) { aDest = Sound.ctx.createMediaStreamDestination(); Sound.master.connect(aDest); for (const t of aDest.stream.getAudioTracks()) stream.addTrack(t); } } catch (e) { aDest = null; }
+  let rec;
+  try { rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 6e6 }); }
+  catch (e) { try { rec = new MediaRecorder(stream); } catch (e2) { toast('Video se nepodařilo spustit', 2); return; } }
+  const chunks = [];
+  rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    const blob = new Blob(chunks, { type: (rec.mimeType || type).split(';')[0] });
+    VID.blob = blob.size ? blob : null; VID.busy = false;
+    if (!VID.blob) toast('Video se nepodařilo uložit', 2);
+    else if (VID.autoSave) vidSave();
+    else { toast('Video je hotové 🎬', 1.8); UIS.coin(); }
+    vidUi();
+  };
+  if (R.t >= R.len - 0.5) R.t = 0;
+  R.play = true; replayUi();
+  // první snímek se nakreslí až v hlavní smyčce hned po vykreslení (mimo ni je obraz WebGL už smazaný → černý snímek)
+  Object.assign(VID, { on: true, busy: true, autoSave: false, t0: performance.now(), cv, g, rec, aDest, blob: null, n: 0, stage: STAGES[G.sel].name, carName: carType().name });
+  rec.start(500);
+  UIS.click('main');
+  vidUi();
+}
+function vidStop() {
+  if (!VID.on) return;
+  VID.on = false;
+  try { if (VID.aDest) Sound.master.disconnect(VID.aDest); } catch (e) { /* nic */ }
+  try { VID.rec.stop(); } catch (e) { VID.busy = false; }
+  vidUi();
+}
+// jeden snímek videa: obraz hry a popisky (tmavý pruh s tratí a autem vlevo nahoře, rychlost vlevo dole, logo vpravo dole)
+function vidFrame() {
+  const { g, cv } = VID, w = cv.width, h = cv.height, R = G.replay, s = h / 720;
+  g.drawImage(renderer.domElement, 0, 0, w, h); VID.n++;
+  const disp = '"Saira Condensed", Arial, sans-serif';
+  g.save();
+  g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 8 * s;
+  // trať a auto
+  const pad = 22 * s, tx = pad, ty = pad;
+  g.font = `italic 900 ${Math.round(30 * s)}px ${disp}`;
+  const t1 = VID.stage.toUpperCase(), t2 = VID.carName, w1 = g.measureText(t1).width;
+  g.font = `600 ${Math.round(20 * s)}px ${disp}`; const w2 = g.measureText(t2).width;
+  const bw = Math.max(w1, w2) + 34 * s;
+  g.shadowBlur = 0;
+  const grd = g.createLinearGradient(tx, 0, tx + bw, 0); grd.addColorStop(0, 'rgba(8,12,22,.82)'); grd.addColorStop(1, 'rgba(8,12,22,.35)');
+  g.fillStyle = grd; g.beginPath(); g.moveTo(tx, ty); g.lineTo(tx + bw, ty); g.lineTo(tx + bw - 14 * s, ty + 70 * s); g.lineTo(tx, ty + 70 * s); g.closePath(); g.fill();
+  g.fillStyle = '#ffc419'; g.fillRect(tx, ty, 6 * s, 70 * s);
+  g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  g.fillStyle = '#fff'; g.font = `italic 900 ${Math.round(30 * s)}px ${disp}`; g.fillText(t1, tx + 18 * s, ty + 33 * s);
+  g.fillStyle = '#c9d2e0'; g.font = `600 ${Math.round(20 * s)}px ${disp}`; g.fillText(t2, tx + 18 * s, ty + 58 * s);
+  // rychlost a čas záznamu
+  g.shadowBlur = 10 * s; g.shadowColor = 'rgba(0,0,0,.7)';
+  const kmh = Math.round(Math.abs(car.vf || 0) * 3.6);
+  g.fillStyle = '#fff'; g.font = `italic 900 ${Math.round(64 * s)}px ${disp}`; g.fillText(String(kmh), pad, h - pad - 4 * s);
+  const kw = g.measureText(String(kmh)).width;
+  g.fillStyle = '#ffc419'; g.font = `italic 800 ${Math.round(22 * s)}px ${disp}`; g.fillText('KM/H', pad + kw + 8 * s, h - pad - 8 * s);
+  if (R) { g.fillStyle = 'rgba(255,255,255,.85)'; g.font = `700 ${Math.round(22 * s)}px ${disp}`; g.fillText(fmt(R.t), pad, h - pad - 70 * s); }
+  // logo hry
+  g.textAlign = 'right'; g.font = `italic 900 ${Math.round(40 * s)}px ${disp}`;
+  g.fillStyle = '#fff'; g.fillText('RALLY', w - pad - g.measureText(' SPRINT').width, h - pad);
+  g.fillStyle = '#ffc419'; g.fillText(' SPRINT', w - pad, h - pad);
+  g.restore();
+  const el = (performance.now() - VID.t0) / 1000;
+  if (!R || el >= VID.max || (!R.play && R.t >= R.len)) { vidStop(); return; }
+  if (performance.now() - VID.uiT > 250) { VID.uiT = performance.now(); vidUi(); }
+}
+function vidUi() {
+  const b = $('rpVideo'), lab = $('replayBar').querySelector('.rp-rec'); if (!b) return;
+  b.classList.toggle('rec', VID.on); b.classList.toggle('ready', !VID.on && !!VID.blob);
+  if (VID.on) { const el = Math.floor((performance.now() - VID.t0) / 1000); b.textContent = `■ Hotovo ${Math.floor(el / 60)}:${String(el % 60).padStart(2, '0')}`; }
+  else if (VID.busy) b.textContent = '⏳ Ukládám…';
+  else if (VID.blob) b.textContent = vidCanShare() ? '📤 Sdílet video' : '⬇ Stáhnout video';
+  else b.textContent = '🎬 Video';
+  if (lab) lab.textContent = VID.on ? '● NAHRÁVÁM VIDEO' : '● ZÁZNAM';
+  b.disabled = !!VID.busy && !VID.on;
+}
+async function vidSave() {
+  const blob = VID.blob; if (!blob) return;
+  const ext = /mp4/.test(blob.type) ? 'mp4' : 'webm', name = `rally-sprint-${Date.now()}.${ext}`;
+  VID.last = { size: blob.size, type: blob.type, name };
+  try {
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Rally Sprint', text: `${VID.stage} · Rally Sprint` }); toast('Video odesláno', 1.6); VID.blob = null; vidUi(); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  toast(`Video uložené (${(blob.size / 1e6).toFixed(1).replace('.', ',')} MB)`, 2.2);
+  VID.blob = null; vidUi();   // další klepnutí nahraje nové video
+}
+$('rpVideo').onclick = () => { if (VID.on) vidStop(); else if (VID.blob && !VID.busy) vidSave(); else if (!VID.busy) vidStart(); };
 // další kamery záznamu: helikoptéra (vysoko za autem, pomalu krouží), u kola (nízko u předního kola, dívá se dopředu),
 // divák (stojí u trati, kamera v ruce, otáčí se za autem, po přejetí jde o kus dál)
 function rpExtraCam(dt) {
@@ -20254,6 +20373,7 @@ function tick(now) {
   } else renderer.render(scene, camera);
   if (!mirOn && MIR.cabMesh && MIR.cabMesh.userData.mirOn) mirrorCab(false);
   if (G.trex) try { trexMirror(); } catch (e) { tickErrors++; }
+  if (VID.on) try { vidFrame(); } catch (e) { tickErrors++; vidStop(); }   // snímek videa hned po vykreslení
   if (PERF.on) try {
     const pR = performance.now(); perfGpuEnd(gq);
     const sh = PERF.sh - pfSh0;
@@ -20483,7 +20603,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { renderMenu, garRender, useCar, decalOwned, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { renderMenu, garRender, useCar, decalOwned, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
