@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwtuvxr6';
+window.__BUILD = 'mwtv7ied';
 (function () {
   function check() {
     try {
@@ -25104,11 +25104,19 @@ function megaDress(group, td, spectators, hAt) {
   {
     const z = L + 85, x = -(hw + 26), gy = hAt(x, z), top = Math.max(gy + 12, Y(z) + 14), glass = new T.MeshStandardMaterial({ color: '#33526e', roughness: 0.06, metalness: 0.6, emissive: '#0b1722', emissiveIntensity: 0.5 });
     box(4, top - gy, 4, concM, x - 2, (top + gy) / 2 - 1, z);
+    const frames = canvasTex(512, 128, (c, w, h) => { c.fillStyle = '#20384c'; c.fillRect(0, 0, w, h); const gr = c.createLinearGradient(0, 0, w, h); gr.addColorStop(0, 'rgba(255,255,255,.18)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = '#eef0f2'; for (let k = 0; k <= 8; k++) c.fillRect(k * (w / 8) - 3, 0, 6, h); c.fillRect(0, 0, w, 6); c.fillRect(0, h - 6, w, 6); c.fillRect(0, h * 0.62, w, 3); });
+    const glassF = new T.MeshStandardMaterial({ map: frames, roughness: 0.15, metalness: 0.4, emissive: '#0b1722', emissiveIntensity: 0.4 }), railM = stdM('#dfe3e6', { metalness: 0.6, roughness: 0.35 });
     for (let k = 0; k < 4; k++) {
       const y = top - 1 + k * 3, zz = z - 2 + k * 1.2;   // patra ustupují dozadu jako schody
-      box(9, 3, 4, stdM('#e7e3da'), x + 2.5, y, zz);
-      const w = new T.Mesh(new T.PlaneGeometry(8.4, 1.7), glass); w.position.set(x + 7.05, y + 0.2, zz); w.rotation.y = Math.PI / 2; group.add(w);
+      box(9, 3, 4, stdM(k % 2 ? '#e7e3da' : '#d9d4c8'), x + 2.5, y, zz);
+      const w = new T.Mesh(new T.PlaneGeometry(8.6, 2.2), glassF); w.position.set(x + 7.06, y + 0.1, zz); w.rotation.y = Math.PI / 2; group.add(w);
+      box(1.2, 0.15, 4.2, railM, x + 7.6, y - 1.45, zz);                                       // ochoz
+      box(0.06, 1.0, 4.2, railM, x + 8.15, y - 0.9, zz);                                       // zábradlí
+      for (let r = -2; r <= 2; r++) box(0.06, 1.0, 0.06, railM, x + 8.15, y - 0.9, zz + r);
     }
+    box(0.12, 7, 0.12, steelM, x + 5, top + 13.5, z + 1.6);                                     // stožár s vlajkou
+    { const ft = text(128, 80, (c, w, h) => { [['#ffffff', 0], ['#d7141a', 0.5]].forEach(([col, y]) => { c.fillStyle = col; c.fillRect(0, y * h, w, h / 2); }); c.fillStyle = '#11457e'; c.beginPath(); c.moveTo(0, 0); c.lineTo(w / 2, h / 2); c.lineTo(0, h); c.fill(); });
+      const fg = new T.PlaneGeometry(2.2, 1.4, 8, 1).translate(1.1, 0, 0), f = new T.Mesh(fg, new T.MeshStandardMaterial({ map: ft, side: T.DoubleSide, roughness: 0.8 })); f.position.set(x + 5.06, top + 16.2, z + 1.6); group.add(f); D.flags.push({ m: f, base: fg.attributes.position.array.slice(), ph: 2.2 }); }
     box(10, 0.4, 6, stdM('#c9ccd1', { roughness: 0.5 }), x + 2.5, top + 9.7, z + 1.6);
   }
   // 9) stožáry světel a větrné rukávy podél svahu
@@ -25331,11 +25339,35 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
     });
     const PAL = ['#f2d9b8', '#f6e7c8', '#e9b99a', '#f3d1c4', '#d9e4c8', '#f7f1e3', '#e8c98f', '#cfe0e8', '#f0c6a2'];
     const houses = [];
+    // kostel se zvonicí na náměstíčku (na straně do vnitrozemí)
+    const ic = td.startIdx + 75, inl = (X[ic] * NX[ic] + Z[ic] * NZ[ic]) < 0 ? 1 : -1, chx = X[ic] + NX[ic] * inl * (hw + 17), chz = Z[ic] + NZ[ic] * inl * (hw + 17);
+    {
+      const g = new T.Group(), white = stdM('#f4efe4', { roughness: 0.9 }), roofM = stdM('#b5562f', { roughness: 0.7 }), stone = stdM('#d8cdb8', { roughness: 0.95 });
+      g.add(new T.Mesh(new T.BoxGeometry(10, 8, 20).translate(0, 4, 0), white));                                   // loď
+      const gable = new T.Mesh(new T.CylinderGeometry(6.2, 6.2, 20.6, 3, 1).rotateX(-Math.PI / 2).scale(1, 0.43, 1).translate(0, 8 + 1.33, 0), roofM); g.add(gable);   // sedlová střecha: trojboký hranol podél lodi, hřeben nahoře
+      g.add(new T.Mesh(new T.BoxGeometry(4.6, 22, 4.6).translate(0, 11, -12), white));                            // věž
+      g.add(new T.Mesh(new T.BoxGeometry(5.2, 0.6, 5.2).translate(0, 22.3, -12), stone));
+      g.add(new T.Mesh(new T.ConeGeometry(3.4, 7, 4).rotateY(Math.PI / 4).translate(0, 26.1, -12), stdM('#5f8f7a', { roughness: 0.5, metalness: 0.3 })));   // měděná špice
+      g.add(new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 2.2, 6).translate(0, 30.6, -12), stdM('#c9a227', { metalness: 0.8, roughness: 0.3 })));
+      g.add(new T.Mesh(new T.BoxGeometry(1.4, 0.12, 0.12).translate(0, 30.9, -12), stdM('#c9a227', { metalness: 0.8, roughness: 0.3 })));
+      const dark = stdM('#2a2622'), clock = canvasTex(128, 128, (c, w) => { c.fillStyle = '#f6f2e6'; c.beginPath(); c.arc(64, 64, 60, 0, 7); c.fill(); c.strokeStyle = '#222'; c.lineWidth = 5; c.stroke(); for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; c.fillStyle = '#222'; c.fillRect(64 + Math.sin(a) * 48 - 2, 64 - Math.cos(a) * 48 - 2, 4, 4); } c.lineWidth = 6; c.beginPath(); c.moveTo(64, 64); c.lineTo(64, 26); c.moveTo(64, 64); c.lineTo(92, 74); c.stroke(); });
+      for (const [rx, rz, ry] of [[0, -14.32, Math.PI], [2.32, -12, Math.PI / 2], [-2.32, -12, -Math.PI / 2], [0, -9.68, 0]]) {
+        const win = new T.Mesh(new T.PlaneGeometry(1.4, 2.6), dark); win.position.set(rx, 19.2, rz); win.rotation.y = ry; g.add(win);   // okna zvonice
+        const ck = new T.Mesh(new T.CircleGeometry(1.1, 24), new T.MeshStandardMaterial({ map: clock, roughness: 0.6 })); ck.position.set(rx * 1.004, 15.6, rz + (rz < -12 ? -0.005 : rz > -12 ? 0.005 : 0)); ck.rotation.y = ry; g.add(ck);
+      }
+      const door = new T.Mesh(new T.PlaneGeometry(2.4, 3.6), stdM('#5a3a22')); door.position.set(0, 1.8, 10.01); g.add(door);
+      const rose = new T.Mesh(new T.CircleGeometry(1.2, 24), new T.MeshStandardMaterial({ color: '#3a5f8a', emissive: '#1c3048', emissiveIntensity: 0.4, roughness: 0.2 })); rose.position.set(0, 6.2, 10.02); g.add(rose);
+      for (let k = 0; k < 4; k++) for (const sd of [-1, 1]) { const w = new T.Mesh(new T.PlaneGeometry(1.2, 3.2), dark); w.position.set(sd * 5.01, 4.6, -6 + k * 4.5); w.rotation.y = sd * Math.PI / 2; g.add(w); }
+      g.children.forEach((c) => { c.castShadow = true; c.receiveShadow = true; });
+      const gy = hAt(chx, chz); g.position.set(chx, gy - 0.4, chz); g.rotation.y = td.HD[ic] + (inl > 0 ? Math.PI / 2 : -Math.PI / 2); group.add(g);   // průčelím k silnici
+      addObstacle(chx, chz, 6, true); addObstacle(chx + Math.sin(g.rotation.y) * -12, chz + Math.cos(g.rotation.y) * -12, 3.4, true);
+      D.church = { x: chx, z: chz };
+    }
     for (let i = Math.max(4, td.startIdx - 70); i < td.startIdx + 170; i += 7) for (const sd of [-1, 1]) for (let row = 0; row < 2; row++) {
       if (rnd() < 0.18) continue;
       const w = 8 + rnd() * 4, d = 8 + rnd() * 3, h = 6 + ((rnd() * 3) | 0) * 2.8, off = hw + 6 + d / 2 + row * 14 + rnd() * 2;
       const x = X[i] + NX[i] * sd * off, z = Z[i] + NZ[i] * sd * off, gy = hAt(x, z);
-      if (gy < 1.2 || roadDistAt(x, z) < hw + 4 + d / 2 || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
+      if (gy < 1.2 || roadDistAt(x, z) < hw + 4 + d / 2 || Math.hypot(x - chx, z - chz) < 22 || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
       houses.push({ x, z, y: Math.min(gy, Y[i]) - 0.6, w, d, h: h + Math.max(0, gy - Y[i]), a: td.HD[i], c: PAL[(rnd() * PAL.length) | 0] });
     }
     const walls = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), new T.MeshStandardMaterial({ map: wallT, roughness: 0.85 }), houses.length);
