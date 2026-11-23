@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwtlicb3';
+window.__BUILD = 'mwtm9fsh';
 (function () {
   function check() {
     try {
@@ -1343,6 +1343,22 @@ window.__BUILD = 'mwtlicb3';
   /* parametry auta v jednom řádku: pět sloupců (název nad pruhem) */
   .gar-stats.row { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px 6px; font-size: 11px; }
   .gar-stats.row span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; grid-row: 1; } .gar-stats.row i { grid-row: 2; height: 6px; }
+  /* malování auta */
+  .pt { display: flex; flex-direction: column; gap: 6px; }
+  .pt h4 { margin: 6px 0 0; font-family: var(--display); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: #ffc419; }
+  .pt-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .pt-row.use { margin-top: 4px; }
+  .pt-l { min-width: 92px; font-size: 13px; color: #dfe3ea; }
+  .pt input[type=color] { width: 40px; height: 30px; padding: 0; border: 2px solid rgba(255,255,255,.35); background: none; cursor: pointer; }
+  .pt-sw { display: flex; flex-wrap: wrap; gap: 3px; flex: 1 1 140px; }
+  .pt-sw button { width: 20px; height: 20px; border: 2px solid rgba(0,0,0,.4); padding: 0; cursor: pointer; }
+  .pt-sw button[aria-pressed=true] { outline: 2px solid #fff; outline-offset: 1px; }
+  .pt-b { border: 0; background: rgba(255,255,255,.1); color: #fff; font-family: var(--display); font-weight: 700; font-size: 13px; padding: 6px 10px; cursor: pointer; }
+  .pt-b[aria-pressed=true] { background: linear-gradient(90deg, #ff7a59, #ff3fa4); }
+  .pt-b.sq { width: 32px; padding: 6px 0; } .pt-b.wide { flex: 1; padding: 9px 10px; font-size: 14px; }
+  .pt-num { min-width: 34px; text-align: center; font-family: var(--display); font-size: 20px; }
+  .pt-row.stick { gap: 4px; } .pt-st { width: 48px; height: 48px; padding: 2px; border: 2px solid transparent; background: rgba(255,255,255,.07); cursor: pointer; }
+  .pt-st[aria-pressed=true] { border-color: #ffc419; background: rgba(255,196,25,.15); } .pt-st canvas { width: 40px; height: 40px; display: block; }
   .gar-sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
   .gar-sw button { border: 3px solid transparent; background: rgba(255, 255, 255, .06); color: #fff; font-family: var(--display); font-size: 12px; padding: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
   .gar-sw button i { width: 100%; height: 30px; display: block; } .gar-sw button[aria-pressed="true"] { border-color: #ffc419; } .gar-sw button.locked { opacity: .5; }
@@ -1680,7 +1696,7 @@ window.__BUILD = 'mwtlicb3';
   <div class="gar-panel" id="garPanel">
     <div class="gar-head"><h3 id="garName"></h3><span class="gar-up" id="garUp"></span><small id="garDesc"></small></div>
     <div class="gar-stats" id="garStats"></div>
-    <div class="gar-tabs" id="garTabs"><button data-t="tune" aria-pressed="true">Tuning</button><button data-t="paint" aria-pressed="false">Lak</button><button data-t="decal" aria-pressed="false">Polepy</button></div>
+    <div class="gar-tabs" id="garTabs"><button data-t="tune" aria-pressed="true">Tuning</button><button data-t="paint" aria-pressed="false">Lak</button><button data-t="decal" aria-pressed="false">Polepy</button><button data-t="art" aria-pressed="false">Malování</button></div>
     <div class="gar-list" id="garList"></div>
     <button class="btn gar-pick" id="garPick">Jet s tímhle autem</button>
   </div>
@@ -3281,6 +3297,90 @@ delete saved.mode; delete saved.bike;   // skrytý režim horských kol byl ze h
 function persist() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(saved)); } catch (e) { /* bez úložiště to jde taky */ }
 }
+// ---------------------------------------------------------------- MALOVÁNÍ AUTA (vlastní lak)
+// V garáži záložka „Malování“: vlastní barvy karoserie, dvou doplňků a ráfků (barevné kolo i rychlé vzorky), povrch
+// (lesk, metalíza, mat, perleť), startovní číslo na dveřích a na střeše (kruh, štítek, bez pozadí) a až tři nálepky
+// (hvězda, blesk, plamen, srdce, šachovnice, česká vlajka, smajlík, lebka, T-rex, měsíc) na dveře, zadní blatník,
+// kapotu nebo střechu. Ukládá se jako „Vlastní lak“ (poslední v seznamu laků): je vidět v garáži, za jízdy, v záznamu
+// i u soupeřů ve hře po síti (barvy, číslo a nálepky jdou s přítomností hráče). Bez značek a log.
+const PAINT_FIN = { gloss: { n: 'Lesk', metal: 0.15, rough: 0.28 }, metal: { n: 'Metalíza', metal: 0.7, rough: 0.22 }, matte: { n: 'Mat', metal: 0.05, rough: 0.78 }, pearl: { n: 'Perleť', metal: 0.38, rough: 0.12 } };
+const STICKERS = { star: 'Hvězda', bolt: 'Blesk', flame: 'Plamen', heart: 'Srdce', check: 'Šachovnice', cz: 'Česká vlajka', smile: 'Smajlík', skull: 'Lebka', trex: 'T-rex', moon: 'Měsíc' };
+const STICK_AT = { door: 'Dveře', rear: 'Zadní blatník', hood: 'Kapota', roof: 'Střecha' };
+const NUM_STYLE = { round: 'Kruh', plate: 'Štítek', none: 'Bez pozadí' };
+const PAINT_SW = ['#f4f6f8', '#16181c', '#cf1d27', '#ff7a00', '#ffc419', '#7ac943', '#0f5a3a', '#18b5c8', '#1849c9', '#6a3fc8', '#ff4fa3', '#b9bec6', '#c9a227', '#8a5a2b'];
+function paintDef() { return { body: '#2a7de1', a1: '#ffffff', a2: '#111418', rim: '#d8d8d8', fin: 'gloss', num: { on: true, n: 7, style: 'round', col: '#111418', bg: '#ffffff', roof: true }, st: [] }; }
+// kontrola dat (vlastní lak soupeře přichází po síti): jen barvy #rrggbb, číslo 0–99, známé nálepky a místa
+function paintSan(p) {
+  const d = paintDef(), hex = (c, f) => (typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c : f);
+  if (!p || typeof p !== 'object') return d;
+  const n = p.num && typeof p.num === 'object' ? p.num : {};
+  return {
+    body: hex(p.body, d.body), a1: hex(p.a1, d.a1), a2: hex(p.a2, d.a2), rim: hex(p.rim, d.rim), fin: PAINT_FIN[p.fin] ? p.fin : 'gloss',
+    num: { on: n.on !== false, n: clamp(Math.round(+n.n || 0), 0, 99), style: NUM_STYLE[n.style] ? n.style : 'round', col: hex(n.col, d.num.col), bg: hex(n.bg, d.num.bg), roof: n.roof !== false },
+    st: (Array.isArray(p.st) ? p.st : []).filter((s) => s && STICKERS[s.k] && STICK_AT[s.at]).slice(0, 3).map((s) => ({ k: s.k, at: s.at, col: hex(s.col, '#ffc419') })),
+  };
+}
+function paintLv(p) { const q = paintSan(p === undefined ? saved.paint : p), f = PAINT_FIN[q.fin]; return { name: 'Vlastní lak', custom: true, body: q.body, a1: q.a1, a2: q.a2, rim: q.rim, metal: f.metal, rough: f.rough, num: q.num, st: q.st }; }
+const CUSTOM_LIV = LIVERIES.length;
+LIVERIES.push(paintLv());
+// nálepka jako vektorový obrázek (bez písma, ať vypadá všude stejně); kreslí se do čtverce o straně s se středem v 0,0
+function stickerDraw(g, k, s, col) {
+  const r = s / 2; g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
+  const outline = () => { g.lineWidth = s * 0.06; g.strokeStyle = 'rgba(0,0,0,0.55)'; g.stroke(); };
+  g.fillStyle = col;
+  if (k === 'star') { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.42 : r; g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g.closePath(); g.fill(); outline(); }
+  else if (k === 'bolt') { g.beginPath(); [[0.15, -1], [-0.55, 0.12], [-0.02, 0.12], [-0.18, 1], [0.58, -0.2], [0.05, -0.2], [0.3, -1]].forEach(([x, y]) => g.lineTo(x * r, y * r)); g.closePath(); g.fill(); outline(); }
+  else if (k === 'flame') { g.beginPath(); g.moveTo(0, r); g.bezierCurveTo(-r * 0.9, r * 0.8, -r * 0.8, -r * 0.1, -r * 0.2, -r); g.bezierCurveTo(-r * 0.1, -r * 0.4, r * 0.25, -r * 0.3, r * 0.3, -r * 0.75); g.bezierCurveTo(r * 0.9, -r * 0.1, r * 0.9, r * 0.8, 0, r); g.fill(); outline(); g.fillStyle = 'rgba(255,240,160,0.85)'; g.beginPath(); g.ellipse(0, r * 0.45, r * 0.28, r * 0.42, 0, 0, Math.PI * 2); g.fill(); }
+  else if (k === 'heart') { g.beginPath(); g.moveTo(0, r * 0.85); g.bezierCurveTo(-r * 1.2, -r * 0.05, -r * 0.6, -r * 1.05, 0, -r * 0.45); g.bezierCurveTo(r * 0.6, -r * 1.05, r * 1.2, -r * 0.05, 0, r * 0.85); g.fill(); outline(); }
+  else if (k === 'check') { const n = 4, c = s / n; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#fff'; g.fillRect(-r + i * c, -r * 0.7 + j * c * 0.7, c, c * 0.7); } g.strokeStyle = 'rgba(0,0,0,0.6)'; g.lineWidth = s * 0.03; g.strokeRect(-r, -r * 0.7, s, s * 0.7); }
+  else if (k === 'cz') { const h = s * 0.66; g.fillStyle = '#ffffff'; g.fillRect(-r, -h / 2, s, h / 2); g.fillStyle = '#d7141a'; g.fillRect(-r, 0, s, h / 2); g.fillStyle = '#11457e'; g.beginPath(); g.moveTo(-r, -h / 2); g.lineTo(0, 0); g.lineTo(-r, h / 2); g.closePath(); g.fill(); g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = s * 0.03; g.strokeRect(-r, -h / 2, s, h); }
+  else if (k === 'smile') { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill(); outline(); g.fillStyle = '#111'; g.beginPath(); g.arc(-r * 0.35, -r * 0.25, r * 0.13, 0, Math.PI * 2); g.arc(r * 0.35, -r * 0.25, r * 0.13, 0, Math.PI * 2); g.fill(); g.strokeStyle = '#111'; g.lineWidth = s * 0.07; g.beginPath(); g.arc(0, r * 0.05, r * 0.55, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
+  else if (k === 'skull') { g.beginPath(); g.arc(0, -r * 0.15, r * 0.78, Math.PI, 0); g.lineTo(r * 0.55, r * 0.45); g.lineTo(r * 0.3, r * 0.9); g.lineTo(-r * 0.3, r * 0.9); g.lineTo(-r * 0.55, r * 0.45); g.closePath(); g.fill(); outline(); g.fillStyle = '#111'; g.beginPath(); g.ellipse(-r * 0.32, -r * 0.05, r * 0.2, r * 0.24, 0, 0, Math.PI * 2); g.ellipse(r * 0.32, -r * 0.05, r * 0.2, r * 0.24, 0, 0, Math.PI * 2); g.fill(); g.beginPath(); g.moveTo(0, r * 0.18); g.lineTo(-r * 0.1, r * 0.38); g.lineTo(r * 0.1, r * 0.38); g.fill(); }
+  else if (k === 'trex') { g.beginPath(); [[-1, 0.2], [-0.55, 0.05], [-0.25, -0.35], [0.15, -0.45], [0.35, -0.85], [0.85, -0.8], [0.95, -0.55], [0.55, -0.45], [0.6, -0.3], [0.35, -0.2], [0.3, 0.2], [0.45, 0.95], [0.25, 0.95], [0.05, 0.35], [-0.15, 0.35], [-0.2, 0.95], [-0.4, 0.95], [-0.45, 0.3]].forEach(([x, y]) => g.lineTo(x * r, y * r)); g.closePath(); g.fill(); outline(); }
+  else if (k === 'moon') { g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.arc(r * 0.42, -r * 0.15, r * 0.82, 0, Math.PI * 2, true); g.fill('evenodd'); outline(); }
+  g.restore();
+}
+// startovní číslo: kruh / bílý štítek / jen číslice s obrysem
+function numDraw(g, num, R) {
+  g.save();
+  if (num.style === 'round') { g.fillStyle = num.bg; g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.fill(); g.lineWidth = R * 0.08; g.strokeStyle = 'rgba(0,0,0,0.45)'; g.stroke(); }
+  else if (num.style === 'plate') { g.fillStyle = num.bg; const w = R * 2.1, h = R * 1.5; g.beginPath(); g.roundRect ? g.roundRect(-w / 2, -h / 2, w, h, R * 0.18) : g.rect(-w / 2, -h / 2, w, h); g.fill(); g.lineWidth = R * 0.07; g.strokeStyle = 'rgba(0,0,0,0.45)'; g.stroke(); }
+  g.font = `italic 900 ${Math.round(R * (String(num.n).length > 1 ? 1.25 : 1.45))}px "Saira Condensed", Arial, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (num.style === 'none') { g.lineWidth = R * 0.14; g.strokeStyle = num.bg; g.strokeText(String(num.n), 0, R * 0.05); }
+  g.fillStyle = num.col; g.fillText(String(num.n), 0, R * 0.05);
+  g.restore();
+}
+// bok: vzor polepu (pokud je) + číslo na dveřích + nálepky na dveřích a blatníku. mirror = pravý bok (obrázky se kreslí
+// zrcadlově, aby na autě nebyly obrácené). asp = délka boku / výška pásu (kruh na autě má zůstat kulatý).
+function paintSideTex(decalId, lv, asp, mirror) {
+  const base = decalId && decalId !== 'none' ? decalSideTex(decalId, lv, asp) : null;
+  return canvasTex(1024, 256, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    if (base && base.image) g.drawImage(base.image, 0, 0, w, h);
+    const kx = clamp(4 / asp, 0.25, 1.5);   // vodorovné stlačení: 1 px na výšku = kx px na šířku
+    const at = (u, v, sz, fn) => { g.save(); g.translate(u * w, (1 - v) * h); g.scale(kx * (mirror ? -1 : 1), 1); fn(sz); g.restore(); };
+    if (lv.num && lv.num.on) at(0.47, 0.5, h * 0.36, (R) => numDraw(g, lv.num, R));
+    for (const s of lv.st || []) if (s.at === 'door' || s.at === 'rear') at(s.at === 'door' ? 0.27 : 0.8, 0.5, h * 0.62, (S) => stickerDraw(g, s.k, S, s.col));
+  });
+}
+// střecha a kapota: číslo na střeše, nálepky na kapotě a střeše (shora čitelné ve směru jízdy)
+function paintTopTex(decalId, lv) {
+  const base = decalId && decalId !== 'none' ? decalTopTex(decalId, lv) : null;
+  const any = (lv.num && lv.num.on && lv.num.roof) || (lv.st || []).some((s) => s.at === 'hood' || s.at === 'roof');
+  if (!any) return base;
+  return canvasTex(256, 512, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    if (base && base.image) g.drawImage(base.image, 0, 0, w, h);
+    const at = (u, v, fn) => { g.save(); g.translate(u * w, (1 - v) * h); g.rotate(Math.PI); fn(); g.restore(); };
+    if (lv.num && lv.num.on && lv.num.roof) at(0.5, 0.42, () => numDraw(g, lv.num, w * 0.24));
+    let hood = 0, roof = 0;
+    for (const s of lv.st || []) {
+      if (s.at === 'hood') at(0.5 + (hood++ ? 0.22 : 0), 0.82, () => stickerDraw(g, s.k, w * 0.34, s.col));
+      if (s.at === 'roof') at(0.5 + (roof++ % 2 ? 0.26 : -0.26), 0.3, () => stickerDraw(g, s.k, w * 0.26, s.col));
+    }
+  });
+}
+
 
 // ---------------------------------------------------------------- trať
 // Postaví středovou čáru etapy, výškový profil, hlášení spolujezdce
@@ -8159,7 +8259,8 @@ function buildModelCar(lv, spec) {
     trimS.position.set(0, 0.66, -0.16); body.add(trimS);
     driver.push(helm, hans, sh, trimS);
   }
-  if (!spec.formula && spec.decal) applyDecal(spec.decal, { body, bb, lv, paintMeshes });
+  if (!spec.formula && lv.custom && ((lv.num && lv.num.on) || (lv.st && lv.st.length))) applyDecal('custom', { body, bb, lv, paintMeshes, texSide: (asp) => paintSideTex(spec.decal, lv, asp, false), texSideR: (asp) => paintSideTex(spec.decal, lv, asp, true), texTop: paintTopTex(spec.decal, lv) });   // vlastní lak: číslo a nálepky
+  else if (!spec.formula && spec.decal) applyDecal(spec.decal, { body, bb, lv, paintMeshes });
   // formule: kresba livreje týmu (lv obsahuje barvy týmu)
   if (spec.formula && lv.code) { const team = Object.keys(F1_TEAMS).find((k) => F1_TEAMS[k].code === lv.code), lid = F1_LIVERY[team]; if (lid) applyDecal('livery-' + lid, { body, bb, lv, paintMeshes, texSide: liverySideTex(lid, lv), texTop: liveryTopTex(lid, lv) }); }
   if (!spec.formula && spec.shop) roadShopLook(spec.shop, { body, wheels, bb, lv, carId: Object.keys(CAR_TYPES).find((k) => CAR_TYPES[k].model === spec.model) });   // tuning silničního auta z dílny
@@ -9032,7 +9133,7 @@ function liveryTopTex(id, tm) {
   });
 }
 // polep na karoserii: promítne se přímo na trojúhelníky laku (boky z boku, pruhy shora) – kopíruje tvar a podběhy kol
-function applyDecal(id, { body, bb, lv, paintMeshes, texSide, texTop }) {
+function applyDecal(id, { body, bb, lv, paintMeshes, texSide, texSideR, texTop }) {
   if (!id || id === 'none' || !paintMeshes.length) return;
   body.updateMatrixWorld(true);
   const ray = new T.Raycaster();
@@ -9047,15 +9148,16 @@ function applyDecal(id, { body, bb, lv, paintMeshes, texSide, texTop }) {
   const hm = hitN(new T.Vector3(3, (yTop + yBot) / 2, mid), new T.Vector3(-1, 0, 0)), sideX = hm ? Math.abs(hm.p.x) : 0.8;
   const Wt = Math.min(1.5, sideX * 2 * 0.8);
   const clampTex = (t) => { if (t) { t.wrapS = t.wrapT = T.ClampToEdgeWrapping; t.needsUpdate = true; } return t; };
-  const sideT = clampTex(texSide || decalSideTex(id, lv, L / Hs)), topT = clampTex(texTop !== undefined ? texTop : decalTopTex(id, lv));
+  const sideT = clampTex(typeof texSide === 'function' ? texSide(L / Hs) : texSide || decalSideTex(id, lv, L / Hs)), topT = clampTex(texTop !== undefined ? texTop : decalTopTex(id, lv));
+  const sideTR = texSideR ? clampTex(typeof texSideR === 'function' ? texSideR(L / Hs) : texSideR) : null;   // pravý bok zvlášť (obrázky nejsou zrcadlově)
   const mat = (tex, key) => addShine(new T.MeshStandardMaterial({ map: tex, transparent: true, roughness: 0.3, metalness: 0.15, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4, depthWrite: false }), key, { gloss: 0.9 });
-  const sm = mat(sideT, 'decal-wrap'), tm = topT && mat(topT, 'decal-top');
+  const sm = mat(sideT, 'decal-wrap'), tm = topT && mat(topT, 'decal-top'), smR = sideTR ? mat(sideTR, 'decal-wrap') : null;
   const A = new T.Vector3(), B = new T.Vector3(), C = new T.Vector3(), N = new T.Vector3(), E1 = new T.Vector3(), E2 = new T.Vector3(), W = [A, B, C];
   for (const m of paintMeshes) {
     const g = m.geometry, pos = g.attributes.position, nor = g.attributes.normal, ix = g.index;
     if (!pos) continue;
     const mw = m.matrixWorld, nTri = ix ? ix.count / 3 : pos.count / 3;
-    const out = { s: { p: [], n: [], uv: [] }, t: { p: [], n: [], uv: [] } };
+    const out = { s: { p: [], n: [], uv: [] }, r: { p: [], n: [], uv: [] }, t: { p: [], n: [], uv: [] } };
     for (let t = 0; t < nTri; t++) {
       const vi = [0, 1, 2].map((k) => (ix ? ix.getX(t * 3 + k) : t * 3 + k));
       for (let k = 0; k < 3; k++) W[k].fromBufferAttribute(pos, vi[k]).applyMatrix4(mw);
@@ -9066,7 +9168,7 @@ function applyDecal(id, { body, bb, lv, paintMeshes, texSide, texTop }) {
       let tgt = null, uvOf = null;
       if (Math.abs(N.x) > 0.42 && Math.abs(cx) > sideX * 0.7 && cy > yBot - 0.12 && cy < yTop + 0.04 && cz > zR - 0.1 && cz < zF + 0.1) {
         // nápis (policie) se na pravém boku (x < 0) mapuje obráceně, aby se dal číst na obou stranách
-        tgt = out.s; uvOf = id === 'police' && cx < 0 ? (v) => [(v.z - zR) / L, (v.y - yBot) / Hs] : (v) => [(zF - v.z) / L, (v.y - yBot) / Hs];
+        tgt = smR && cx < 0 ? out.r : out.s; uvOf = id === 'police' && cx < 0 ? (v) => [(v.z - zR) / L, (v.y - yBot) / Hs] : (v) => [(zF - v.z) / L, (v.y - yBot) / Hs];
       } else if (tm && Math.abs(N.y) > 0.5 && cy > yTop - 0.15 && Math.abs(cx) < Wt / 2 + 0.05) {
         tgt = out.t; uvOf = (v) => [(v.x + Wt / 2) / Wt, 1 - (bb.max.z - 0.05 - v.z) / (bb.max.z - bb.min.z - 0.1)];
       }
@@ -9077,7 +9179,7 @@ function applyDecal(id, { body, bb, lv, paintMeshes, texSide, texTop }) {
         tgt.uv.push(...uvOf(W[k]));
       }
     }
-    for (const [o, mt] of [[out.s, sm], [out.t, tm]]) {
+    for (const [o, mt] of [[out.s, sm], [out.r, smR], [out.t, tm]]) {
       if (!o.p.length) continue;
       const dg = new T.BufferGeometry();
       dg.setAttribute('position', new T.Float32BufferAttribute(o.p, 3));
@@ -19424,7 +19526,7 @@ function driftAiMake(opp) {
   e.skids.setColor(...SKID_LOOK.tarmac); scene.add(e.skids.mesh);
   ensureCarModel(CAR_TYPES[carId].model).then(() => {
     if (!G.drift || G.drift.ai !== e) return;
-    const k = Math.abs(Array.from(opp.name).reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7)) % LIVERIES.length;
+    const k = Math.abs(Array.from(opp.name).reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7)) % CUSTOM_LIV;   // soupeř nikdy nedostane hráčův vlastní lak
     const c3 = buildModelCar({ ...LIVERIES[k], body: opp.color }, CAR_TYPES[carId]);
     c3.beams.visible = false; if (c3.pod) c3.pod.visible = false; if (c3.flame) c3.flame.visible = false;
     const tag = new T.Sprite(new T.SpriteMaterial({ map: canvasTex(256, 64, (g, w, h) => {
@@ -22954,7 +23056,7 @@ function netConnect() {
         NET.dbUnsub = db.collection('net').onSnapshot((snap) => netDbSnap(snap), () => { NET.db = null; NET.dbPeers = []; netRender(); });
       } catch (e) { NET.db = null; }
     }
-    netPresence({ game: 'rally', dev: netDev(), name: netName(), car: saved.car, team: f1Team(), livery: saved.livery | 0, lobby: NET.lobby });
+    netPresence({ game: 'rally', dev: netDev(), name: netName(), car: saved.car, team: f1Team(), livery: saved.livery | 0, paint: (saved.livery | 0) === CUSTOM_LIV ? paintSan(saved.paint) : null, lobby: NET.lobby });
     return netOnline();
   }).catch(() => netOnline());
 }
@@ -22995,7 +23097,7 @@ function netPump() {
     .then(() => { NET.inflight = false; NET.gap = Math.max(100, NET.gap * 0.97); })
     .catch((e) => { NET.inflight = false; NET.dirty = true; if (e && (e.code === 'resource_exhausted' || e.code === 'unavailable')) NET.gap = Math.min(1500, NET.gap * 1.6); else if (e && /revoked|not_granted|capability/.test(e.code || '')) { NET.db = null; netRender(); } });
 }
-const netLobbyState = () => ({ game: 'rally', lobby: true, name: netName(), car: saved.car, team: f1Team(), livery: saved.livery | 0, stage: G.sel });
+const netLobbyState = () => ({ game: 'rally', lobby: true, name: netName(), car: saved.car, team: f1Team(), livery: saved.livery | 0, paint: (saved.livery | 0) === CUSTOM_LIV ? paintSan(saved.paint) : null, stage: G.sel });
 function openNet() {
   $('netModal').hidden = false;
   $('netName').value = saved.netName || '';
@@ -23216,7 +23318,7 @@ function netCar(p) {
   const type = CAR_TYPES[p.presence.car] ? p.presence.car : 'bmw', spec = CAR_TYPES[type];
   ensureCarModel(spec.model).then(() => {
     if (NET.others.get(key) !== o || !G.net) return;
-    const lv = { ...LIVERIES[clamp(p.presence.livery | 0, 0, LIVERIES.length - 1)], team: F1_TEAMS[p.presence.team] ? p.presence.team : 'mclaren' };
+    const lv = { ...(p.presence.paint ? paintLv(p.presence.paint) : LIVERIES[clamp(p.presence.livery | 0, 0, LIVERIES.length - 1)]), team: F1_TEAMS[p.presence.team] ? p.presence.team : 'mclaren' };   // soupeř s vlastním lakem
     let c;
     try { c = carModels[spec.model] ? buildModelCar(lv, spec) : buildProceduralCar(lv); } catch (e) { c = buildProceduralCar(lv); }
     c.beams.visible = false; c.pod.visible = !!W.td.st.night; if (c.flame) c.flame.visible = false;
@@ -24007,8 +24109,8 @@ function garRender() {
   $('garDesc').textContent = ct.formula ? `Formule 1 · tým ${F1_TEAMS[f1Team()].name}` : ct.desc;
   $('garStats').innerHTML = rxCarStats(id).map(([n, v]) => `<span>${n}</span><i><u style="width:${(v * 100).toFixed(0)}%"></u></i>`).join('');
   $('garStats').classList.add('row');
-  if (ct.formula && GAR.tab === 'decal') GAR.tab = 'tune';
-  for (const b of $('garTabs').children) { b.hidden = !!ct.formula && b.dataset.t === 'decal'; b.setAttribute('aria-pressed', String(b.dataset.t === GAR.tab)); b.textContent = b.dataset.t === 'paint' && ct.formula ? 'Tým' : { tune: 'Tuning', paint: 'Lak', decal: 'Polepy' }[b.dataset.t]; }
+  if (ct.formula && (GAR.tab === 'decal' || GAR.tab === 'art')) GAR.tab = 'tune';
+  for (const b of $('garTabs').children) { b.hidden = !!ct.formula && (b.dataset.t === 'decal' || b.dataset.t === 'art'); b.setAttribute('aria-pressed', String(b.dataset.t === GAR.tab)); b.textContent = b.dataset.t === 'paint' && ct.formula ? 'Tým' : { tune: 'Tuning', paint: 'Lak', decal: 'Polepy', art: 'Malování' }[b.dataset.t]; }
   const list = $('garList'); list.innerHTML = ''; list.classList.toggle('tiles', GAR.tab === 'tune');
   // tuning: malé dlaždice ve dvou sloupcích (na telefonu je vidět celá nabídka najednou): díl, hvězdy, co přidá
   // další stupeň a cena; celý název dílu je v popisku po podržení / najetí myší
@@ -24038,7 +24140,8 @@ function garRender() {
       b.onclick = () => { if (!own) { const a = ACH_BY[l.ach]; toast(`Odemkneš úspěchem „${a.name}“: ${a.desc}`, 2.6); return; } if (car3d && !G.gp) setLivery(i); else { saved.livery = i; persist(); } garRebuild(); garRender(); };
       sw.appendChild(b);
     });
-  } else for (const dc of DECALS) {
+  } else if (GAR.tab === 'art') paintPanel(list);
+  else for (const dc of DECALS) {
     const own = decalOwned(id, dc.id), cur = decalOf(id) === dc.id, row = document.createElement('div');
     row.className = 'gar-it' + (cur ? ' max' : '');
     row.innerHTML = '<span class="ic">▨</span><b></b><button></button><small></small>';
@@ -24054,6 +24157,77 @@ function garRender() {
     list.appendChild(row);
   }
   $('garPick').textContent = saved.car === id ? 'Jedeš s tímhle autem ✓' : 'Jet s tímhle autem';
+}
+// garáž, záložka Malování: každá změna se hned uloží jako Vlastní lak a auto se přebarví (s malým zpožděním, ať se
+// při tahání barevným kolem model nepřestavuje stokrát za sekundu)
+function paintApply() {
+  clearTimeout(paintApply.t);
+  paintApply.t = setTimeout(() => { if (car3d && !G.gp && CAR_TYPES[saved.car] && !CAR_TYPES[saved.car].formula && (saved.livery | 0) === CUSTOM_LIV) setLivery(CUSTOM_LIV); if (GAR.orb) garRebuild(); }, 140);
+}
+function paintSet(fn, rerender = true) {
+  const q = paintSan(saved.paint); fn(q); saved.paint = q;
+  Object.assign(LIVERIES[CUSTOM_LIV], paintLv(q)); saved.livery = CUSTOM_LIV; persist();
+  paintApply(); if (rerender) garRender();
+}
+function paintRandom() {
+  const hsl = (h, s, l) => '#' + new T.Color().setHSL(h, s, l).getHexString();
+  const h = Math.random(), k = Math.floor(Math.random() * 4), keys = Object.keys(STICKERS);
+  paintSet((q) => {
+    q.body = hsl(h, 0.65 + Math.random() * 0.3, 0.35 + Math.random() * 0.25);
+    q.a1 = [hsl((h + 0.5) % 1, 0.85, 0.55), '#ffffff', hsl((h + 0.08) % 1, 0.9, 0.6), '#111418'][k];
+    q.a2 = k === 3 ? '#ffffff' : '#111418'; q.rim = Math.random() < 0.5 ? '#d8d8d8' : '#16181c';
+    q.fin = Object.keys(PAINT_FIN)[Math.floor(Math.random() * 4)];
+    q.num.n = Math.floor(Math.random() * 99) + 1; q.num.on = true;
+    q.st = [{ k: keys[Math.floor(Math.random() * keys.length)], at: 'door', col: hsl(Math.random(), 0.9, 0.6) }];
+  });
+}
+function paintPanel(list) {
+  const p = paintSan(saved.paint), el = document.createElement('div'); el.className = 'pt'; list.appendChild(el);
+  const sec = (title) => { const h = document.createElement('h4'); h.textContent = title; el.appendChild(h); };
+  const row = (cls) => { const r = document.createElement('div'); r.className = 'pt-row ' + (cls || ''); el.appendChild(r); return r; };
+  const btn = (r, txt, on, fn, cls) => { const b = document.createElement('button'); b.className = 'pt-b ' + (cls || ''); b.textContent = txt; b.setAttribute('aria-pressed', String(!!on)); b.onclick = () => { UIS.click(); fn(); }; r.appendChild(b); return b; };
+  const color = (r, val, fn, label) => { const c = document.createElement('input'); c.type = 'color'; c.value = val; c.title = label || ''; c.setAttribute('aria-label', label || 'barva'); c.onchange = () => fn(c.value); r.appendChild(c); return c; };
+  if ((saved.livery | 0) !== CUSTOM_LIV) { const r = row('use'); btn(r, '🎨 Použít vlastní lak', false, () => paintSet(() => {}), 'wide'); }
+  sec('Barvy');
+  for (const [key, label] of [['body', 'Karoserie'], ['a1', 'Doplněk 1'], ['a2', 'Doplněk 2'], ['rim', 'Ráfky']]) {
+    const r = row('col'); const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = label; r.appendChild(l);
+    color(r, p[key], (v) => paintSet((q) => { q[key] = v; }), label);
+    const sw = document.createElement('span'); sw.className = 'pt-sw'; r.appendChild(sw);
+    for (const c of PAINT_SW) { const b = document.createElement('button'); b.style.background = c; b.title = c; b.setAttribute('aria-label', label + ' ' + c); b.setAttribute('aria-pressed', String(p[key].toLowerCase() === c)); b.onclick = () => { UIS.click(); paintSet((q) => { q[key] = c; }); }; sw.appendChild(b); }
+  }
+  sec('Povrch laku');
+  { const r = row(); for (const [k, f] of Object.entries(PAINT_FIN)) btn(r, f.n, p.fin === k, () => paintSet((q) => { q.fin = k; })); }
+  sec('Startovní číslo');
+  {
+    const r = row();
+    btn(r, p.num.on ? 'Číslo: ano' : 'Číslo: ne', p.num.on, () => paintSet((q) => { q.num.on = !q.num.on; }));
+    btn(r, '−', false, () => paintSet((q) => { q.num.n = (q.num.n + 99) % 100; }), 'sq');
+    const n = document.createElement('b'); n.className = 'pt-num'; n.textContent = String(p.num.n); r.appendChild(n);
+    btn(r, '+', false, () => paintSet((q) => { q.num.n = (q.num.n + 1) % 100; }), 'sq');
+    btn(r, 'I na střeše', p.num.roof, () => paintSet((q) => { q.num.roof = !q.num.roof; }));
+    const r2 = row();
+    for (const [k, t] of Object.entries(NUM_STYLE)) btn(r2, t, p.num.style === k, () => paintSet((q) => { q.num.style = k; }));
+    const r3 = row('col'); const l1 = document.createElement('span'); l1.className = 'pt-l'; l1.textContent = 'Číslice / pozadí'; r3.appendChild(l1);
+    color(r3, p.num.col, (v) => paintSet((q) => { q.num.col = v; }), 'barva číslic'); color(r3, p.num.bg, (v) => paintSet((q) => { q.num.bg = v; }), 'barva pozadí čísla');
+  }
+  sec(`Nálepky (${p.st.length}/3)`);
+  {
+    const r = row('stick');
+    for (const [k, name] of Object.entries(STICKERS)) {
+      const on = p.st.some((s) => s.k === k), b = document.createElement('button'); b.className = 'pt-st'; b.title = name; b.setAttribute('aria-label', name); b.setAttribute('aria-pressed', String(on));
+      const cv = document.createElement('canvas'); cv.width = cv.height = 44; const g = cv.getContext('2d'); g.translate(22, 22); stickerDraw(g, k, 34, (p.st.find((s) => s.k === k) || {}).col || '#ffc419'); b.appendChild(cv);
+      b.onclick = () => { UIS.click(); paintSet((q) => { const i = q.st.findIndex((s) => s.k === k); if (i >= 0) q.st.splice(i, 1); else if (q.st.length < 3) q.st.push({ k, at: q.st.length === 0 ? 'door' : q.st.length === 1 ? 'hood' : 'rear', col: '#ffc419' }); else toast('Nejvýš tři nálepky – nejdřív nějakou odeber', 1.8); }); };
+      r.appendChild(b);
+    }
+    p.st.forEach((s, i) => {
+      const rr = row('col'); const l = document.createElement('span'); l.className = 'pt-l'; l.textContent = STICKERS[s.k]; rr.appendChild(l);
+      const ats = Object.keys(STICK_AT);
+      btn(rr, STICK_AT[s.at], true, () => paintSet((q) => { q.st[i].at = ats[(ats.indexOf(q.st[i].at) + 1) % ats.length]; }));
+      color(rr, s.col, (v) => paintSet((q) => { q.st[i].col = v; }), 'barva nálepky');
+      btn(rr, '✕', false, () => paintSet((q) => { q.st.splice(i, 1); }), 'sq');
+    });
+  }
+  { const r = row('use'); btn(r, '🎲 Náhodný lak', false, paintRandom, 'wide'); }
 }
 function garBuy(itemId) {
   const id = GAR.id, it = shopItemsFor(id).find((x) => x.id === itemId), l = shopLvC(id, itemId);
@@ -25024,7 +25198,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { roverModel, carLocked, MOON, moonCraters, get gNow() { return gNow; }, QUAKE, QZ, quakeArm, quakeTick, quakeReset, quakeDy, get quake() { return G.quake; }, AVAL, avalArm, avalTick, avalReset, get aval() { return G.aval; }, UFO, ufoArm, ufoTick, ufoReset, ufoCover, get ufo() { return G.ufo; }, eventsArm, lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { PAINT_FIN, STICKERS, CUSTOM_LIV, paintDef, paintSan, paintLv, paintSet, paintRandom, paintSideTex, paintTopTex, roverModel, carLocked, MOON, moonCraters, get gNow() { return gNow; }, QUAKE, QZ, quakeArm, quakeTick, quakeReset, quakeDy, get quake() { return G.quake; }, AVAL, avalArm, avalTick, avalReset, get aval() { return G.aval; }, UFO, ufoArm, ufoTick, ufoReset, ufoCover, get ufo() { return G.ufo; }, eventsArm, lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
