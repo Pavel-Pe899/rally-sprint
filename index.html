@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwts0eg0';
+window.__BUILD = 'mwtsq3rv';
 (function () {
   function check() {
     try {
@@ -1149,14 +1149,20 @@ window.__BUILD = 'mwts0eg0';
   .act-pick button { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 6px; border: 2px solid #050608; border-radius: 12px; background: linear-gradient(180deg, #353a46, #22252d); color: #dfe4ea; font: 900 14px var(--display); font-style: italic; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .act-pick button i { font-style: normal; font-size: 17px; }
   .act-pick button[aria-pressed="true"] { color: #fff; border-color: #ffc419; background: linear-gradient(180deg, rgba(255, 196, 25, .38), #262a31); }
-  .pane-act .act-card { display: none; } .pane-act[data-a="drag"] .act-drag, .pane-act[data-a="derby"] .act-derby, .pane-act[data-a="ball"] .act-ball, .pane-act[data-a="cop"] .act-cop, .pane-act[data-a="mega"] .act-mega { display: flex; }
+  .pane-act .act-card { display: none; } .pane-act[data-a="drag"] .act-drag, .pane-act[data-a="derby"] .act-derby, .pane-act[data-a="ball"] .act-ball, .pane-act[data-a="cop"] .act-cop, .pane-act[data-a="mega"] .act-mega, .pane-act[data-a="free"] .act-free { display: flex; }
   .act-derby { background: radial-gradient(120% 100% at 0% 0%, rgba(255, 70, 40, .24), transparent 55%), linear-gradient(180deg, #2b2f38, #1b1e24); }
   .act-ball { background: radial-gradient(120% 100% at 0% 0%, rgba(60, 200, 90, .22), transparent 55%), linear-gradient(180deg, #2b2f38, #1b1e24); }
   .act-cop { background: radial-gradient(120% 100% at 0% 0%, rgba(50, 100, 255, .3), transparent 55%), radial-gradient(90% 80% at 100% 0%, rgba(200, 240, 26, .1), transparent 60%), linear-gradient(180deg, #2b2f38, #1b1e24); }
   .act-mega { background: radial-gradient(120% 100% at 0% 0%, rgba(255, 150, 30, .26), transparent 55%), radial-gradient(90% 80% at 100% 0%, rgba(80, 170, 255, .14), transparent 60%), linear-gradient(180deg, #2b2f38, #1b1e24); }
-  /* pět režimů: na užší obrazovce ikona nad nápisem */
-  @media (max-width: 640px) { .act-pick { gap: 4px; } .act-pick button { flex-direction: column; font-size: 11.5px; padding: 6px 2px; gap: 1px; letter-spacing: 0; } .act-pick button i { font-size: 17px; } }
-  @media (max-width: 360px) { .act-pick button { font-size: 10.5px; } }
+  .act-free { background: radial-gradient(120% 100% at 0% 0%, rgba(40, 190, 220, .26), transparent 55%), radial-gradient(90% 80% at 100% 0%, rgba(255, 210, 90, .14), transparent 60%), linear-gradient(180deg, #2b2f38, #1b1e24); }
+  /* šest režimů: na užší obrazovce ve dvou řadách po třech */
+  @media (max-width: 640px) { .act-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; } .act-pick button { font-size: 12px; padding: 7px 2px; gap: 4px; letter-spacing: 0; } .act-pick button i { font-size: 15px; } }
+  body.freemode #hud .hud-note, body.freemode #hud .hud-split { display: none !important; }
+  .free-hud { position: absolute; left: 50%; transform: translateX(-50%); top: calc(88px + env(safe-area-inset-top, 0px)); padding: 6px 14px 7px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 200px; }
+  .free-hud[hidden] { display: none; }
+  .free-hud b { font: italic 900 17px var(--display); color: #7fe0ff; letter-spacing: .02em; white-space: nowrap; } .free-hud span { font-size: 12px; color: #e6ebf3; white-space: nowrap; }
+  @media (max-width: 600px) { .free-hud { top: calc(var(--tlb, 112px) + 62px); left: calc(12px + env(safe-area-inset-left, 0px)); transform: none; align-items: flex-start; } body.touch .free-hud { top: calc(var(--tlb, 112px) + 128px); } }
+  @media (max-height: 450px) { .free-hud { top: calc(62px + env(safe-area-inset-top, 0px)); padding: 4px 10px 5px; } .free-hud b { font-size: 14px; } }
   /* ---- Megarampa: panel nahoře, ukazatel svahu, ohlášení triků, výsledky ---- */
   body.megamode #hud .hud-note, body.megamode #hud .hud-split, body.megamode #hud .hud-nos, body.megamode #hud .hud-tr, body.megamode #touch .tbtn.nos { display: none !important; }
   .mega-hud { position: absolute; left: 50%; transform: translateX(-50%); top: calc(88px + env(safe-area-inset-top, 0px)); width: min(460px, 50vw); padding: 7px 12px 9px; display: flex; flex-direction: column; gap: 7px; }
@@ -1518,6 +1524,8 @@ window.__BUILD = 'mwts0eg0';
     <div class="mg-bar"><i id="mgFill"></i><em id="mgK">K</em><em id="mgHS" class="hs">HS</em><em id="mgRec" class="rec" hidden>★</em><u id="mgCar"></u></div>
   </div>
   <div class="mg-pop" id="mgPop"></div>
+  <!-- Ostrov: kde auto je a co najelo -->
+  <div class="free-hud panel" id="freeHud" hidden><b id="frTitle"></b><span id="frSub"></span></div>
   <div class="hud-note panel" id="hNote">
     <svg viewBox="-50 -50 100 100" aria-hidden="true"><path id="hNoteIcon" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"></path><path id="hNoteHead" fill="#fff"></path></svg>
     <div>
@@ -1665,7 +1673,13 @@ window.__BUILD = 'mwts0eg0';
       </div>
     </div>
     <div class="pane pane-act" data-a="drag">
-      <div class="act-pick" id="actPick" role="tablist"><button data-a="drag"><i aria-hidden="true">🏁</i>Drag</button><button data-a="derby"><i aria-hidden="true">💥</i>Derby</button><button data-a="ball"><i aria-hidden="true">⚽</i>Autofotbal</button><button data-a="cop"><i aria-hidden="true">🚔</i>Honička</button><button data-a="mega"><i aria-hidden="true">🛫</i>Megarampa</button></div>
+      <div class="act-pick" id="actPick" role="tablist"><button data-a="drag"><i aria-hidden="true">🏁</i>Drag</button><button data-a="derby"><i aria-hidden="true">💥</i>Derby</button><button data-a="ball"><i aria-hidden="true">⚽</i>Autofotbal</button><button data-a="cop"><i aria-hidden="true">🚔</i>Honička</button><button data-a="mega"><i aria-hidden="true">🛫</i>Megarampa</button><button data-a="free"><i aria-hidden="true">🏝️</i>Ostrov</button></div>
+      <div class="act-card act-free">
+        <div class="ac-head"><span class="ac-ic" aria-hidden="true">🏝️</span><div><b>Ostrov · volná jízda</b><small>bez času a bez cíle · tvoje auto z garáže</small></div></div>
+        <p class="ac-help">Silnice vede z <b>přístavního městečka</b> po pobřeží kolem celého ostrova k <b>vyhlídce</b> na kopci. Jezdit se dá i terénem: přes louky, pláže a kopce (tráva tu brzdí míň). Najdeš <b>maják</b> na mysu, molo s loďkami a pláže se slunečníky. Když zajedeš do moře, auto se vrátí na silnici. Konec jízdy: pauza → Menu.</p>
+        <div class="ac-stats" id="freeStats"></div>
+        <button class="btn primary ac-go" id="bFreeGo"><span class="t">▶ Na ostrov</span></button>
+      </div>
       <div class="act-card act-mega">
         <div class="ac-head"><span class="ac-ic" aria-hidden="true">🛫</span><div><b>Megarampa</b><small>obří skokanský můstek pro auta · tvoje auto z garáže</small></div></div>
         <p class="ac-help">Plný plyn po nájezdu až na <b>odrazovou hranu</b> – rychlejší auto skočí dál (nitro na můstku nejde). Ve vzduchu: <b>brzda</b> salto vzad, <b>plyn</b> (po puštění) salto vpřed, <b>← →</b> vrut, <b>ruční + ← →</b> výkrut. Dopadni na kola, jinak skok neplatí. Délka se měří po svahu od hrany; za K-bod a triky jsou body navíc.</p>
@@ -3027,6 +3041,29 @@ function megaZofD(d) { const M = megaTables(); let lo = M.kL, hi = M.DS.length -
 // krajina: údolí, jehož dno kopíruje vyhlazený profil můstku, po stranách stoupají svahy hor
 const megaBase = (b0) => (px, pz) => megaLook('YT', pz) - 0.6 + 26 * smooth(34, 260, Math.abs(px)) + 0.05 * Math.max(0, Math.abs(px) - 180) + b0(px, pz) * smooth(20, 90, Math.abs(px));
 const MEGA_PATH = (() => { const P = []; for (let z = 0; z <= 1100; z += 20) P.push([0, z]); return P; })();
+// Ostrov (Akce → Ostrov, volná jízda): silnice z přístavního městečka na jihu vede po pobřeží kolem ostrova (asi 300°)
+// a nakonec se stočí dovnitř k vyhlídce na kopci; dojezd za koncem trasy přejde přes střed ostrova. Krajina je ostrov
+// (kopce uprostřed, pláže, kolem moře), auto smí jet kamkoli po souši.
+const ISLE = { R: 760, cx: 0, cz: 0, water: 0 };
+const ISLE_PATH = (() => {
+  const P = [];
+  // silnice asi 110 m od pobřeží (kopíruje zátoky a mysy), mírně zvlněná
+  const coast = (a) => ISLE.R + 60 * Math.sin(a * 3 + 0.6) + 34 * Math.sin(a * 7 - 1.3);
+  for (let k = 0; k <= 60; k++) {
+    const a = Math.PI - (k / 60) * (Math.PI * 5 / 3), r = coast(a) - 112 + Math.sin(k * 0.9) * 10;   // po směru hodin
+    P.push([+(Math.sin(a) * r).toFixed(1), +(Math.cos(a) * r).toFixed(1)]);
+  }
+  // stočení dovnitř ostrova k vyhlídce
+  const a1 = Math.PI - Math.PI * 5 / 3, r1 = coast(a1) - 112;
+  for (let k = 1; k <= 8; k++) { const t = k / 8, a = a1 - t * 0.55, r = r1 - t * 300; P.push([+(Math.sin(a) * r).toFixed(1), +(Math.cos(a) * r).toFixed(1)]); }
+  return P;
+})();
+// výška ostrova: kopce uprostřed, k pobřeží klesá, za pobřežím mořské dno (zvlněné pobřeží: zátoky a mysy)
+const isleH = (b0) => (px, pz) => {
+  const a = Math.atan2(px, pz), r = Math.hypot(px, pz), R = ISLE.R + 60 * Math.sin(a * 3 + 0.6) + 34 * Math.sin(a * 7 - 1.3);
+  const t = r / R;   // u pobřeží pláž (asi 30 m písku těsně nad vodou), za ní mořské dno
+  return t < 1 ? 48 * Math.pow(1 - t * t, 1.3) + 1.2 + b0(px, pz) * (1 - t) : 1.2 - (t - 1) * 80;
+};
 const STAGES = [
   {
     id: 'sumava', photo: { road: 'gravel', sat: 0.35, tint: '#e2d2bc', terrain: 'meadow' }, name: 'Šumavské lesy', region: 'Šumava', surface: 'Šotolina', road: 'gravel', tod: 'Dopoledne',
@@ -3355,6 +3392,20 @@ const STAGES = [
     clouds: ['#ffffff', 0.4], grass: ['#4c7d29', '#9cc25a', 0.35],
   },
   {
+    // Ostrov: volná jízda po ostrově s přístavním městečkem, plážemi, majákem a vyhlídkou (Akce → Ostrov; v seznamu tratí není)
+    id: 'ostrov', photo: { road: 'asphalt', tint: '#d8d2c4', terrain: 'meadow' }, name: 'Ostrov', region: 'Volná jízda · ostrov v moři', surface: 'Asfalt', road: 'tarmac', tod: 'Odpoledne',
+    free: true, mini: true, path: ISLE_PATH, hw: 5.2, kerbs: false, gpName: 'OSTROV', country: 'VOLNÁ JÍZDA', venue: 'OSTROV',
+    len: 3000, seed: 2323, turn: 1, hills: 16, hillScale: 1 / 260, bumps: 0.6, crests: 0, water: 0, tilt: [0, 0],
+    grip: 1.15, offGrip: 0.72, offRoll: 0.35, loose: false, treeGap: 7,
+    sky: { top: '#2468c4', hor: '#cfe6f2', bottom: '#b4d2dc' }, sun: { dir: [-0.5, 0.7, 0.5], color: '#fff3dc', int: 3.3 },
+    hemi: { sky: '#dcefff', ground: '#5a6a3a', int: 1.2 }, fog: [380, 2200], exposure: 1.02,
+    ground: { a: '#6f9a3c', b: '#5d8a32', dirt: '#a89270', rock: '#a39d90', beach: '#ecdcac' },
+    shoulder: { inner: '#a8a49a', outer: '#7a9a44' }, dust: '#e6dcc4', dustK: 0.45, waterColor: '#1b6e96',
+    trees: [['palm', 0.5], ['umbrella', 0.2], ['bush', 0.2], ['olive', 0.1]], density: 0.85, rocks: 0.4,
+    mountains: { color: '#6f8aa8', snow: false }, props: { posts: 'tarmac', bales: false, spectators: false, tape: false },
+    clouds: ['#ffffff', 0.45], grass: ['#5c8a2c', '#b8cc6a', 0.4], flowers: ['#e3402e', '#f0d24a', '#ffffff'],
+  },
+  {
     // Sopka: šotolina z černé lávy na úbočí činné sopky – lávová pole s mechem, v proláklinách jezírka žhavé lávy
     // (silnice vede po náspech mezi nimi), výtrysky páry se sírou, padající popel, rudý soumrak. Sopka na obzoru kouří
     // a za jízdy vybuchuje: na silnici dopadají lávové bomby (viz volTick).
@@ -3644,6 +3695,7 @@ function buildTrackData0(st) {
   }
   // megarampa: výška přesně podle profilu můstku (bez šumu a vyhlazení), krajina je údolí kopírující můstek
   if (st.mega) { for (let i = 0; i < n; i++) Y[i] = megaY(Z[i]); base = megaBase(base); }
+  if (st.free) { const b1 = isleH(base); base = b1; for (let i = 0; i < n; i++) Y[i] = Math.max(b1(X[i], Z[i]), 2.6); for (let pass = 0; pass < 3; pass++) { for (let i = 0; i < n; i++) { let a = 0, c = 0; for (let k = -10; k <= 10; k++) { const j = i + k; if (j >= 0 && j < n) { a += Y[j]; c++; } } tmp[i] = a / c; } Y.set(tmp); } }   // ostrov: silnice po terénu ostrova, nad mořem
   // město kolem trati (Monako): terén navazuje na výšku trati (vážený průměr okolních bodů trati), v přístavu klesne pod hladinu
   if (st.city || st.harbour) {
     const samp = []; for (let i = startIdx; i < finishIdx; i += 10) samp.push(X[i], Z[i], Y[i]);
@@ -6897,7 +6949,8 @@ function buildWorld(td) {
   }
 
   let specBody = null, specHead = null, specFlags = null, specMeshes = null, specSet = null, specFlush = null, specLod = null;
-  if (st.mega) megaDress(group, td, spectators, terrainAt);   // megarampa: věž, zdi, odrazová hrana, čáry, tabule, sítě, tribuny
+  if (st.mega) megaDress(group, td, spectators, terrainAt);
+  if (st.free) isleDress(group, td, terrainAt, roadDistAt, addObstacle);   // ostrov: městečko, molo s loďkami, maják, pláže, vyhlídka   // megarampa: věž, zdi, odrazová hrana, čáry, tabule, sítě, tribuny
   if (spectators.length) {
     // Diváci: nohy v kalhotách, trup s rukama v tričku (část jásá s rukama nahoře), hlava a vlasy nebo kšiltovka.
     // Blízko kamery podrobné postavy, dál jednoduché (kvádry ve stejných barvách) – tisíce podrobných postav by
@@ -7076,7 +7129,7 @@ function buildWorld(td) {
   };
   if (st.rx || st.drift) rxVenue(group, td, terrainAt, roadDistAt);   // nafukovací brána, vlajky, paddock
   if (st.drift) driftDecor(group, td);   // drift: ideální stopa, klipy, zóny a kužely
-  else if (!st.drag && !st.arena && !st.mega) gantry(td.startIdx, st.circuit ? 'START · CÍL' : 'START', st.name.toUpperCase());   // drag: vlastní stromeček a cílová brána
+  else if (!st.drag && !st.arena && !st.mega && !st.free) gantry(td.startIdx, st.circuit ? 'START · CÍL' : 'START', st.name.toUpperCase());   // drag: vlastní stromeček a cílová brána
   // okruh: pět startovních světel F1 pod bránou (rozsvěcují se při startu Velké ceny)
   // startovní rampa F1 ve 3D: pět sloupků po čtyřech světlech pod startovním portálem (horní dvě se rozsvěcují červeně,
   // se stříškou proti slunci a září viditelnou i z konce roštu), podél roštu menší opakovací světla na sloupech.
@@ -7140,7 +7193,7 @@ function buildWorld(td) {
     cg.rotation.y = td.HD[i] + Math.PI;
     group.add(cg);
   }
-  if (!st.circuit && !st.mega) gantry(td.finishIdx, 'CÍL', 'STOP ZA 200 M');
+  if (!st.circuit && !st.mega && !st.free) gantry(td.finishIdx, 'CÍL', 'STOP ZA 200 M');
 
   // ---- Miami: stadion Hard Rock uvnitř okruhu a tribuny u startovní rovinky
   if (st.landmarks === 'miami') {
@@ -11249,7 +11302,7 @@ function physics0(dt, inp) {
   if (car.revT > 0.6) inp = { ...inp, rev: true };
   if (!flying) {
     const mu = surfaceMu(st, surf) * dmgGrip();
-    const rollRes = 0.35 + (surf === 'road' ? 0 : surf === 'shoulder' ? 0.9 : 3.0 * (1 + Math.min(1.2, Math.abs(vf) / 18)));
+    const rollRes = 0.35 + (surf === 'road' ? 0 : surf === 'shoulder' ? 0.9 : 3.0 * (st.offRoll || 1) * (1 + Math.min(1.2, Math.abs(vf) / 18)));   // ostrov: terénem se jezdí lehčeji
     let d;
     if (G.drift && G.mode === 'race') d = driftDynamics({ u: vf, v: vr, nos: car.nos }, inp, dt);
     else d = carDynamics({ u: vf, v: vr, wR: -car.omega, steer: car.steer, axS: car.axS, nos: car.nos }, inp, mu, surf !== 'off' && st.road === 'tarmac' && carType().formula ? TIRE.slick : TIRE[surf === 'off' ? 'off' : td.mix && rxGravel(td, car.s) ? 'gravel' : st.road] || TIRE.gravel, rollRes, dt);
@@ -13020,7 +13073,7 @@ const demoSpeed = () => 14;
 function startDemo() {
   podiumHide(); rxgClose(false); statsFlush(); $('chatBar').hidden = true; trexReset(); tornReset(); volReset(); avalReset(); ufoReset(); quakeReset();
   driftClear(); $('driftModal').hidden = true;
-  dragClear(); $('dragModal').hidden = true; derbyClear(); $('derbyModal').hidden = true; ballClear(); $('ballModal').hidden = true; copClear(); $('copModal').hidden = true; megaClear(); $('megaModal').hidden = true;
+  dragClear(); $('dragModal').hidden = true; derbyClear(); $('derbyModal').hidden = true; ballClear(); $('ballModal').hidden = true; copClear(); $('copModal').hidden = true; megaClear(); $('megaModal').hidden = true; freeClear();
   gpEnd();
   if (WX.cfg) wxEnd(); G.rwPlan = null;
   wkEnd();
@@ -13047,7 +13100,7 @@ function startRace() {
   if (!saved.tutDone && !G.net) setTimeout(() => { if (G.mode === 'race') tutShow(false); }, 400);
   G.todSun = null; G.todT = 0;
   // poslední samostatná jízda (pro tlačítko „Jet znovu“ v lobby)
-  if (W && !G.gp && !G.net && !G.rx && !G.drift && !G.drag && !G.derby && !G.ball && !G.cop && !G.mega && !G.stunt && !G.weekly && !G.champ) { saved.lastRun = { id: W.td.st.id, car: saved.car || 'bmw' }; persist(); }
+  if (W && !G.gp && !G.net && !G.rx && !G.drift && !G.drag && !G.derby && !G.ball && !G.cop && !G.mega && !G.free && !G.stunt && !G.weekly && !G.champ) { saved.lastRun = { id: W.td.st.id, car: saved.car || 'bmw' }; persist(); }
   rdStart();
   Sound.init();
   // čisté auto na začátku každé jízdy (bláto z rallycrossu se nepřenáší; v RX se lak nešpiní barvou, ale shaderem)
@@ -13055,10 +13108,10 @@ function startRace() {
   G.mode = 'race'; G.phase = 'countdown'; G.countdown = 3.6; G.time = 0; G.penalty = 0; G.result = null; G.wallPenAt = -9; G.wallHits = 0; G.parked = 0; G.stuck = 0; G.under = 0;
   G.cp = false; G.cpWarn = false; G.splits = []; G.splitShown = 0; G.noteIdx = 0; G.speakIdx = 0; G.callIdx = 0; G.paused = false; G.lastBeep = 4;
   G.tele = { v: [], c: [], t: [] }; G.teleRef = null; G.rec = []; G.recNext = 0; G.rp = null; G.replay = null; G.photo = null;
-  G.ghost = saved.ghost && !G.gp && !G.net && !G.cop && !G.mega ? loadGhost(W.td.st.id) : null;
-  { const dl = !G.gp && !G.net && !G.cop && !G.mega ? duelLoad() : null; G.ghost2 = dl && dl.id === W.td.st.id ? dl : null; }
+  G.ghost = saved.ghost && !G.gp && !G.net && !G.cop && !G.mega && !G.free ? loadGhost(W.td.st.id) : null;
+  { const dl = !G.gp && !G.net && !G.cop && !G.mega && !G.free ? duelLoad() : null; G.ghost2 = dl && dl.id === W.td.st.id ? dl : null; }
   const td = W.td;
-  G.splitS = G.gp || G.drift || G.cop || G.mega ? [] : [td.S[td.startIdx] + td.length / 3, td.S[td.startIdx] + (2 * td.length) / 3];
+  G.splitS = G.gp || G.drift || G.cop || G.mega || G.free ? [] : [td.S[td.startIdx] + td.length / 3, td.S[td.startIdx] + (2 * td.length) / 3];
   placeCar(td.startIdx - 3);
   if (G.net) { // proti sobě: vedle sebe na startu (pořadí stejné na obou telefonech)
     const g = netGridLat(), i = clamp(td.startIdx - 3 - Math.round(g.back / td.ds), 0, td.n - 1);
@@ -14160,7 +14213,7 @@ function rwStart() {
   wxEnd(); G.rwPlan = null;
   const td = W.td, st = td.st;
   // rally i okruhy při samostatné jízdě (Velká cena má vlastní počasí, rallycross, drift a výzvy jsou za sucha)
-  if (G.gp || G.net || G.rx || G.stunt || G.drift || G.drag || G.derby || G.ball || G.cop || G.mega || st.volcano || st.space || G.mode !== 'race') return;   // drag a derby; sopka má vlastní popel, Měsíc nemá vzduch: bez počasí a předpovědi
+  if (G.gp || G.net || G.rx || G.stunt || G.drift || G.drag || G.derby || G.ball || G.cop || G.mega || G.free || st.volcano || st.space || G.mode !== 'race') return;   // drag a derby; sopka má vlastní popel, Měsíc nemá vzduch: bez počasí a předpovědi
   let plan = (G.weekly && G.weekly.ch.plan) || (G.champ && G.champ.wx && G.champ.wx[G.champ.k]) || rwPlan(st, saved.rallyWx || 'auto');
   if (st.circuit && plan.type === 'dust') plan.type = 'rain';
   // vrch: nahoře vždy mlha (oblačnost na hřebeni), i za jasna
@@ -15805,7 +15858,7 @@ function copGo() {
   if (idx < 0) return;
   overlay.results.hidden = true; $('copModal').hidden = true;
   G.champ = null; G.weekly = null; G.stunt = null; G.rxCup = null;
-  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear();
+  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear(); freeClear();
   const go = async () => {
     if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
     const td = W.td; if (td.st.id !== sid) return;
@@ -18038,7 +18091,7 @@ function dragGo() {
   if (idx < 0) return;
   overlay.results.hidden = true; $('dragModal').hidden = true;
   G.champ = null; G.weekly = null; G.stunt = null; G.rxCup = null;
-  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear();
+  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear(); freeClear();
   const go = async () => {
     if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
     const td = W.td; if (!DRAG.dress || DRAG.dress.td !== td) return;
@@ -18439,7 +18492,7 @@ function derbyGo() {
   if (idx < 0) return;
   overlay.results.hidden = true; $('derbyModal').hidden = true;
   G.champ = null; G.weekly = null; G.stunt = null; G.rxCup = null;
-  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear();
+  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear(); freeClear();
   const go = async () => {
     if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
     const td = W.td, st = td.st; if (!st.arena || st.ball) return;
@@ -18987,7 +19040,7 @@ function ballGo() {
   if (idx < 0) return;
   overlay.results.hidden = true; $('ballModal').hidden = true;
   G.champ = null; G.weekly = null; G.stunt = null; G.rxCup = null;
-  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear();
+  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear(); freeClear();
   const go = async () => {
     if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
     const td = W.td, st = td.st; if (!st.ball) return;
@@ -23971,7 +24024,7 @@ function hubRender() {
   $('hubF1N').textContent = F1_TEAMS[f1Team()].name;
   const d = rxDiff(), N = RX_CUP().length; $('hubRxN').textContent = `★ ${rxCupTotal(d)}/${N * 3}`;
   driftHub();
-  dragMenu(); derbyMenu(); ballMenu(); copMenu(); megaMenu(); actPick();
+  dragMenu(); derbyMenu(); ballMenu(); copMenu(); megaMenu(); freeMenu(); actPick();
   for (const b of document.querySelectorAll('.mode-tabs [role="tab"]')) b.setAttribute('aria-selected', String(b.dataset.v === HUB.view));
   // formule: týmy, okruhy Velké ceny
   const tl = $('f1Teams'); tl.innerHTML = '';
@@ -24702,7 +24755,7 @@ function megaGo() {
   if (idx < 0) return;
   overlay.results.hidden = true; $('megaModal').hidden = true;
   G.champ = null; G.weekly = null; G.stunt = null; G.rxCup = null;
-  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear();
+  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear(); freeClear();
   const go = async () => {
     if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
     const td = W.td; if (!td.st.mega) return;
@@ -25170,6 +25223,182 @@ function megaDressTick(dt, M) {
     if (M.phase === 'inrun' && run) { D.trapT = (D.trapT || 0) - dt; if (D.trapT < 0 && car.z > MEGA.L - 120) { D.trapT = 0.15; megaTrap(Math.hypot(car.vx, car.vz)); } }
   }
 }
+// ---------------------------------------------------------------- Ostrov: volná jízda (Akce → Ostrov)
+// Bez času na výsledek a bez cíle: jezdí se po silnici kolem ostrova i terénem. Z moře se auto samo vrátí na silnici.
+function freeGo() {
+  const idx = STAGES.findIndex((x) => x.free), target = roadCarId();
+  if (idx < 0) return;
+  overlay.results.hidden = true;
+  G.champ = null; G.weekly = null; G.stunt = null; G.rxCup = null;
+  if (G.rx) rxClear(); if (G.gp) gpEnd(); driftClear(); dragClear(); derbyClear(); ballClear(); copClear(); megaClear(); freeClear();
+  const go = async () => {
+    if (saved.car !== target) { saved.car = target; persist(); await ensureCarModel(CAR_TYPES[target].model); setLivery(saved.livery); }
+    const td = W.td; if (!td.st.free) return;
+    G.free = { t: 0, dist: 0, top: 0, air: 0, hudT: 0, px: null, pz: null };
+    startRace();
+    wxEnd();
+    document.body.classList.add('freemode');
+    hud.stage.textContent = 'Ostrov · volná jízda';
+    hud.split.textContent = ''; G.splitShown = 0;
+    Voice.stop(); G.speakIdx = td.notes.length;
+    camS.init = false;
+  };
+  if (G.sel === idx) go(); else loadStage(idx, go);
+}
+function freeClear() {
+  const F = G.free; G.free = null;
+  document.body.classList.remove('freemode');
+  const h = $('freeHud'); if (h) h.hidden = true;
+  if (F && F.dist > 50) { const s = saved.freeStats || {}; saved.freeStats = { km: +((s.km || 0) + F.dist / 1000).toFixed(2), top: Math.max(s.top || 0, Math.round(F.top)), runs: (s.runs | 0) + 1 }; persist(); }
+}
+function freeTick(dt) {
+  const F = G.free; if (!F || G.phase !== 'run') { freeHud(dt); return; }
+  F.t += dt;
+  if (F.px != null) { const d = Math.hypot(car.x - F.px, car.z - F.pz); if (d < 5) F.dist += d; }
+  F.px = car.x; F.pz = car.z;
+  F.top = Math.max(F.top, Math.hypot(car.vx, car.vz) * 3.6);
+  if (car.air && car.hAbove > 0.3) F.air += dt;
+  freeHud(dt);
+}
+function freeHud(dt) {
+  const F = G.free, el = $('freeHud'); if (!el) return;
+  const show = !!F && G.mode === 'race' && (G.phase === 'run' || G.phase === 'countdown');
+  el.hidden = !show; if (!show) return;
+  F.hudT -= dt; if (F.hudT > 0) return; F.hudT = 0.25;
+  const off = Math.abs(car.lat) > HW + 2.5, place = isleWhere(car.x, car.z);
+  $('frTitle').textContent = place;
+  $('frSub').textContent = `${(F.dist / 1000).toFixed(1).replace('.', ',')} km · max ${Math.round(F.top)} km/h${off ? ' · terén' : ''}`;
+}
+// kde na ostrově auto je (pro panel): městečko, přístav, maják, vyhlídka, pobřeží podle světové strany, vnitrozemí
+function isleWhere(x, z) {
+  const D = ISLE.dress, r = Math.hypot(x, z);
+  if (D) { for (const p of D.places) if (Math.hypot(x - p.x, z - p.z) < p.r) return p.n; }
+  if (r < 330) return '⛰ Vnitrozemí';
+  const a = Math.atan2(x, z), dir = ['severní', 'severovýchodní', 'východní', 'jihovýchodní', 'jižní', 'jihozápadní', 'západní', 'severozápadní'][((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8];
+  return `🌊 ${dir[0].toUpperCase() + dir.slice(1)} pobřeží`;
+}
+function freeMenu() {
+  const el = $('freeStats'); if (!el) return;
+  const s = saved.freeStats || {}, id = roadCarId();
+  el.innerHTML = `<div><small>Auto</small><b>${CAR_TYPES[id].name}</b></div><div><small>Najeto na ostrově</small><b>${(s.km || 0).toFixed(1).replace('.', ',')} km</b><em>${s.runs | 0} výletů</em></div><div><small>Nejvyšší rychlost</small><b>${s.top ? s.top + ' km/h' : '–'}</b></div>`;
+}
+// ---- výbava ostrova: přístavní městečko (pastelové domy s okenicemi a taškovými střechami), molo s loďkami,
+// maják na mysu, slunečníky a lehátka na plážích
+function isleDress(group, td, hAt, roadDistAt, addObstacle) {
+  const rnd = mulberry32(td.st.seed + 5), hw = HW, X = td.X, Z = td.Z, Y = td.Y, NX = td.NX, NZ = td.NZ;
+  const m4 = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), vP = new T.Vector3(), vS = new T.Vector3();
+  const stdM = (c, o = {}) => new T.MeshStandardMaterial({ color: c, roughness: 0.8, metalness: 0.02, ...o });
+  const D = { places: [], boats: [], t: 0 };
+  const coastR = (a) => ISLE.R + 60 * Math.sin(a * 3 + 0.6) + 34 * Math.sin(a * 7 - 1.3);
+  // 1) městečko kolem startu
+  {
+    const wallT = canvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) {
+        const x = 22 + c * 80, y = 30 + r * 120;
+        g.fillStyle = '#2d3a46'; g.fillRect(x, y, 52, 70);   // okno
+        g.fillStyle = '#f4f1ea'; g.fillRect(x - 3, y - 3, 58, 4); g.fillRect(x - 3, y + 70, 58, 6); g.fillRect(x + 24, y, 4, 70);
+        g.fillStyle = '#3f7a5a'; g.fillRect(x - 16, y, 13, 70); g.fillRect(x + 55, y, 13, 70);   // okenice
+        g.strokeStyle = 'rgba(0,0,0,.25)'; for (let k = 0; k < 7; k++) { g.beginPath(); g.moveTo(x - 16, y + 6 + k * 10); g.lineTo(x - 3, y + 6 + k * 10); g.moveTo(x + 55, y + 6 + k * 10); g.lineTo(x + 68, y + 6 + k * 10); g.stroke(); }
+      }
+      g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(0, h - 14, w, 14);
+    });
+    const PAL = ['#f2d9b8', '#f6e7c8', '#e9b99a', '#f3d1c4', '#d9e4c8', '#f7f1e3', '#e8c98f', '#cfe0e8', '#f0c6a2'];
+    const houses = [];
+    for (let i = Math.max(4, td.startIdx - 70); i < td.startIdx + 170; i += 7) for (const sd of [-1, 1]) for (let row = 0; row < 2; row++) {
+      if (rnd() < 0.18) continue;
+      const w = 8 + rnd() * 4, d = 8 + rnd() * 3, h = 6 + ((rnd() * 3) | 0) * 2.8, off = hw + 6 + d / 2 + row * 14 + rnd() * 2;
+      const x = X[i] + NX[i] * sd * off, z = Z[i] + NZ[i] * sd * off, gy = hAt(x, z);
+      if (gy < 1.2 || roadDistAt(x, z) < hw + 4 + d / 2 || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
+      houses.push({ x, z, y: Math.min(gy, Y[i]) - 0.6, w, d, h: h + Math.max(0, gy - Y[i]), a: td.HD[i], c: PAL[(rnd() * PAL.length) | 0] });
+    }
+    const walls = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), new T.MeshStandardMaterial({ map: wallT, roughness: 0.85 }), houses.length);
+    const roofs = new T.InstancedMesh(new T.ConeGeometry(0.75, 1, 4, 1).rotateY(Math.PI / 4).translate(0, 0.5, 0), stdM('#ffffff', { roughness: 0.7 }), houses.length);
+    houses.forEach((o, k) => {
+      walls.setMatrixAt(k, m4.compose(vP.set(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.a, 0)), vS.set(o.w, o.h + 0.6, o.d))); walls.setColorAt(k, new T.Color(o.c));
+      roofs.setMatrixAt(k, m4.compose(vP.set(o.x, o.y + o.h + 0.6, o.z), q, vS.set(o.w * 1.08, 2.6 + o.w * 0.12, o.d * 1.08))); roofs.setColorAt(k, new T.Color(['#c0673d', '#b45a36', '#cf7a4a', '#a9553a'][(rnd() * 4) | 0]));
+      addObstacle(o.x, o.z, Math.min(o.w, o.d) * 0.55, true);
+    });
+    walls.castShadow = walls.receiveShadow = roofs.castShadow = true; walls.computeBoundingSphere(); roofs.computeBoundingSphere(); group.add(walls, roofs);
+    D.houses = houses.length;
+    const i0 = td.startIdx + 40; D.places.push({ n: '🏘 Přístavní městečko', x: X[i0], z: Z[i0], r: 230 });
+  }
+  // 2) molo s loďkami: od pobřeží pod městečkem na moře
+  {
+    const i0 = td.startIdx + 30, a = Math.atan2(X[i0], Z[i0]), R = coastR(a), ux = Math.sin(a), uz = Math.cos(a);
+    let r0 = R - 60; while (r0 < R + 40 && hAt(ux * r0, uz * r0) > 1.0) r0 += 2;   // první místo u vody
+    const L = 70, wood = stdM('#8a6a48', { roughness: 0.9 }), cx = ux * (r0 + L / 2 - 6), cz = uz * (r0 + L / 2 - 6);
+    const deck = new T.Mesh(new T.BoxGeometry(4, 0.3, L), wood); deck.position.set(cx, 1.3, cz); deck.rotation.y = a; deck.castShadow = deck.receiveShadow = true; group.add(deck);
+    const piles = new T.InstancedMesh(new T.CylinderGeometry(0.16, 0.16, 5, 6).translate(0, -1.0, 0), stdM('#5e4630'), Math.floor(L / 5) * 2);
+    let k = 0; for (let s = 0; s < Math.floor(L / 5); s++) for (const sd of [-1, 1]) { const d = r0 - 6 + s * 5, px = ux * d + uz * sd * 1.8, pz = uz * d - ux * sd * 1.8; piles.setMatrixAt(k++, m4.makeTranslation(px, 1.2, pz)); }
+    piles.computeBoundingSphere(); group.add(piles);
+    const hullCols = ['#f4f4f0', '#1f5fbf', '#d7141a', '#f2c230'];
+    for (let b = 0; b < 4; b++) {
+      const g = new T.Group(), hull = new T.Mesh(new T.CylinderGeometry(1.2, 0.7, 6, 10, 1).rotateX(Math.PI / 2).scale(1, 0.55, 1), stdM(hullCols[b], { roughness: 0.4 }));
+      hull.position.y = 0.35; g.add(hull);
+      const cab = new T.Mesh(new T.BoxGeometry(1.4, 0.9, 2), stdM('#f7f7f2')); cab.position.set(0, 1.1, -0.6); g.add(cab);
+      if (b % 2) { const mast = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 6, 6), stdM('#ddd')); mast.position.set(0, 3.6, 0.6); g.add(mast); }
+      const d = r0 + 8 + b * 14, sd = b % 2 ? 1 : -1;
+      g.position.set(ux * d + uz * sd * 6, 0, uz * d - ux * sd * 6); g.rotation.y = a + (rnd() - 0.5) * 0.4; group.add(g);
+      D.boats.push({ g, ph: rnd() * 6.28 });
+    }
+    D.places.push({ n: '⚓ Přístav', x: ux * (r0 + 20), z: uz * (r0 + 20), r: 70 });
+  }
+  // 3) maják na východním mysu: bílý s červenými pruhy, lucerna se světlem
+  {
+    const a = Math.PI / 2 + 0.25, R = coastR(a);
+    let r = R - 20; while (r > R - 200 && hAt(Math.sin(a) * r, Math.cos(a) * r) < 3) r -= 4;
+    const x = Math.sin(a) * r, z = Math.cos(a) * r, gy = hAt(x, z), g = new T.Group();
+    const stripes = canvasTex(64, 256, (c, w, h) => { for (let k = 0; k < 6; k++) { c.fillStyle = k % 2 ? '#d7141a' : '#f6f6f2'; c.fillRect(0, (k * h) / 6, w, h / 6 + 1); } });
+    const tower = new T.Mesh(new T.CylinderGeometry(1.6, 2.4, 18, 20).translate(0, 9, 0), new T.MeshStandardMaterial({ map: stripes, roughness: 0.6 })); g.add(tower);
+    g.add(new T.Mesh(new T.CylinderGeometry(2.3, 2.3, 0.4, 20).translate(0, 18.2, 0), stdM('#2a2e35')));
+    g.add(new T.Mesh(new T.CylinderGeometry(1.3, 1.3, 2.2, 16).translate(0, 19.5, 0), new T.MeshStandardMaterial({ color: '#fff6c8', emissive: '#ffe9a0', emissiveIntensity: 1.2, transparent: true, opacity: 0.85 })));
+    g.add(new T.Mesh(new T.ConeGeometry(1.7, 1.6, 16).translate(0, 21.4, 0), stdM('#b5262b', { roughness: 0.5 })));
+    const house = new T.Mesh(new T.BoxGeometry(6, 3.2, 5).translate(4.5, 1.6, 0), stdM('#f4efe4')); g.add(house);
+    const roof = new T.Mesh(new T.ConeGeometry(4.6, 1.8, 4).rotateY(Math.PI / 4).scale(1.1, 1, 0.9).translate(4.5, 4.1, 0), stdM('#b5562f')); g.add(roof);
+    g.children.forEach((c) => { c.castShadow = true; });
+    g.position.set(x, gy - 0.3, z); group.add(g);
+    addObstacle(x, z, 2.6, true);
+    D.places.push({ n: '🗼 Maják', x, z, r: 90 });
+  }
+  // 4) slunečníky a lehátka na plážích (písek těsně nad vodou)
+  {
+    const spots = [];
+    for (let k = 0; k < 900 && spots.length < 70; k++) {
+      const a = rnd() * Math.PI * 2, R = coastR(a), r = R - 10 - rnd() * 40, x = Math.sin(a) * r, z = Math.cos(a) * r, gy = hAt(x, z);
+      if (gy < 0.5 || gy > 3 || roadDistAt(x, z) < hw + 4) continue;
+      spots.push([x, gy, z, rnd()]);
+    }
+    const cols = ['#e63946', '#f1c40f', '#2a9df4', '#f4f4f0', '#2ecc71', '#ff7f50'];
+    const pole = new T.InstancedMesh(new T.CylinderGeometry(0.04, 0.04, 2.3, 5).translate(0, 1.15, 0), stdM('#dddddd'), spots.length);
+    const top = new T.InstancedMesh(new T.ConeGeometry(1.3, 0.55, 10, 1, true).translate(0, 2.25, 0), stdM('#ffffff', { side: T.DoubleSide, roughness: 0.7 }), spots.length);
+    const bed = new T.InstancedMesh(new T.BoxGeometry(0.7, 0.18, 1.9).translate(0.9, 0.3, 0), stdM('#ffffff'), spots.length);
+    spots.forEach(([x, y, z, r], k) => {
+      m4.makeTranslation(x, y, z); pole.setMatrixAt(k, m4); top.setMatrixAt(k, m4); top.setColorAt(k, new T.Color(cols[k % cols.length]));
+      bed.setMatrixAt(k, m4.compose(vP.set(x, y, z), q.setFromEuler(e.set(0, r * 6.28, 0)), vS.set(1, 1, 1))); bed.setColorAt(k, new T.Color(k % 3 ? '#f4f4f0' : '#2a9df4'));
+    });
+    for (const im of [pole, top, bed]) { im.computeBoundingSphere(); im.castShadow = true; group.add(im); }
+    D.beach = spots.length;
+  }
+  // 5) vyhlídka na konci silnice (dřevěná rozhledna)
+  {
+    const i = Math.min(td.n - 2, td.finishIdx + 12), x = X[i] + NX[i] * (hw + 9), z = Z[i] + NZ[i] * (hw + 9), gy = hAt(x, z), wood = stdM('#7a5a3c', { roughness: 0.9 }), g = new T.Group();
+    for (const [dx, dz] of [[-1.6, -1.6], [1.6, -1.6], [1.6, 1.6], [-1.6, 1.6]]) g.add(new T.Mesh(new T.BoxGeometry(0.3, 10, 0.3).translate(dx, 5, dz), wood));
+    g.add(new T.Mesh(new T.BoxGeometry(4.4, 0.3, 4.4).translate(0, 10, 0), wood));
+    g.add(new T.Mesh(new T.ConeGeometry(3.4, 2.2, 4).rotateY(Math.PI / 4).translate(0, 12.6, 0), stdM('#5a3a26')));
+    for (const [dx, dz, w, d] of [[0, -2.1, 4.4, 0.1], [0, 2.1, 4.4, 0.1], [-2.1, 0, 0.1, 4.4], [2.1, 0, 0.1, 4.4]]) g.add(new T.Mesh(new T.BoxGeometry(w, 1, d).translate(dx, 10.6, dz), wood));
+    g.children.forEach((c) => { c.castShadow = true; }); g.position.set(x, gy - 0.2, z); group.add(g);
+    addObstacle(x, z, 2.6, true);
+    D.places.push({ n: '🔭 Vyhlídka', x, z, r: 110 });
+  }
+  ISLE.dress = D; D.td = td;
+  return D;
+}
+function isleTick(dt) {
+  const D = ISLE.dress; if (!D) return;
+  D.t += dt;
+  for (const b of D.boats) { b.g.position.y = Math.sin(D.t * 1.3 + b.ph) * 0.12; b.g.rotation.z = Math.sin(D.t * 0.9 + b.ph) * 0.05; }
+}
 function dragMenu() {
   const seg = $('dragDiffSeg'); if (!seg) return;
   const cur = DRAG_DIFF[saved.dragDiff] ? saved.dragDiff : 'normal';
@@ -25184,6 +25413,7 @@ $('bDerbyGo').onclick = () => { UIS.click('main'); derbyGo(); };
 $('bBallGo').onclick = () => { UIS.click('main'); ballGo(); };
 $('bCopGo').onclick = () => { UIS.click('main'); copGo(); };
 $('bMegaGo').onclick = () => { UIS.click('main'); megaGo(); };
+$('bFreeGo').onclick = () => { UIS.click('main'); freeGo(); };
 $('megaAgain').onclick = () => { UIS.click('main'); $('megaModal').hidden = true; megaGo(); };
 $('megaMenuB').onclick = () => { UIS.click('back'); $('megaModal').hidden = true; startDemo(); menuView('act'); };
 $('copAgain').onclick = () => { UIS.click('main'); $('copModal').hidden = true; copGo(); };
@@ -25193,11 +25423,11 @@ $('ballMenuB').onclick = () => { UIS.click('back'); $('ballModal').hidden = true
 $('derbyAgain').onclick = () => { UIS.click('main'); $('derbyModal').hidden = true; derbyGo(); };
 $('derbyMenuB').onclick = () => { UIS.click('back'); $('derbyModal').hidden = true; startDemo(); menuView('act'); };
 // Akce: výběr režimu (karty Drag race, Demoliční derby); pozadí menu je trať vybraného režimu
-function actSel() { return ['drag', 'derby', 'ball', 'cop', 'mega'].includes(saved.actSel) ? saved.actSel : 'drag'; }
+function actSel() { return ['drag', 'derby', 'ball', 'cop', 'mega', 'free'].includes(saved.actSel) ? saved.actSel : 'drag'; }
 // trať v pozadí menu podle vybraného režimu (honička: vybraná etapa)
 // menu po načtení trati Akce zůstane v záložce Akce (honička jede na rallyové etapě, menu by jinak přeskočilo na Rally)
 function actDemo() { startDemo(); if (HUB.view !== 'act') menuView('act'); }
-function actStageIdx() { const a = actSel(); return a === 'cop' ? STAGES.findIndex((x) => x.id === copStage()) : STAGES.findIndex((x) => (a === 'derby' ? x.derby : a === 'ball' ? x.ball : a === 'mega' ? x.mega : x.drag)); }
+function actStageIdx() { const a = actSel(); return a === 'cop' ? STAGES.findIndex((x) => x.id === copStage()) : STAGES.findIndex((x) => (a === 'derby' ? x.derby : a === 'ball' ? x.ball : a === 'mega' ? x.mega : a === 'free' ? x.free : x.drag)); }
 function actPick() {
   const pane = document.querySelector('.pane-act'); if (!pane) return;
   pane.dataset.a = actSel();
@@ -25205,12 +25435,12 @@ function actPick() {
     b.setAttribute('aria-pressed', String(b.dataset.a === actSel()));
     b.onclick = () => { if (saved.actSel === b.dataset.a) return; UIS.click(); saved.actSel = b.dataset.a; persist(); actPick(); if (HUB.view === 'act') { const k = actStageIdx(); if (k >= 0 && k !== G.sel && G.mode !== 'race') loadStage(k, actDemo); } };
   }
-  $('hubActN').textContent = { drag: 'drag race', derby: 'demoliční derby', ball: 'autofotbal', cop: 'policejní honička', mega: 'megarampa' }[actSel()];
+  $('hubActN').textContent = { drag: 'drag race', derby: 'demoliční derby', ball: 'autofotbal', cop: 'policejní honička', mega: 'megarampa', free: 'volná jízda' }[actSel()];
 }
 $('dragAgain').onclick = () => { UIS.click('main'); $('dragModal').hidden = true; dragGo(); };
 $('dragMenu').onclick = () => { UIS.click('back'); $('dragModal').hidden = true; startDemo(); menuView('act'); };
-$('bRestart').onclick = () => { overlay.pause.hidden = true; G.paused = false; if (G.cop) copGo(); else if (G.ball) ballGo(); else if (G.derby) derbyGo(); else if (G.drag) dragGo(); else if (G.mega) megaGo(); else if (G.drift) { const D = G.drift; driftRun({ kind: D.kind, role: D.role, opp: D.opp, title: D.title, done: D.done }); } else startRace(); };
-$('bQuit').onclick = () => { overlay.pause.hidden = true; G.paused = false; G.champ = null; const rx = G.rx && !G.net ? (G.rxCup ? 'cup' : 'hub') : null, dr = !!G.drift, dg = !!G.drag || !!G.derby || !!G.ball || !!G.cop || !!G.mega; if (dr) DRIFT.tour = null; startDemo(); if (rx) openRx(rx); if (dr) menuView('drift'); if (dg) menuView('act'); };
+$('bRestart').onclick = () => { overlay.pause.hidden = true; G.paused = false; if (G.cop) copGo(); else if (G.ball) ballGo(); else if (G.derby) derbyGo(); else if (G.drag) dragGo(); else if (G.mega) megaGo(); else if (G.free) freeGo(); else if (G.drift) { const D = G.drift; driftRun({ kind: D.kind, role: D.role, opp: D.opp, title: D.title, done: D.done }); } else startRace(); };
+$('bQuit').onclick = () => { overlay.pause.hidden = true; G.paused = false; G.champ = null; const rx = G.rx && !G.net ? (G.rxCup ? 'cup' : 'hub') : null, dr = !!G.drift, dg = !!G.drag || !!G.derby || !!G.ball || !!G.cop || !!G.mega || !!G.free; if (dr) DRIFT.tour = null; startDemo(); if (rx) openRx(rx); if (dr) menuView('drift'); if (dg) menuView('act'); };
 $('bPause').onclick = () => setPaused(true);
 const wkCamLock = () => { if (G.weekly && G.weekly.ch.rule === 'cockpit' && G.mode === 'race') { toast('Výzva týdne: jen z kabiny', 1.4); return true; } return false; };
 $('bCam').onclick = () => { if (wkCamLock()) return; G.camMode = (G.camMode + 1) % 3; camS.init = false; };
@@ -25823,7 +26053,7 @@ function tickUpdate(dt) {
       const needCp = !!(G.gp || G.rx || (G.net && td.st.circuit));
       { const s0 = td.S[td.startIdx], L0 = td.S[td.finishIdx] - s0, mid = s0 + L0 * 0.5;
         if (!G.cp && car.s >= mid && car.s < mid + L0 * 0.25) G.cp = true; }
-      if (G.drift || G.mega) { /* drift: cíl a konec jízdy hlídá driftTick, megarampa megaTick */ }
+      if (G.drift || G.mega || G.free) { /* drift: cíl a konec jízdy hlídá driftTick, megarampa megaTick; volná jízda nemá cíl */ }
       else if (car.s >= td.S[td.finishIdx] && (G.cp || !needCp)) { G.cp = false; if (G.gp) gpLap(); else if (G.rx) rxLap(); else if (G.cop) copFinish(true); else if (!(G.net && netLap())) finishRace(); }
       else if (needCp && car.s >= td.S[td.finishIdx] + 20 && G.phase === 'run') {
         // čáru přejel bez kontrolního bodu: kolo se nepočítá, auto se jen přenese na začátek kola (stejné místo za cílem)
@@ -25831,17 +26061,17 @@ function tickUpdate(dt) {
         if (!G.cpWarn) { G.cpWarn = true; toast('Kolo se nepočítá: chybí průjezd kontrolním bodem v půlce okruhu', 3); }
       }
       if (td.st.circuit && !G.net && !G.drift) trackLimits(dt);
-      const lost = Math.abs(car.lat) > HW + 38 || (td.st.water != null && car.y < td.st.water - 0.4);
+      const lost = (!G.free && Math.abs(car.lat) > HW + 38) || (td.st.water != null && car.y < td.st.water - 0.4);
       const slow = Math.abs(car.vf) < 1.5 && car.surf === 'off';
       G.stuck = lost || slow ? G.stuck + dt : 0;
       // stojí na místě (u zdi, otočený proti směru, zapíchnutý v ohrazení) a nejede ani v boxech: nabídne se návrat na trať
       const parked = Math.abs(car.vf) < 1.5 && G.time > 2 && !(G.gp && (G.gp.service > 0 || G.gp.pilot || G.gp.waiting)) && !(G.trex && G.trex.repair > 0) && !(G.aval && G.aval.bury > 0) && !(G.ufo && G.ufo.phase === 'taken');   // oprava po T-rexovi, zasypání lavinou, únos: auto stojí schválně
       G.parked = parked ? (G.parked || 0) + dt : 0;
-      hud.reset.hidden = !(G.stuck > 1.5 || G.parked > 3 || (Math.abs(car.lat) > HW + 14 && !inJoker(td, car.s, car.lat)));
+      hud.reset.hidden = !(G.stuck > 1.5 || G.parked > 3 || (Math.abs(car.lat) > HW + 14 && !G.free && !inJoker(td, car.s, car.lat)));
       // okruh: auto mimo silnici hluboko pod její úrovní (za zdí u úseku nad jiným úsekem) – zpět na trať
       const under = td.st.circuit && !car.air && Math.abs(car.lat) > HW + 2 && car.y < td.Y[car.idx] - 2;
       G.under = under ? (G.under || 0) + dt : 0;
-      if (Math.abs(car.lat) > HW + 70 || (lost && G.stuck > 2.5) || G.under > 1) { G.under = 0; resetToTrack(true); }
+      if ((!G.free && Math.abs(car.lat) > HW + 70) || (lost && G.stuck > 2.5) || G.under > 1) { G.under = 0; resetToTrack(true); }
     }
     if (G.phase === 'demo' && car.s > td.S[td.finishIdx] + 60) { placeCar(td.startIdx - 4); car.vx = Math.sin(car.h) * demoSpeed(); car.vz = Math.cos(car.h) * demoSpeed(); G.cine.fixed = null; }
     if (G.rx && G.mode === 'race') rxTick(dt);
@@ -25853,6 +26083,7 @@ function tickUpdate(dt) {
     if (G.ufo) ufoTick(dt);   // UFO
     if (G.quake) quakeTick(dt);   // zemětřesení
     if (W.td.st.mega) { if (G.mega && G.mode === 'race') megaTick(dt, inp); else megaDressTick(dt, null); }   // megarampa
+    if (W.td.st.free) { if (G.free && G.mode === 'race') freeTick(dt); isleTick(dt); }   // ostrov
     if (W.vol) volTick(dt);   // sopka: kouř, popel, pára, erupce a lávové bomby
     if (W.lap) lapTick(dt);   // Laponsko: polární záře, varování před ledem
     if (W.moon) moonTick(dt);   // Měsíc: astronauti mávají
@@ -25915,7 +26146,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { MEGA, MEGA_PTS, megaY, megaDist, megaZofD, megaTables, megaGo, megaClear, megaFinish, megaTick, megaTouch, megaLip, megaMenu, megaScore, get mega() { return G.mega; }, PAINT_FIN, STICKERS, CUSTOM_LIV, paintDef, paintSan, paintLv, paintSet, paintRandom, paintSideTex, paintTopTex, roverModel, carLocked, MOON, moonCraters, get gNow() { return gNow; }, QUAKE, QZ, quakeArm, quakeTick, quakeReset, quakeDy, get quake() { return G.quake; }, AVAL, avalArm, avalTick, avalReset, get aval() { return G.aval; }, UFO, ufoArm, ufoTick, ufoReset, ufoCover, get ufo() { return G.ufo; }, eventsArm, lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { ISLE, isleH, isleWhere, freeGo, freeClear, freeTick, freeMenu, get free() { return G.free; }, MEGA, MEGA_PTS, megaY, megaDist, megaZofD, megaTables, megaGo, megaClear, megaFinish, megaTick, megaTouch, megaLip, megaMenu, megaScore, get mega() { return G.mega; }, PAINT_FIN, STICKERS, CUSTOM_LIV, paintDef, paintSan, paintLv, paintSet, paintRandom, paintSideTex, paintTopTex, roverModel, carLocked, MOON, moonCraters, get gNow() { return gNow; }, QUAKE, QZ, quakeArm, quakeTick, quakeReset, quakeDy, get quake() { return G.quake; }, AVAL, avalArm, avalTick, avalReset, get aval() { return G.aval; }, UFO, ufoArm, ufoTick, ufoReset, ufoCover, get ufo() { return G.ufo; }, eventsArm, lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
