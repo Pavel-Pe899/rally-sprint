@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwtv7ied';
+window.__BUILD = 'mwtvhfqd';
 (function () {
   function check() {
     try {
@@ -2074,7 +2074,7 @@ window.__BUILD = 'mwtv7ied';
     <div class="rows" id="megaTable"></div>
     <div class="mg-list" id="megaTop"></div>
     <div class="derby-info" id="megaInfo"></div>
-    <div class="actions"><button class="btn primary" id="megaAgain">Znovu</button><button class="btn ghost" id="megaMenuB">Menu</button></div>
+    <div class="actions"><button class="btn primary" id="megaAgain">Znovu</button><button class="btn ghost" id="megaReplay">Záznam</button><button class="btn ghost" id="megaMenuB">Menu</button></div>
   </div>
 </div>
 <div id="copModal" class="modal" hidden>
@@ -22883,7 +22883,8 @@ function replayEnd() {
   G.replay = null; G.photo = null;
   $('replayBar').hidden = true; $('photoBar').hidden = true;
   cockpitUpdate(0, false);
-  overlay.results.hidden = false;
+  if (G.mega && G.mega.done) $('megaModal').hidden = false;   // megarampa: zpět do výsledků skoku
+  else overlay.results.hidden = false;
 }
 // televizní kamery: každých ~110 m střídavě vlevo a vpravo na horní hraně plotu nad zdí (u rally vedle trati)
 function tvCams() {
@@ -25580,6 +25581,7 @@ $('bMegaGo').onclick = () => { UIS.click('main'); megaGo(); };
 $('bFreeGo').onclick = () => { UIS.click('main'); freeGo(); };
 $('megaAgain').onclick = () => { UIS.click('main'); $('megaModal').hidden = true; megaGo(); };
 $('megaMenuB').onclick = () => { UIS.click('back'); $('megaModal').hidden = true; startDemo(); menuView('act'); };
+$('megaReplay').onclick = () => { UIS.click(); $('megaModal').hidden = true; replayStart(); if (!G.replay) $('megaModal').hidden = false; };   // záznam skoku (zpomalení ve vzduchu)
 $('copAgain').onclick = () => { UIS.click('main'); $('copModal').hidden = true; copGo(); };
 $('copMenuB').onclick = () => { UIS.click('back'); $('copModal').hidden = true; startDemo(); menuView('act'); };
 $('ballAgain').onclick = () => { UIS.click('main'); $('ballModal').hidden = true; ballGo(); };
