@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwtsx3hn';
+window.__BUILD = 'mwtuvxr6';
 (function () {
   function check() {
     try {
@@ -13014,11 +13014,11 @@ function precompile(obj) {
 // Předehřátí: celá scéna (i skryté a mimo záběr) se jednou vykreslí do malého bufferu, aby se do grafiky
 // nahrály všechny sítě, instance a obrázky hned při načítání. Jinak se nahrávají až ve chvíli, kdy se věc
 // poprvé objeví (tribuna za zatáčkou, garáže, podrobné stromy) a hra na okamžik škubne.
-function warmUp(root) {
+function warmUp(root, keepCull = false) {
   const shown = [], culled = [];
   for (const r of Array.isArray(root) ? root : [root]) r.traverse((o) => {
     if (!o.visible) { shown.push(o); o.visible = true; }
-    if ((o.isMesh || o.isPoints) && o.frustumCulled) { culled.push(o); o.frustumCulled = false; }
+    if (!keepCull && (o.isMesh || o.isPoints) && o.frustumCulled) { culled.push(o); o.frustumCulled = false; }
   });
   // kreslí se do stejného cíle jako za jízdy (mezibuffer filmového obrazu nebo obrazovka), ale jen do 1 pixelu,
   // takže se nepřekládají jiné varianty shaderů a na obrazovce nic neblikne
@@ -13066,6 +13066,18 @@ function loadStage(idx, then) {
     precompile(scene);
     if (W.rline) W.rline.mesh.visible = false;
     warmUp(scene);
+    // velké světy (Megarampa, Ostrov): stín se kreslí jen kolem auta a three.js má pro stín jeden sdílený materiál,
+    // jehož varianta (s texturou / bez, strana) závisí na pořadí kreslených objektů. Proto se stín projede podél celé
+    // trati s běžným ořezáním jako za jízdy, aby se všechny varianty přeložily hned (jinak např. u tribun v dojezdu)
+    if (W.td.st.mega || W.td.st.free) {
+      const td = W.td, sd = W.td.st.sun.dir, L = new T.Vector3(sd[0], sd[1], sd[2]).normalize(), t0 = sun.target.position.clone(), s0 = sun.position.clone();
+      for (let k = 1; k <= 24; k++) {
+        const i = Math.round(td.startIdx + ((td.finishIdx - td.startIdx) * k) / 24);
+        sun.target.position.set(td.X[i], td.Y[i], td.Z[i]); sun.position.copy(sun.target.position).addScaledVector(L, 150); sun.target.updateMatrixWorld();
+        warmUp(scene, true);
+      }
+      sun.target.position.copy(t0); sun.position.copy(s0); sun.target.updateMatrixWorld();
+    }
     overlay.loading.hidden = true;
     then && then();
   }));
@@ -24981,6 +24993,12 @@ function megaDress(group, td, spectators, hAt) {
     bar.add(bm); bar.position.set(-hw + 0.5, yTop + 1.05, 2); group.add(bar);
     box(0.4, 1.3, 0.4, stdM('#d7141a'), -hw + 0.5, yTop + 0.55, 2);
     D.bar = bar;
+    // fanoušci a pořadatelé u startovní věže (za zdí nájezdu); zároveň se tím hned při načtení přeloží shadery
+    // podrobných postav diváků, které by se jinak překládaly až v dojezdu u tribun
+    for (let k = 0; k < 16; k++) {
+      const sd = k % 2 ? 1 : -1, x = sd * (hw + 3 + rnd() * 5), z = -44 + rnd() * 36, gy = hAt(x, z);
+      spectators.push({ x, y: gy, z, phase: rnd() * 6.28, speed: 7 + rnd() * 5, face: sd > 0 ? -Math.PI / 2 + 0.5 : Math.PI / 2 - 0.5, flag: rnd() < 0.3 ? (rnd() * 3) | 0 : -1 });
+    }
     const lampBox = box(0.55, 1.4, 0.4, darkM, hw - 0.2, yTop + 2.6, 3.2); void lampBox;
     box(0.12, 2, 0.12, steelM, hw - 0.2, yTop + 1, 3.2);
     for (const [k, c] of [[0, '#ff2a14'], [1, '#22e06a']]) {
@@ -25132,7 +25150,7 @@ function megaDress(group, td, spectators, hAt) {
       }
       const back = box(0.4, ROWS * rowH + 2.4, zB - zA, stdM('#2b2f37', { roughness: 0.8 }), x0 + sd * (ROWS * rowD + 0.3), y0 + (ROWS * rowH + 2.4) / 2 - 0.2, (zA + zB) / 2); void back;
       const roof = box(ROWS * rowD + 3, 0.3, zB - zA + 2, stdM('#e6e8eb', { roughness: 0.4, metalness: 0.3 }), x0 + sd * (ROWS * rowD / 2), y0 + ROWS * rowH + 4.2, (zA + zB) / 2, 0, 0); roof.rotation.z = sd * 0.08;
-      for (let z = zA; z <= zB; z += 20) box(0.25, ROWS * rowH + 4.4, 0.25, steelM, x0 + sd * (ROWS * rowD + 0.1), y0 + (ROWS * rowH + 4.4) / 2 - 0.2, z);
+      for (let z = zA; z <= zB; z += 20) box(0.25, ROWS * rowH + 4.4, 0.25, steelM, x0 + sd * (ROWS * rowD + 0.1), y0 + (ROWS * rowH + 4.4) / 2 - 0.2, z).castShadow = false;   // tenké sloupky stín nevrhají
     }
     steps.castShadow = steps.receiveShadow = true; steps.computeBoundingSphere(); seats.computeBoundingSphere(); group.add(steps, seats);
     // diváci stojí i na trávě podél dolní části svahu (za sítí)
@@ -25251,6 +25269,7 @@ function freeGo() {
 function freeClear() {
   const F = G.free; G.free = null;
   const ID = ISLE.dress; if (ID && ID.mk) { for (const m of Object.values(ID.mk)) m.visible = false; ID.person.visible = false; }
+  if (ISLE.mapEls) { for (const e of ISLE.mapEls) e.remove(); ISLE.mapEls = null; }
   document.body.classList.remove('freemode');
   const h = $('freeHud'); if (h) h.hidden = true;
   if (F && F.dist > 50) { const s = saved.freeStats || {}; saved.freeStats = { km: +((s.km || 0) + F.dist / 1000).toFixed(2), top: Math.max(s.top || 0, Math.round(F.top)), runs: (s.runs | 0) + 1 }; persist(); }
@@ -25486,8 +25505,19 @@ function jobTick(dt, F) {
     jobIdle(F);
   }
 }
+// minimapa: tečky zakázek (žlutá pošta, modrý cestující, zelený cíl)
+function jobMap(F) {
+  const D = ISLE.dress; if (!D || !D.post || !mapInfo || !hud.map) return;
+  const P = hud.map.parentNode;
+  if (!ISLE.mapEls || !ISLE.mapEls[0].isConnected) {
+    ISLE.mapEls = ['#ffc419', '#33b5ff', '#3fdc86'].map((c) => { const e = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); e.setAttribute('r', '4.5'); e.setAttribute('fill', c); e.setAttribute('stroke', '#ffffff'); e.setAttribute('stroke-width', '1.5'); P.insertBefore(e, hud.mapCar); return e; });
+  }
+  const J = F.job, pts = [J ? null : D.post, J ? null : F.taxiAt, J ? J.dest : null];
+  ISLE.mapEls.forEach((e, k) => { const q = pts[k]; e.setAttribute('visibility', q ? 'visible' : 'hidden'); if (q) { const [x, y] = mapInfo.map(q.x, q.z); e.setAttribute('cx', x.toFixed(1)); e.setAttribute('cy', y.toFixed(1)); } });
+}
 // panel: cíl, vzdálenost, zbývající čas a šipka (nahoru = dopředu)
 function jobHud(F) {
+  jobMap(F);
   const D = ISLE.dress, J = F.job, ar = $('frArrow'), jl = $('frJob'); if (!ar || !jl) return;
   const tgt = J ? J.dest : null;
   if (!J) { ar.hidden = true; jl.textContent = D && D.post ? `📦 pošta ${Math.round(Math.hypot(car.x - D.post.x, car.z - D.post.z))} m · 🚕 cestující ${Math.round(Math.hypot(car.x - F.taxiAt.x, car.z - F.taxiAt.z))} m` : ''; return; }
