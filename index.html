@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwsyi2lt';
+window.__BUILD = 'mwt5w229';
 (function () {
   function check() {
     try {
@@ -1155,6 +1155,7 @@ window.__BUILD = 'mwsyi2lt';
   .act-cop { background: radial-gradient(120% 100% at 0% 0%, rgba(50, 100, 255, .3), transparent 55%), radial-gradient(90% 80% at 100% 0%, rgba(200, 240, 26, .1), transparent 60%), linear-gradient(180deg, #2b2f38, #1b1e24); }
   @media (max-width: 460px) { .act-pick { gap: 4px; } .act-pick button { font-size: 12.5px; padding: 8px 3px; gap: 3px; } .act-pick button i { font-size: 15px; } }
   /* ---- Policejní honička: panel bliká modře, ukazatel zatčení, tečky policie a zátarasy na minimapě, výsledky ---- */
+  .trex-hud.torn { box-shadow: 0 0 0 2px rgba(214, 150, 70, .8), 0 0 18px rgba(160, 100, 40, .45); } .trex-hud.torn .th-bar i, .trex-hud.torn[data-s] .th-bar i { background: linear-gradient(90deg, #d9a35a, #ff5a2e); }
   .trex-hud.cop { animation: copBlink .8s steps(1) infinite; }
   @keyframes copBlink { 0% { box-shadow: 0 0 0 2px rgba(60, 110, 255, .95), 0 0 20px rgba(60, 110, 255, .55); } 50% { box-shadow: 0 0 0 2px rgba(60, 110, 255, .35), 0 0 8px rgba(60, 110, 255, .15); } }
   .trex-hud.cop .th-bar i, .trex-hud.cop[data-s] .th-bar i { background: linear-gradient(90deg, #ffc419, #ff3b30); }
@@ -1871,6 +1872,7 @@ window.__BUILD = 'mwsyi2lt';
         <button class="tog" id="tTyre">Pneumatiky: <b id="tTyreVal"></b></button>
         <button class="tog" id="tSpare"><i></i>Rezerva v kufru</button>
         <button class="tog" id="tFog"><i></i>Ranní mlha (rally)</button>
+        <button class="tog" id="tTornado"><i></i>Tornáda (Keňa, poušť)</button>
         <button class="tog" id="tDmg"><i></i>Poškození aut</button>
     </div>
     <p class="label">Grafika</p>
@@ -2952,7 +2954,7 @@ const STAGES = [
   {
     id: 'poust', photo: { road: 'gravel', sat: 0.75, tint: '#ffd296', terrain: 'dune' }, name: 'Pouštní rychlík', region: 'Maroko', surface: 'Písek', road: 'sand', tod: 'Poledne',
     len: 6400, seed: 83, turn: 0.72, hills: 24, hillScale: 1 / 300, crests: 7, water: null, tilt: [0, 0],
-    grip: 0.72, offGrip: 0.55, loose: true,
+    grip: 0.72, offGrip: 0.55, loose: true, tornado: true,
     sky: { top: '#2a78cc', hor: '#f0dcbc', bottom: '#dcc29a' }, sun: { dir: [0.25, 0.92, 0.25], color: '#fff3df', int: 3.6 },
     hemi: { sky: '#cfe3ff', ground: '#c99b62', int: 1.0 }, fog: [120, 720], exposure: 0.95,
     ground: { a: '#e0b678', b: '#cfa063', dirt: '#c49a62', rock: '#9b6c48', beach: '#e0b678' },
@@ -2966,7 +2968,7 @@ const STAGES = [
     // jezero s plameňáky, na obzoru zasněžený vrchol. Prach je hustý a rudý (za deště se nepráší).
     id: 'kena', photo: { road: 'gravel', sat: 0.8, tint: '#f0a070', terrain: 'dirt' }, name: 'Keňská savana', region: 'Keňa · Safari rally', surface: 'Rudá šotolina', road: 'gravel', tod: 'Ráno',
     len: 6600, seed: 131, turn: 0.74, hills: 26, hillScale: 1 / 430, crests: 8, water: -7, tilt: [0, 0],
-    grip: 0.8, offGrip: 0.56, loose: true, dustK: 1.8,
+    grip: 0.8, offGrip: 0.56, loose: true, dustK: 1.8, tornado: true,
     sky: { top: '#3c78c4', hor: '#f4d6a6', bottom: '#d9b48a' }, sun: { dir: [0.62, 0.42, 0.52], color: '#ffd59a', int: 3.4 },
     hemi: { sky: '#ffe2b8', ground: '#9a6a3a', int: 1.15 }, fog: [130, 780], exposure: 1.0,
     ground: { a: '#c2a259', b: '#a98b45', dirt: '#b4532a', rock: '#8a5636', beach: '#cfa86c' },
@@ -9700,7 +9702,7 @@ const Sound = {
   silence() {
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    for (const g of [this.eg, this.gravel, this.wind, this.skid, this.hiss, this.turbo.g, this.whine.g, this.f1, this.opp, this.rainG, this.scrapeHi, this.scrapeMid, this.scrapeLo, this.rumble, this.crowd, this.crowdHi, this.echo, this.squeal && this.squeal.g, this.sir && this.sir.g]) if (g) g.gain.setTargetAtTime(0, t, 0.1);
+    for (const g of [this.eg, this.gravel, this.wind, this.skid, this.hiss, this.turbo.g, this.whine.g, this.f1, this.opp, this.rainG, this.scrapeHi, this.scrapeMid, this.scrapeLo, this.rumble, this.crowd, this.crowdHi, this.echo, this.squeal && this.squeal.g, this.sir && this.sir.g, this.tor && this.tor.g]) if (g) g.gain.setTargetAtTime(0, t, 0.1);
     this.inTunnel = false;
   },
   // nejbližší soupeř: hlasitost podle vzdálenosti, výška tónu podle jeho otáček a přibližování (Doppler)
@@ -9733,6 +9735,27 @@ const Sound = {
     if (S.pp) S.pp.pan.setTargetAtTime(clamp(pan, -0.85, 0.85), t, 0.1);
   },
   sirenOff() { if (this.sir && this.ctx) this.sir.g.gain.setTargetAtTime(0, this.ctx.currentTime, 0.12); },
+  // tornádo: hluboké burácení (šum pod 300 Hz s pomalým kolísáním) a hvízdání větru (úzké pásmo, výška se vlní);
+  // k = blízkost 0–1, pan = strana, kde tornádo je
+  tornado(k, pan = 0) {
+    if (!this.ctx || !this.noiseBuf) return;
+    const c = this.ctx, t = c.currentTime;
+    if (!this.tor) {
+      const src = c.createBufferSource(); src.buffer = this.noiseBuf; src.loop = true;
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 260; lp.Q.value = 0.9;
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 7;
+      const gl = c.createGain(), gw = c.createGain(), g = c.createGain(), pp = c.createStereoPanner ? c.createStereoPanner() : null;
+      gl.gain.value = 1.6; gw.gain.value = 0.35; g.gain.value = 0;
+      src.connect(lp); lp.connect(gl); gl.connect(g); src.connect(bp); bp.connect(gw); gw.connect(g);
+      if (pp) { g.connect(pp); pp.connect(this.out); } else g.connect(this.out);
+      src.start(); this.tor = { g, lp, bp, pp };
+    }
+    const S = this.tor, w = Math.sin(t * 0.9) * 0.5 + Math.sin(t * 2.3) * 0.3;
+    S.g.gain.setTargetAtTime(0.55 * k * k * (0.85 + 0.15 * w), t, 0.15);
+    S.lp.frequency.setTargetAtTime(180 + 260 * k + 60 * w, t, 0.2); S.bp.frequency.setTargetAtTime(700 + 500 * k + 260 * w, t, 0.2);
+    if (S.pp) S.pp.pan.setTargetAtTime(clamp(pan, -0.8, 0.8) * (1 - k * 0.6), t, 0.2);
+  },
+  tornOff() { if (this.tor && this.ctx) this.tor.g.gain.setTargetAtTime(0, this.ctx.currentTime, 0.3); },
   // poškozený motor: nepravidelné klepání a chrastění (častější s otáčkami a poškozením)
   damage(k, rpm, dt) {
     if (!this.ctx || !this.noiseBuf || k < 0.3) return;
@@ -12491,7 +12514,7 @@ function warmUp(root) {
 let loadTok = 0;
 function loadStage(idx, then) {
   const tok = ++loadTok;
-  trexReset();
+  trexReset(); tornReset();
   overlay.loading.hidden = false;
   $('loadingText').innerHTML = `Načítám mapu <b>${String(STAGES[idx].name).replace(/[<>&]/g, '')}</b>`;
   // formule na načítací obrazovce v barvě vybraného týmu
@@ -12527,7 +12550,7 @@ function loadStage(idx, then) {
 
 const demoSpeed = () => 14;
 function startDemo() {
-  podiumHide(); rxgClose(false); statsFlush(); $('chatBar').hidden = true; trexReset();
+  podiumHide(); rxgClose(false); statsFlush(); $('chatBar').hidden = true; trexReset(); tornReset();
   driftClear(); $('driftModal').hidden = true;
   dragClear(); $('dragModal').hidden = true; derbyClear(); $('derbyModal').hidden = true; ballClear(); $('ballModal').hidden = true; copClear(); $('copModal').hidden = true;
   gpEnd();
@@ -12576,6 +12599,7 @@ function startRace() {
   if (G.gp) { gpSetup(); G.countdown = 4.6; G.lastBeep = 0; gpCrewReset(); }
   else rwStart();
   trexArm();   // Džungle: T-rex čeká na náhodném místě etapy
+  tornArm();   // Keňa a poušť: tornádo přejde přes silnici
   resetPushables();
   Tilt.calibrate();
   car.nos = nosTank(); car.nosOn = false; car.nosFx = 0;
@@ -15892,6 +15916,227 @@ function copMenu() {
   const st = saved.copStats || {}, best = (st.best || {})[cs + ':' + cur];
   $('copStats').innerHTML = `<div><small>Etapa</small><b>${STAGES.find((x) => x.id === cs).name}</b></div><div><small>Nejlepší útěk</small><b>${best != null ? fmt(best) : '–'}</b><em>${COP_DIFF[cur].name.toLowerCase()} policie</em></div><div><small>Útěky</small><b>${st.wins | 0} / ${st.runs | 0}</b></div>`;
 }
+// ---------------------------------------------------------------- TORNÁDO (Keňa, poušť)
+// Na Keni a v poušti se na náhodném místě etapy (25–70 %) z dálky objeví tornádo a přejde přes silnici: trychtýř
+// z prachu (dvě vrstvy s pruhy, které se točí a stoupají, osa se vlní a ohýbá), u země vír prachu a poletující trosky,
+// obloha a mlha ztmavnou, burácí vítr. Tornádo si rychlost řídí tak, aby silnici přešlo zhruba, když tam dojedeš:
+// můžeš zpomalit a nechat ho přejít, nebo projet před ním. V jeho dosahu (36 m) vítr auto táhne dokola a dovnitř,
+// natáčí ho, v jádru (8 m) ho nadzvedne a odhodí. Panel nahoře ukazuje vzdálenost, směr a nebezpečí. Vypíná se
+// v Nastavení (Rally → Tornáda).
+const TORN = { R: 36, core: 8, H: 150, nDust: 360, nDeb: 40 };
+const tornOn = () => saved.tornado !== false;
+const TORN_VERT = `
+uniform float uT; uniform vec2 uLean;
+varying vec2 vUv; varying float vH; varying vec3 vN; varying vec3 vView; varying float vDepth;
+void main() {
+  vec3 p = position;
+  float h = clamp(p.y / ${TORN.H.toFixed(1)}, 0.0, 1.0), w = h * h;
+  // osa se vlní a nahoře ohýbá ve směru větru
+  p.x += sin(uT * 0.7 + h * 5.0) * 5.0 * w + uLean.x * w;
+  p.z += cos(uT * 0.6 + h * 4.3) * 5.0 * w + uLean.y * w;
+  vec4 wp = modelMatrix * vec4(p, 1.0), mv = viewMatrix * wp;
+  vUv = uv; vH = h; vN = normalize(mat3(modelMatrix) * normal); vView = normalize(cameraPosition - wp.xyz); vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+}`;
+const TORN_FRAG = `
+uniform float uT; uniform float uSpin; uniform float uA; uniform vec3 uCol; uniform vec3 uCol2; uniform vec3 uFogC; uniform vec2 uFog; uniform vec3 uSun;
+varying vec2 vUv; varying float vH; varying vec3 vN; varying vec3 vView; varying float vDepth;
+float th(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float tn(vec3 p) { vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(th(i), th(i + vec3(1.0, 0.0, 0.0)), f.x), mix(th(i + vec3(0.0, 1.0, 0.0)), th(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+             mix(mix(th(i + vec3(0.0, 0.0, 1.0)), th(i + vec3(1.0, 0.0, 1.0)), f.x), mix(th(i + vec3(0.0, 1.0, 1.0)), th(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z); }
+float tf(vec3 p) { float s = 0.0, a = 0.5; for (int k = 0; k < 3; k++) { s += a * tn(p); p = p * 2.03 + vec3(1.7, 9.2, 4.1); a *= 0.5; } return s; }
+void main() {
+  // pruhy prachu točící se kolem osy a stoupající vzhůru; šum se bere na kružnici (kolem dokola bez švu)
+  float ang = vUv.x * 6.2832 + uT * uSpin - vH * 3.0;
+  vec3 q = vec3(cos(ang) * 1.7, sin(ang) * 1.7, vH * 9.0 - uT * 0.9);
+  float n = tf(q), n2 = tf(q * 2.3 + 7.0);
+  float dens = smoothstep(0.1, 0.68, n * 0.8 + n2 * 0.4);
+  float edge = 1.0 - abs(dot(normalize(vN), vView));
+  float a = uA * (0.35 + 0.65 * dens) * (0.55 + 0.45 * edge) * smoothstep(0.0, 0.025, vH) * (1.0 - smoothstep(0.84, 1.0, vH));
+  if (a < 0.004) discard;
+  vec3 c = mix(uCol, uCol2, smoothstep(0.08, 0.8, vH)) * (0.62 + 0.38 * max(dot(normalize(vN), uSun), 0.0)) * (0.8 + 0.35 * n2);
+  c = mix(c, uFogC, smoothstep(uFog.x, uFog.y, vDepth) * 0.85);
+  gl_FragColor = vec4(c, a);
+  #include <colorspace_fragment>
+}`;
+const TORN_CLOUD_VERT = `
+varying vec2 vP; varying float vDepth;
+void main() { vec4 wp = modelMatrix * vec4(position, 1.0), mv = viewMatrix * wp; vP = position.xz; vDepth = -mv.z; gl_Position = projectionMatrix * mv; }`;
+const TORN_CLOUD_FRAG = `
+uniform float uT; uniform float uA; uniform vec3 uCol; uniform vec3 uFogC; uniform vec2 uFog;
+varying vec2 vP; varying float vDepth;
+float ch(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float cn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(ch(i), ch(i + vec2(1.0, 0.0)), f.x), mix(ch(i + vec2(0.0, 1.0)), ch(i + vec2(1.0, 1.0)), f.x), f.y); }
+void main() {
+  float r = length(vP) / 260.0, ang = atan(vP.y, vP.x) + uT * 0.05 + r * 2.5;
+  vec2 q = vec2(cos(ang), sin(ang)) * r * 7.0;
+  float n = cn(q) * 0.55 + cn(q * 2.1 + 3.0) * 0.3 + cn(q * 4.3 + 9.0) * 0.15;
+  float a = uA * smoothstep(1.0, 0.35, r) * (0.55 + 0.45 * n);
+  vec3 c = uCol * (0.75 + 0.45 * n) * (0.8 + 0.3 * r);
+  c = mix(c, uFogC, smoothstep(uFog.x, uFog.y, vDepth) * 0.8);
+  gl_FragColor = vec4(c, a);
+  #include <colorspace_fragment>
+}`;
+// trychtýř: válec přetvarovaný na prohnutý kužel (dole úzký, nahoře široký), počátek u země
+function tornFunnel(rBot, rTop, a, spin, col, col2) {
+  const H = TORN.H, g = new T.CylinderGeometry(1, 1, H, 48, 30, true), p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { const h = (p.getY(i) + H / 2) / H, r = rBot + (rTop - rBot) * Math.pow(h, 1.7); p.setXYZ(i, p.getX(i) * r, h * H, p.getZ(i) * r); }
+  g.computeVertexNormals();
+  const m = new T.ShaderMaterial({ vertexShader: TORN_VERT, fragmentShader: TORN_FRAG, transparent: true, depthWrite: false, side: T.DoubleSide,
+    uniforms: { uT: { value: 0 }, uLean: { value: new T.Vector2() }, uSpin: { value: spin }, uA: { value: a }, uCol: { value: new T.Color(col) }, uCol2: { value: new T.Color(col2) },
+      uFogC: { value: new T.Color() }, uFog: { value: new T.Vector2(100, 600) }, uSun: { value: new T.Vector3(0, 1, 0) } } });
+  const mesh = new T.Mesh(g, m); mesh.frustumCulled = false; mesh.renderOrder = 4;
+  return mesh;
+}
+function tornBuild(st) {
+  const grp = new T.Group(), dc = new T.Color(st.dust || '#c9a070'), low = IS_TOUCH || saved.quality === 'low';
+  const gray = new T.Color('#55524f'), c1 = '#' + dc.clone().lerp(gray, 0.35).multiplyScalar(0.5).getHexString(), c2 = '#' + gray.clone().multiplyScalar(0.8).getHexString();
+  const outer = tornFunnel(5, 50, 0.9, 0.35, c1, c2); grp.add(outer);
+  const inner = low ? null : tornFunnel(2.6, 26, 0.75, 0.85, '#' + dc.clone().lerp(gray, 0.5).multiplyScalar(0.36).getHexString(), c2); if (inner) grp.add(inner);
+  // bouřkový mrak nad tornádem: tmavá vířící deska, k okrajům řídne
+  const cloudM = new T.ShaderMaterial({ vertexShader: TORN_CLOUD_VERT, fragmentShader: TORN_CLOUD_FRAG, transparent: true, depthWrite: false, side: T.DoubleSide,
+    uniforms: { uT: { value: 0 }, uA: { value: 0.9 }, uCol: { value: gray.clone().multiplyScalar(0.55) }, uFogC: { value: new T.Color() }, uFog: { value: new T.Vector2(100, 600) } } });
+  const cloud = new T.Mesh(new T.CircleGeometry(260, 64).rotateX(-Math.PI / 2), cloudM); cloud.position.y = TORN.H * 0.9; cloud.frustumCulled = false; cloud.renderOrder = 3; grp.add(cloud);
+  // vír prachu u země: vlastní částice obíhají osu a stoupají
+  const dust = new Dust(low ? 220 : TORN.nDust, { grow: 0, fade: 1 }); dust.setColor('#' + dc.clone().lerp(gray, 0.45).getHexString(), 0.62); dust.points.visible = true;
+  const P = []; for (let k = 0; k < dust.max; k++) P.push({ a: Math.random() * 6.283, r: 3 + Math.random() * 13, y: Math.random() * 14, w: 1.4 + Math.random() * 1.6, u: 1 + Math.random() * 4, s: 8 + Math.random() * 14, life: Math.random() });
+  // trosky: kusy hlíny, větve a kamínky na spirále
+  const deb = new T.InstancedMesh(new T.DodecahedronGeometry(0.35, 0), new T.MeshStandardMaterial({ color: '#4a3a2c', roughness: 0.95 }), TORN.nDeb);
+  deb.frustumCulled = false; deb.castShadow = true;
+  const D = []; for (let k = 0; k < TORN.nDeb; k++) D.push({ a: Math.random() * 6.283, r: 3 + Math.random() * 10, y: Math.random() * 40, w: 1.2 + Math.random() * 1.4, u: 2 + Math.random() * 5, s: 0.4 + Math.random() * 1.4, rx: Math.random() * 6, ry: Math.random() * 6 });
+  return { grp, mats: [outer.material].concat(inner ? [inner.material] : []), cloudM, dust, P, deb, D, M: new T.Matrix4(), Q: new T.Quaternion(), E: new T.Euler(), V: new T.Vector3(), S: new T.Vector3() };
+}
+function tornReset() {
+  const X = G.torn; G.torn = null;
+  if (Sound.tornOff) Sound.tornOff();
+  const th = $('trexHud'); if (th && th.classList.contains('torn')) { th.classList.remove('torn'); if (!G.trex && !G.cop) th.hidden = true; }
+  if (!X) return;
+  tornSky(X, 0);
+  if (X.v3) { scene.remove(X.v3.grp, X.v3.dust.points, X.v3.deb); disposeGroup(X.v3.grp); X.v3.dust.geo.dispose(); X.v3.dust.mat.dispose(); X.v3.deb.geometry.dispose(); X.v3.deb.material.dispose(); }
+}
+function tornArm() {
+  tornReset();
+  const td = W.td, st = td.st;
+  if (!st.tornado || !tornOn() || G.mode !== 'race' || G.net || G.stunt || G.weekly || G.gp || G.rx || G.drift || G.cop) return;
+  const s0 = td.S[td.startIdx], L = td.S[td.finishIdx] - s0;
+  G.torn = { phase: 'wait', sAt: s0 + L * (0.25 + Math.random() * 0.45), side: Math.random() < 0.5 ? -1 : 1, t: 0, k: 0, x: 0, z: 0, dx: 0, dz: 0, v: 7, wob: Math.random() * 9,
+    minD: 1e9, lifted: false, hudT: 0, said: 0, i: 0, sky: null };
+}
+// obloha a mlha ztmavnou podle blízkosti (jen za jasna; počasí si oblohu řídí samo)
+function tornSky(X, k) {
+  if (!X.sky) { if (k <= 0 || WX.cfg) return; X.sky = { sun: sun.intensity, hemi: hemi.intensity, fog: scene.fog ? scene.fog.color.clone() : null, dc: new T.Color(W.td.st.dust || '#c9a070').multiplyScalar(0.55) }; }
+  const S = X.sky;
+  sun.intensity = S.sun * (1 - 0.42 * k); hemi.intensity = S.hemi * (1 - 0.25 * k);
+  if (S.fog && scene.fog) scene.fog.color.copy(S.fog).lerp(S.dc, 0.55 * k);
+  if (k <= 0) X.sky = null;
+}
+function tornTick(dt) {
+  const X = G.torn; if (!X || !W) return;
+  const td = W.td;
+  if (G.mode !== 'race') return;
+  X.t += dt;
+  if (X.phase === 'wait') {
+    if (G.phase !== 'run' || car.s < X.sAt - 720) return;
+    // objeví se daleko u silnice na jedné straně a půjde napříč přes místo sAt
+    const i = clamp(Math.round(X.sAt / td.ds), 0, td.n - 1), a = (Math.random() - 0.5) * 0.7;
+    X.i = i; X.cx = td.X[i]; X.cz = td.Z[i];
+    const nx = td.NX[i] * X.side, nz = td.NZ[i] * X.side;
+    X.x = X.cx + nx * 140; X.z = X.cz + nz * 140;
+    X.dx = -(nx * Math.cos(a) - nz * Math.sin(a)); X.dz = -(nx * Math.sin(a) + nz * Math.cos(a));
+    X.v3 = tornBuild(td.st); scene.add(X.v3.grp, X.v3.dust.points, X.v3.deb); precompile(X.v3.grp);
+    X.phase = 'move'; X.t = 0;
+    Voice.say('Pozor, tornádo! ' + (X.side > 0 ? 'Zprava.' : 'Zleva.'));
+    toast(`🌪 Tornádo ${X.side > 0 ? 'zprava' : 'zleva'}! Přejde přes silnici za ${Math.round((X.sAt - car.s) / 10) * 10} m`, 3);
+    $('trexHud').classList.add('torn');
+  }
+  if (X.phase === 'gone') return;
+  // vzdálenost tornáda od silnice ve směru pohybu (kladná = ještě ji nepřešlo)
+  const toRoad = ((X.cx - X.x) * X.dx + (X.cz - X.z) * X.dz);
+  if (X.phase === 'move') {
+    // rychlost: přejít silnici zhruba ve chvíli, kdy tam dojede auto (když auto stojí, jde pomalu, ale jde)
+    const eta = (X.sAt - car.s) / Math.max(12, car.vf || 0);
+    let vt = toRoad > 0 && car.s < X.sAt + 30 ? clamp(toRoad / Math.max(1, eta - 0.4), 3.5, 13) : 8;
+    X.v += clamp(vt - X.v, -2 * dt, 2 * dt);
+    // směr se pomalu vlní
+    const w = Math.sin(X.t * 0.23 + X.wob) * 0.12 * dt, c = Math.cos(w), s = Math.sin(w), dx = X.dx * c - X.dz * s, dz = X.dx * s + X.dz * c; X.dx = dx; X.dz = dz;
+    X.x += X.dx * X.v * dt; X.z += X.dz * X.v * dt;
+    X.k = Math.min(1, X.k + dt / 4);
+    if (toRoad < -170 || car.s > X.sAt + 450) X.phase = 'fade';
+  } else if (X.phase === 'fade') {
+    X.x += X.dx * X.v * dt; X.z += X.dz * X.v * dt;
+    X.k = Math.max(0, X.k - dt / 5);
+    if (X.k <= 0) { X.phase = 'gone'; tornReset0(X); return; }
+  }
+  tornVisual(X, dt);
+  // vítr na auto
+  const ddx = car.x - X.x, ddz = car.z - X.z, d = Math.hypot(ddx, ddz) || 0.01;
+  X.d = d; X.minD = Math.min(X.minD, d);
+  if (G.phase === 'run' && d < TORN.R && X.k > 0.3) {
+    const k = (1 - d / TORN.R) * X.k, tx = -ddz / d, tz = ddx / d, ix = -ddx / d, iz = -ddz / d;
+    const aT = 13 * Math.pow(k, 1.1), aI = 7 * k * k;
+    car.vx += (tx * aT + ix * aI) * dt; car.vz += (tz * aT + iz * aI) * dt;
+    car.omega += 2.6 * k * k * dt;
+    car.shake = Math.max(car.shake, 0.25 + 0.6 * k); if (Math.random() < dt * 6) rumble(0.3 + 0.6 * k, 90);
+    // jádro: auto nadzvedne a odhodí (jednou za průchod)
+    if (d < TORN.core && !X.lifted && !car.air) {
+      X.lifted = true; car.air = true; car.airT = 0; car.airX = car.x; car.airZ = car.z; car.vy = 5.5 + 3 * k; car.y += 0.05;
+      car.vx += tx * 7; car.vz += tz * 7; car.omega += 2.5;
+      Sound.thump(0.5, 'hit'); toast('🌪 Tornádo tě zvedlo!', 1.8); Voice.say('Držte se!');
+    }
+    if (G.phase === 'run' && d < 20 && !X.close) { X.close = true; achUnlock('tornado'); }
+  }
+  if (d > TORN.core * 3) X.lifted = false;
+  // hluk a tma podle blízkosti
+  const near = clamp(1 - (d - 10) / 420, 0, 1) * X.k;
+  tornSky(X, near * near);
+  if (Sound.ctx) Sound.tornado(near, clamp((ddx * Math.cos(car.h) - ddz * Math.sin(car.h)) / (d + 1), -1, 1));
+  tornHud(X, dt);
+}
+function tornReset0(X) { tornSky(X, 0); if (Sound.tornOff) Sound.tornOff(); const th = $('trexHud'); th.classList.remove('torn'); if (!G.trex && !G.cop) th.hidden = true; if (X.v3) { X.v3.grp.visible = false; X.v3.dust.points.visible = false; X.v3.deb.visible = false; } }
+function tornVisual(X, dt) {
+  const V = X.v3; if (!V) return;
+  V.grp.position.set(X.x, groundAtXZ(X.x, X.z) - 0.5, X.z);
+  const lean = Math.sin(X.t * 0.17 + X.wob) * 14, sunD = sun.position.clone().sub(sun.target.position).normalize();
+  for (const m of V.mats) {
+    const u = m.uniforms; u.uT.value = X.t; u.uA.value = (m === V.mats[0] ? 0.62 : 0.55) * X.k; u.uLean.value.set(X.dx * lean + 10, X.dz * lean);
+    if (scene.fog) { u.uFogC.value.copy(scene.fog.color); u.uFog.value.set(scene.fog.near, scene.fog.far * 1.6); }
+    u.uSun.value.copy(sunD);
+  }
+  { const u = V.cloudM.uniforms; u.uT.value = X.t; u.uA.value = 0.9 * X.k; if (scene.fog) { u.uFogC.value.copy(scene.fog.color); u.uFog.value.set(scene.fog.near, scene.fog.far * 1.8); } }
+  // prach u země: obíhá a stoupá, nahoře se rozplyne a začne znovu dole
+  const ds = V.dust, P = V.P, gy = V.grp.position.y, sc = dust.mat.uniforms.uScale ? dust.mat.uniforms.uScale.value : 1;
+  if (ds.mat.uniforms.uScale) ds.mat.uniforms.uScale.value = sc;
+  for (let k = 0; k < P.length; k++) {
+    const q = P[k]; q.a += q.w * (6 / (q.r + 3)) * dt; q.y += q.u * dt; q.r += 0.6 * dt; q.life += dt / 5;
+    if (q.y > 22 || q.life > 1) { q.y = Math.random() * 2; q.r = 3 + Math.random() * 12; q.life = 0; }
+    ds.p[k * 3] = X.x + Math.cos(q.a) * q.r; ds.p[k * 3 + 1] = gy + q.y; ds.p[k * 3 + 2] = X.z + Math.sin(q.a) * q.r;
+    ds.size[k] = q.s * (1 + q.y / 14); ds.alpha[k] = 0.3 * X.k * Math.sin(Math.min(1, q.life * 5) * Math.PI / 2) * (1 - q.y / 24);
+  }
+  ds.geo.attributes.position.needsUpdate = true; ds.geo.attributes.aSize.needsUpdate = true; ds.geo.attributes.aAlpha.needsUpdate = true;
+  // trosky na spirále
+  for (let k = 0; k < V.D.length; k++) {
+    const q = V.D[k]; q.a += q.w * (5 / (q.r + 2)) * dt; q.y += q.u * dt; q.rx += 3 * dt; q.ry += 2.2 * dt;
+    if (q.y > 45) { q.y = 0; q.r = 3 + Math.random() * 10; }
+    V.S.setScalar(q.s * X.k); V.Q.setFromEuler(V.E.set(q.rx, q.ry, 0));
+    V.M.compose(V.V.set(X.x + Math.cos(q.a) * (q.r + q.y * 0.18), gy + q.y, X.z + Math.sin(q.a) * (q.r + q.y * 0.18)), V.Q, V.S); V.deb.setMatrixAt(k, V.M);
+  }
+  V.deb.instanceMatrix.needsUpdate = true;
+}
+function tornHud(X, dt) {
+  const el = $('trexHud'); if (!el) return;
+  const show = X.phase === 'move' && G.phase === 'run' && X.d < 650 && (car.s < X.sAt + 120 || X.d < 120);
+  el.hidden = !show;
+  if (!show) return;
+  if ((X.hudT -= dt) > 0) return; X.hudT = 0.1;
+  const inR = X.d < TORN.R, ahead = X.sAt - car.s;
+  $('trexTitle').textContent = inR ? '🌪 Jsi ve větru tornáda' : '🌪 Tornádo';
+  $('trexTime').textContent = inR ? 'DRŽ SE!' : `${Math.round(X.d)} m`;
+  $('trexSub').textContent = inR ? 'Vítr tě táhne dokola – kontruj a ujeď z něj.' : ahead > 0 ? `Přechází silnici ${X.side > 0 ? 'zprava doleva' : 'zleva doprava'} za ${Math.round(ahead)} m · zpomal, nebo projeď před ním` : 'Tornádo je za tebou.';
+  const k = clamp(1 - (X.d - TORN.core) / (TORN.R * 4), 0, 1);
+  $('trexBar').style.width = `${Math.round(k * 100)}%`; el.dataset.s = k > 0.7 ? 'bad' : 'warn';
+  trexLayout(el, false);
+}
 // ---------------------------------------------------------------- DRAG RACE: čtvrt míle (402 m) proti jednomu soupeři
 // Dráha je okruh ve tvaru dlouhého úzkého oválu (startovní rovinka = dráha, protější rovinka = zpáteční cesta), takže
 // má betonové zdi s reklamami a plotem, tribunu s diváky a nápisem ze sedaček. Navíc: startovní „vánoční stromeček“,
@@ -19168,6 +19413,7 @@ const ACH = [
   { id: 'rx', icon: '🏁', grp: 'Jízda', name: 'Rallycross', desc: 'Vyhraj rallycrossový závod', rw: { money: 1500 } },
   { id: 'driftKing', icon: '🏆', grp: 'Jízda', name: 'Král driftu', desc: 'Vyhraj drift turnaj Top 16', rw: { money: 3000 } },
   { id: 'trexRun', icon: '🦖', grp: 'Jízda', name: 'Útěk před T-rexem', desc: 'V Džungli ujeď T-rexovi (30 s honičky)', rw: { money: 2000 } },
+  { id: 'tornado', icon: '🌪️', grp: 'Jízda', name: 'Oko bouře', desc: 'Na Keni nebo v poušti projeď blíž než 20 m od tornáda', rw: { money: 1200 } },
   { id: 'copRun', icon: '🚔', grp: 'Jízda', name: 'Ujel jsi policii', desc: 'V policejní honičce dojeď do cíle bez zatčení', rw: { money: 1500 } },
   { id: 'stunt', icon: '🤸', grp: 'Jízda', name: 'Kaskadér', desc: 'Získej 20 hvězd v kaskadérských výzvách', prog: () => [stuntTotal(), 20], rw: { livery: 'Kaskadérská' } },
   { id: 'jump', icon: '🦅', grp: 'Jízda', name: 'Létající Fin', desc: 'Vydrž se skokem ve vzduchu přes 1,6 s', rw: { decal: 'wings' } },
@@ -22431,7 +22677,7 @@ function renderMenu() {
   $('tTyreVal').textContent = RTYRE[RTYRE[saved.rtyre] ? saved.rtyre : 'std'].n; tg('tSpare', saved.spare !== false);
   $('bTrophySub').textContent = `${achCount()} / ${ACH.length} úspěchů`;
   $('bWeeklySub').textContent = wkSub();
-  tg('tFog', !!saved.rallyFog); tg('tABS', !!saved.asABS); tg('tDmg', saved.damage !== false); tg('tESP', !!saved.asESP); tg('tLineC', !!saved.rlineCorners); tg('tRumble', saved.rumble !== false);
+  tg('tFog', !!saved.rallyFog); tg('tTornado', saved.tornado !== false); tg('tABS', !!saved.asABS); tg('tDmg', saved.damage !== false); tg('tESP', !!saved.asESP); tg('tLineC', !!saved.rlineCorners); tg('tRumble', saved.rumble !== false);
   tg('tVoice', saved.voice); tg('tSound', saved.sound); tg('tAuto', saved.autoGas); tg('tBrake', saved.autoBrake); tg('tGhost', saved.ghost); tg('tLine', saved.rline !== false); tg('tTilt', saved.tilt);
   renderVoiceInfo();
   $('tQualityVal').textContent = Q().name;
@@ -22497,6 +22743,7 @@ $('tSpare').onclick = () => { saved.spare = saved.spare === false; persist(); re
 $('bWheel').onclick = () => tyChange();
 $('tWx').onclick = () => { saved.rallyWx = RW_CHOICES[(RW_CHOICES.indexOf(saved.rallyWx || 'auto') + 1) % RW_CHOICES.length]; persist(); renderMenu(); toast(`Počasí na rally: ${RW_NAMES[saved.rallyWx].toLowerCase()}`, 1.6); };
 $('tFog').onclick = () => { saved.rallyFog = !saved.rallyFog; persist(); renderMenu(); if (W) applyStage(W.td); };
+$('tTornado').onclick = () => { saved.tornado = saved.tornado === false; persist(); renderMenu(); };
 $('tTilt').onclick = () => {
   $('tiltInfo').hidden = true;
   saved.tilt = !saved.tilt; persist(); renderMenu();
@@ -23216,6 +23463,7 @@ function tickUpdate(dt) {
     if (G.drift && G.mode === 'race') driftTick(dt);
     if (G.trex && G.mode === 'race') trexTick(dt);
     if (G.cop && G.mode === 'race') copTick(dt);   // policejní honička
+    if (G.torn && G.mode === 'race') tornTick(dt);   // tornádo
     if (G.gp && G.mode === 'race') gpTick(dt);
     else if (WX.cfg && G.mode === 'race') wxTick(dt);   // počasí na rally
     if (G.net && G.mode === 'race') netTick(dt);
@@ -23275,7 +23523,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
