@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwt78u15';
+window.__BUILD = 'mwt7mckh';
 (function () {
   function check() {
     try {
@@ -3230,6 +3230,21 @@ const STAGES = [
     mountains: { color: '#2a1c1b', snow: false }, props: { posts: 'white', bales: false, spectators: true },
     clouds: ['#6e4c44', 0.55], grass: ['#3e4c27', '#6c7236', 0.3],
   },
+  {
+    // Laponsko: zimní rally za polárním kruhem v modré hodině – ujetý sníh mezi vysokými sněhovými valy (odhrnutý sníh,
+    // auto se o ně opře a sklouzne jako na Švédské rally), přejezdy zamrzlých jezer po ledové cestě (lesklý led, tyče na
+    // valech), zasněžené smrky, sobi a polární záře na nebi. Auta mají pneumatiky s hroty (na ledu drží, ale míň než na sněhu).
+    id: 'laponsko', photo: null, name: 'Polární záře', region: 'Laponsko · zimní rally', surface: 'Sníh a led', road: 'snow', tod: 'Modrá hodina',
+    len: 5600, seed: 311, turn: 0.85, hills: 22, hillScale: 1 / 380, crests: 4, water: -5.5, seaSides: '-', tilt: [0, 0],
+    grip: 0.64, offGrip: 0.42, loose: true, snowBanks: true, frozen: true, aurora: true, studs: true, dusk: true,
+    sky: { top: '#0a1532', hor: '#8088bc', bottom: '#2a3662' }, sun: { dir: [-0.55, 0.1, 0.5], color: '#ffb8a6', int: 1.1 },
+    hemi: { sky: '#a9bdf0', ground: '#5a6888', int: 1.15 }, fog: [80, 540], exposure: 1.18,
+    ground: { a: '#eaf0f7', b: '#d6dfeb', dirt: '#c6d0dd', rock: '#5c636e', beach: '#e2e9f2' },
+    shoulder: { inner: '#d4dce7', outer: '#f0f4fa' }, dust: '#f4f8ff', waterColor: '#a9c4d8',
+    trees: [['snowspruce', 0.6], ['snowpine', 0.4]], density: 1.05, rocks: 0.15,
+    mountains: { color: '#34456a', snow: true }, props: { posts: 'snow', bales: false, spectators: true },
+    clouds: null, grass: null,
+  },
 ];
 
 // ---------------------------------------------------------------- uložená data
@@ -3423,12 +3438,19 @@ function buildTrackData0(st) {
       Y[j] += c.H * Math.exp(-d * d);
     }
   }
-  if (st.water != null) for (let i = 0; i < n; i++) Y[i] = Math.max(Y[i], st.water + 2.2);
+  // zamrzlé jezero (Laponsko): cesta vede po ledu těsně nad hladinou; úseky na ledu (aspoň 20 m) se označí
+  let ice = null, iceRuns = null;
+  if (st.water != null && st.frozen) {
+    ice = new Uint8Array(n); for (let i = 0; i < n; i++) if (Y[i] < st.water + 0.9) ice[i] = 1;
+    iceRuns = [];
+    for (let i = 0; i < n;) { if (!ice[i]) { i++; continue; } let j = i; while (j < n && ice[j]) j++; if (j - i < 10) ice.fill(0, i, j); else iceRuns.push([S[i], S[j - 1], i, j - 1]); i = j; }
+  }
+  if (st.water != null) for (let i = 0; i < n; i++) Y[i] = Math.max(Y[i], st.water + (st.frozen ? 0.18 : 2.2));
 
   // Ideální rychlost: přilnavost v zatáčkách + brzdění a zrychlení.
   const aLat = 9.81 * st.grip * 1.25 * 0.9;
   const vCap = st.vmax ? Math.min(VMAX, st.vmax) : VMAX;
-  for (let i = 0; i < n; i++) V[i] = Math.min(vCap, Math.sqrt(aLat / Math.max(1e-4, Math.abs(K[i]))));
+  for (let i = 0; i < n; i++) V[i] = Math.min(vCap, Math.sqrt((ice && ice[i] ? aLat * 0.62 : aLat) / Math.max(1e-4, Math.abs(K[i]))));
   V[0] = 0;
   for (let i = 1; i < n; i++) V[i] = Math.min(V[i], Math.sqrt(V[i - 1] * V[i - 1] + 2 * 8.5 * ds));
   for (let i = n - 2; i >= 0; i--) V[i] = Math.min(V[i], Math.sqrt(V[i + 1] * V[i + 1] + 2 * 9.81 * st.grip * 1.12 * ds));
@@ -3524,7 +3546,7 @@ function buildTrackData0(st) {
       for (let i = 0; i < n; i++) { const r = rel(i), rr = clamp(r, j0, j1), c = rxJokerC(joker, rr), k = smooth(j0 - 30, j0, r) * (1 - smooth(j1, j1 + 30, r)); if (k > 0) wa[i] = Math.max(wa[i], lerp(wa[i], c + rxJokerW(joker, rr) + 1.6, k)); }
     }
   }
-  return { st, n, ds, L, X, Y, Z, S, TX, TZ, NX, NZ, HD, K, V, startIdx, finishIdx, length: S[finishIdx] - S[startIdx], notes, crests, ideal, base, noise, wallL, wallR, pit, bridgeH, bridge, mix, joker };
+  return { st, n, ds, L, X, Y, Z, S, TX, TZ, NX, NZ, HD, K, V, startIdx, finishIdx, length: S[finishIdx] - S[startIdx], notes, crests, ideal, base, noise, wallL, wallR, pit, bridgeH, bridge, mix, joker, ice, iceRuns };
 }
 
 const NUM = ['', 'jedna', 'dva', 'tři', 'čtyři', 'pět', 'šest'];
@@ -5210,8 +5232,8 @@ function buildWorld(td) {
   const obstacles = new Map(); // mřížka 10 m → překážky pro srážky
   // mantinely jako úsečky (joker v rallycrossu): auto po nich klouže, nezasekne se jako o kulaté překážky
   const barriers = { segs: [], grid: new Map() };
-  const addBarrier = (x1, z1, x2, z2) => {
-    const sg = { x1, z1, x2, z2, l2: Math.max(1e-6, (x2 - x1) ** 2 + (z2 - z1) ** 2) }, keys = new Set(), L = Math.sqrt(sg.l2);
+  const addBarrier = (x1, z1, x2, z2, soft) => {
+    const sg = { x1, z1, x2, z2, l2: Math.max(1e-6, (x2 - x1) ** 2 + (z2 - z1) ** 2), soft: !!soft }, keys = new Set(), L = Math.sqrt(sg.l2);
     for (let t = 0; t <= L + 1e-6; t += 4) { const f = Math.min(1, t / L); keys.add(Math.floor((x1 + (x2 - x1) * f) / 10) * 100000 + Math.floor((z1 + (z2 - z1) * f) / 10)); }
     keys.add(Math.floor(x2 / 10) * 100000 + Math.floor(z2 / 10));
     for (const k of keys) { let a = barriers.grid.get(k); if (!a) { a = []; barriers.grid.set(k, a); } a.push(sg); }
@@ -7324,7 +7346,9 @@ function buildWorld(td) {
     });
     const lava = st.lava ? volLavaMaterial() : null;   // sopka: místo vody žhavá láva
     if (lava) lava.uniforms.uWindT = windTime; else mat.uniforms.uWindT = windTime;
-    water = new T.Mesh(wg, lava || mat);
+    const iceM = st.frozen ? lapIceMaterial(wg, pos, dep) : null;   // Laponsko: zamrzlé jezero
+    water = new T.Mesh(wg, iceM || lava || mat);
+    if (iceM) water.receiveShadow = true;
     water.position.y = WL;
     water.renderOrder = 2;
     group.add(water);
@@ -7385,7 +7409,7 @@ function buildWorld(td) {
   // ---- obloha, hvězdy, světla
   const sky = makeSky(st);
   group.add(sky);
-  if (st.night) {
+  if (st.night || st.aurora) {
     const sp = [];
     const r2 = mulberry32(5);
     for (let i = 0; i < 1600; i++) {
@@ -7402,10 +7426,11 @@ function buildWorld(td) {
   const rline = st.circuit ? buildRacingLine(td) : null;
   if (rline) { group.add(rline.mesh); if (st.road === 'tarmac') group.add(buildRubberLine(td)); }
   const vol = st.volcano ? volBuild(group, td, terrainAt, [gx0, gz0, gx1, gz1]) : null;
+  const lap = st.snowBanks || st.aurora ? lapBuild(group, td, terrainAt, addBarrier, sky) : null;
   // tornádo (Keňa, poušť): postaví se skryté už teď, aby se jeho shadery přeložily při načítání, ne za jízdy
   const torn3 = st.tornado ? tornBuild(st) : null;
   if (torn3) { group.add(torn3.grp, torn3.dust.points, torn3.deb); tornShow(torn3, false); }
-  return { vol, torn3, group, td, pit: pitW, startLights, rline, cityChunks, flood: floodW, terrainAt, roadDistAt, obstacles, barriers, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
+  return { vol, lap, torn3, group, td, pit: pitW, startLights, rline, cityChunks, flood: floodW, terrainAt, roadDistAt, obstacles, barriers, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
 }
 
 // ---------------------------------------------------------------- auto
@@ -10293,12 +10318,13 @@ function setLivery(i) {
 }
 function applyNight(st) {
   const L = (car3d.pod.userData && car3d.pod.userData.lv) | 0;
-  car3d.pod.visible = !!st.night && L > 0;
-  car3d.beams.visible = !!st.night;
-  car3d.beamMat.uniforms.uI.value = st.night ? 0.03 : 0;
-  headSpot.intensity = st.night ? 480 : 0;
-  podSpot.intensity = st.night ? [380, 700, 1000, 1350][L] : 0; podSpot.distance = [150, 200, 260, 340][L]; podSpot.position.y = L >= 2 ? 1.5 : 1.0;   // přídavná světla z dílny
-  car3d.headMat.emissiveIntensity = st.night ? 1.4 : 0.5;
+  const lit = !!(st.night || st.dusk);   // v noci a v modré hodině (Laponsko) svítí světla
+  car3d.pod.visible = lit && L > 0;
+  car3d.beams.visible = lit;
+  car3d.beamMat.uniforms.uI.value = st.night ? 0.03 : lit ? 0.018 : 0;
+  headSpot.intensity = st.night ? 480 : lit ? 300 : 0;
+  podSpot.intensity = lit ? [380, 700, 1000, 1350][L] * (st.night ? 1 : 0.7) : 0; podSpot.distance = [150, 200, 260, 340][L]; podSpot.position.y = L >= 2 ? 1.5 : 1.0;   // přídavná světla z dílny
+  car3d.headMat.emissiveIntensity = lit ? 1.4 : 0.5;
 }
 
 function applyStage(td) {
@@ -10534,8 +10560,8 @@ function groundAt(x, z, rp) {
   if (a <= HW) return rp.y + 0.04;
   if (inPitArea(td, rp.s, rp.lat) || inJoker(td, rp.s, rp.lat)) return rp.y + 0.045;
   if (W.td.st.circuit) return a <= HW + 3.2 ? rp.y + 0.03 - 0.06 * ((a - HW) / 3.2) : W.terrainAt(x, z);
-  if (a <= HW + 3.2) return rp.y + 0.03 - 0.53 * ((a - HW) / 3.2);
-  return Math.max(W.terrainAt(x, z), rp.y - 0.6 - (a - HW - 3.2) * 4);
+  const g = a <= HW + 3.2 ? rp.y + 0.03 - 0.53 * ((a - HW) / 3.2) : Math.max(W.terrainAt(x, z), rp.y - 0.6 - (a - HW - 3.2) * 4);
+  return td.st.frozen ? Math.max(g, td.st.water + 0.03) : g;   // zamrzlé jezero: led nese auto
 }
 // boxová ulička včetně vjezdu a výjezdu: asfalt od kraje trati až ke garážím
 function inPitArea(td, s, lat) {
@@ -10808,7 +10834,10 @@ function physics0(dt, inp) {
   const al = Math.abs(rp.lat);
   const surf = al <= HW + 0.4 || inPitArea(td, rp.s, rp.lat) || inJoker(td, rp.s, rp.lat) ? 'road' : al <= HW + SHOULDER_W() ? 'shoulder' : 'off';
   car.surf = surf;
-  const grip = surf === 'road' ? st.grip : surf === 'shoulder' ? st.grip * 0.86 : st.offGrip;
+  let grip = surf === 'road' ? st.grip : surf === 'shoulder' ? st.grip * 0.86 : st.offGrip;
+  // led na zamrzlém jezeře (silnice v úseku ledu nebo jezero mimo ni): pneumatiky s hroty drží, ale méně než na sněhu
+  car.onIce = !!(st.frozen && (surf === 'road' ? td.ice && td.ice[rp.i] : W.terrainAt(car.x, car.z) < st.water + 0.02));
+  if (car.onIce) grip = st.grip * (st.studs ? 0.72 : 0.5);
 
   // ve vysoké rychlosti se volant točí pomaleji (jako u skutečného auta s posilovačem), návrat je rychlejší
   const sp0 = Math.abs(car.vf), slow = lerp(1, 0.55, clamp((sp0 - 15) / 30, 0, 1));
@@ -11807,7 +11836,7 @@ function barrierCollide(dt) {
           const dx = px - (sg.x1 + ex * t), dz = pz - (sg.z1 + ez * t), d2 = dx * dx + dz * dz;
           if (d2 >= rad * rad) continue;
           const d = Math.sqrt(d2) || 1e-3, pen = rad - d;
-          if (!best || pen > best.pen) best = { pen, nx: dx / d, nz: dz / d, off };
+          if (!best || pen > best.pen) best = { pen, nx: dx / d, nz: dz / d, off, soft: !!sg.soft };
         }
       }
     }
@@ -11820,11 +11849,14 @@ function barrierCollide(dt) {
       // náraz předkem nebo zadkem auto natočí podél mantinelu (předek se odvrátí od něj; kladné omega = předek doprava)
       const nr = best.nx * fz - best.nz * fx;   // složka normály mantinelu ve směru „doprava od auta“
       car.omega = car.omega * 0.7 + clamp(best.off * nr * -vn * 0.28, -2.5, 2.5);
-      if (-vn > 3) { Sound.thump(Math.min(1, -vn / 10), 'wall'); car.shake = Math.min(1, car.shake + -vn / 24); rumble(Math.min(1, -vn / 14), 150);
+      if (-vn > 3 && best.soft) {   // sněhový val: tlumené žuchnutí a oblak sněhu
+        Sound.thump(Math.min(0.7, -vn / 14), 'land'); car.shake = Math.min(1, car.shake + -vn / 34); rumble(Math.min(0.7, -vn / 18), 120);
+        for (let q = 0; q < Math.min(26, 6 + -vn * 1.5); q++) dust.emit(car.x - best.nx * 1.1 + (Math.random() - 0.5) * 2, car.y + 0.5 + Math.random(), car.z - best.nz * 1.1 + (Math.random() - 0.5) * 2, -best.nx * 2 + (Math.random() - 0.5) * 3, 1.5 + Math.random() * 3, -best.nz * 2 + (Math.random() - 0.5) * 3, 1.4 + Math.random(), 1.1);
+      } else if (-vn > 3) { Sound.thump(Math.min(1, -vn / 10), 'wall'); car.shake = Math.min(1, car.shake + -vn / 24); rumble(Math.min(1, -vn / 14), 150);
         sparkBurst(car.x - best.nx * 1, car.y + 0.4, car.z - best.nz * 1, Math.min(30, 4 + -vn * 2), Math.min(1.6, -vn / 10)); }
     }
     const vt = Math.hypot(car.vx - best.nx * (car.vx * best.nx + car.vz * best.nz), car.vz - best.nz * (car.vx * best.nx + car.vz * best.nz));
-    if (vt > 4) Sound.scrape(Math.min(1, vt / 40));
+    if (vt > 4) { if (best.soft) { if (Math.random() < 0.5) dust.emit(car.x - best.nx * 1.1, car.y + 0.4, car.z - best.nz * 1.1, (Math.random() - 0.5) * 2, 1 + Math.random() * 2, (Math.random() - 0.5) * 2, 1.2, 0.9); } else Sound.scrape(Math.min(1, vt / 40)); }
   }
 }
 function updateCarVisual(dt, inp) {
@@ -11874,7 +11906,7 @@ function updateCarVisual(dt, inp) {
     w.pivot.visible = !swap;
   }
   tyVisual(r);
-  car3d.tailMat.emissiveIntensity = inp.brake > 0 ? 3.2 : W.td.st.night ? 1.2 : 0.4;
+  car3d.tailMat.emissiveIntensity = inp.brake > 0 ? 3.2 : W.td.st.night || W.td.st.dusk ? 1.2 : 0.4;
   if (car3d.glow) rxGlowSet(car3d, inp.brake > 0, !!G.rx);   // záře světel jen v rallycrossu
   if (car3d.brakeMats && car3d.brakeMats.length) { const bk = clamp(inp.brake, 0, 1) * clamp(Math.abs(car.vf) / 30, 0, 1); for (const b of car3d.brakeMats) b.m.emissiveIntensity = bk * 0.7 * b.glow; } // kroužky brzd při brzdění žhnou
   if (car3d.kersMat) car3d.kersMat.emissiveIntensity = 0.9 + (car.nosOn ? 1.6 : 0) + 0.2 * Math.sin(performance.now() / 160);
@@ -12059,9 +12091,10 @@ const FAUNA_KINDS = {
   giraffe: { s: 2.0, col: '#c27a32', belly: '#efdcb8', legLen: 1.4, legR: 0.055, body: [0.22, 0.28, 0.48], neck: 1.3, neckAng: 0.55, head: [0.09, 0.1, 0.24], antler: 0, hump: 0, osso: true, pattern: 'spots', seg: 16, speed: 8 },
   zebra: { s: 1.12, col: '#f4f4f0', belly: '#f4f4f0', legLen: 0.8, body: [0.3, 0.34, 0.62], neck: 0.52, neckAng: 0.72, head: [0.1, 0.12, 0.3], antler: 0, hump: 0, mane: true, pattern: 'stripes', seg: 18, speed: 12 },
   elephant: { s: 2.4, col: '#7f7771', belly: '#6c645e', legLen: 0.78, legR: 0.13, body: [0.5, 0.5, 0.78], neck: 0.18, neckAng: 1.25, head: [0.3, 0.32, 0.28], antler: 0, hump: 0.12, trunk: true, seg: 12, speed: 5 },
+  reindeer: { s: 1.02, col: '#6f6154', belly: '#e6e0d4', legLen: 0.7, body: [0.3, 0.33, 0.58], neck: 0.44, neckAng: 0.62, head: [0.1, 0.12, 0.25], antler: 1, hump: 0, speed: 10 },
   flamingo: { s: 1.0, col: '#f49ab8', belly: '#f7b6cb', legLen: 0.85, legR: 0.012, body: [0.14, 0.13, 0.26], neck: 0.55, neckAng: 0.15, head: [0.05, 0.05, 0.1], antler: 0, hump: 0, beak: true, seg: 9, speed: 6, shore: true },
 };
-const STAGE_FAUNA = { kena: { giraffe: 0.7, zebra: 0.9, elephant: 0.35, flamingo: 0.6 }, suzuka: {}, monaco: {}, sumava: { deer: 1 }, krkonose: { deer: 0.5 }, jezera: { moose: 0.6, deer: 0.5 }, riviera: {}, poust: { camel: 0.8 }, miami: {} };
+const STAGE_FAUNA = { laponsko: { reindeer: 1.2 }, kena: { giraffe: 0.7, zebra: 0.9, elephant: 0.35, flamingo: 0.6 }, suzuka: {}, monaco: {}, sumava: { deer: 1 }, krkonose: { deer: 0.5 }, jezera: { moose: 0.6, deer: 0.5 }, riviera: {}, poust: { camel: 0.8 }, miami: {} };
 const STAGE_BIRDS = { kena: { n: 4, col: '#f49ac1', size: 1.7 }, sumava: { n: 4, col: '#2b2a2c', size: 1 }, krkonose: { n: 0 }, jezera: { n: 5, col: '#e9ecef', size: 1.3 }, riviera: { n: 5, col: '#f4f6f8', size: 1.4 }, poust: { n: 3, col: '#3a2e26', size: 2.4 } };
 
 function faunaGeometry(k) {
@@ -12621,6 +12654,7 @@ function startRace() {
   trexArm();   // Džungle: T-rex čeká na náhodném místě etapy
   tornArm();   // Keňa a poušť: tornádo přejde přes silnici
   volReset();   // sopka: první erupce za 10–16 s
+  if (W.lap) { W.lap.warned.clear(); W.lap.iceFast = false; }   // Laponsko: varování před ledem znovu
   resetPushables();
   Tilt.calibrate();
   car.nos = nosTank(); car.nosOn = false; car.nosFx = 0;
@@ -15421,7 +15455,7 @@ function copLightbar(c3) {
   body.attach(g);
   const gm = new T.MeshBasicMaterial({ map: tex, color: '#2b5cff', transparent: true, opacity: 0, depthWrite: false, blending: T.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -2 });
   const glowG = new T.Mesh(new T.PlaneGeometry(10, 10).rotateX(-Math.PI / 2), gm); glowG.renderOrder = 3; glowG.frustumCulled = false;
-  const st = W && W.td.st, night = st && st.night ? 1 : st && /Západ|Večer|Noc|Podvečer/.test(st.tod || '') ? 0.55 : 0;
+  const st = W && W.td.st, night = st && st.night ? 1 : st && /Západ|Večer|Noc|Podvečer|Modrá/.test(st.tod || '') ? 0.55 : 0;
   c3.cop = { mL, mR, sL, sR, gm, ph: Math.random(), fo: 0.7 + 0.3 * night, go: 0.12 + 0.45 * night, bar: g };
   for (const s of [sL, sR]) s.scale.setScalar(1.5 + 1.4 * night);
   c3.glowG = glowG;
@@ -16416,6 +16450,133 @@ function volTick(dt) {
     if (V.burnT > 0.9) { V.burnT = 0; V.hit = true; rdHit(16, Math.sin(car.h), Math.cos(car.h)); resetToTrack(true); toast('🔥 Láva! Auto začalo hořet – zpět na trati', 2.6); Voice.say('Láva! To bylo o fous.'); }
   } else V.burnT = Math.max(0, V.burnT - dt);
   if (Sound.ctx && G.mode === 'race' && !G.paused) Sound.tornado(0.22 + 0.55 * ek, 0);   // hluboké dunění sopky
+}
+// ---------------------------------------------------------------- LAPONSKO (etapa Polární záře)
+// Sněhové valy podél celé etapy (odhrnutý sníh: hladký val s nepravidelnou výškou, auto se o něj opře a sklouzne –
+// měkký mantinel, oblak sněhu), zamrzlá jezera (lesklý led s prasklinami a normálovou mapou, u břehu navátý sníh),
+// přes led vede vyhrnutá ledová cesta s červenými tyčemi na valech, na nebi tři vlnící se závěsy polární záře a hvězdy.
+// Před ledem varování (toast a spolujezdec), trofej za rychlý průjezd ledu.
+const AURORA_VERT = `
+uniform float uT; varying vec2 vUv;
+void main() {
+  vUv = uv; vec3 p = position;
+  float a = uv.x * 6.2832;
+  p.xz += vec2(cos(a * 1.5 + uT * 0.07), sin(a * 2.3 - uT * 0.05)) * 110.0;   // závěs se pomalu vlní
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+}`;
+const AURORA_FRAG = `
+uniform float uT; uniform float uA; uniform vec3 uC1; uniform vec3 uC2; varying vec2 vUv;
+float ah(float x) { return fract(sin(x * 127.1) * 43758.5453); }
+float an(float x) { float i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f); return mix(ah(i), ah(i + 1.0), f); }
+void main() {
+  float u = vUv.x, v = vUv.y;
+  // svislé paprsky (jemné i hrubší), místa, kde závěs svítí víc, a dýchání jasu
+  float rays = an(u * 260.0 + uT * 0.5) * 0.55 + an(u * 80.0 - uT * 0.25) * 0.45;
+  float band = an(u * 7.0 + uT * 0.035) * 0.7 + an(u * 19.0 - uT * 0.05) * 0.3;
+  float body = smoothstep(0.0, 0.1, v) * (1.0 - smoothstep(0.3, 1.0, v)) * (1.0 - smoothstep(0.85, 1.0, abs(u * 2.0 - 1.0)));
+  float a = uA * body * (0.3 + 0.7 * rays) * smoothstep(0.22, 0.75, band) * (0.75 + 0.25 * sin(uT * 0.35 + u * 25.0));
+  vec3 c = mix(uC1, uC2, smoothstep(0.2, 0.95, v)) + uC1 * smoothstep(0.1, 0.0, abs(v - 0.06)) * 1.3;   // jasný zelený spodní lem
+  gl_FragColor = vec4(c, a);
+  #include <colorspace_fragment>
+}`;
+function lapAurora(sky) {
+  const grp = new T.Group(), mats = [];
+  for (const [a0, R, y0, h, k, w] of [[0.7, 2450, 540, 780, 0.95, 1.9], [2.1, 2600, 640, 900, 0.75, 1.6], [-0.8, 2350, 500, 680, 0.6, 1.4], [3.6, 2500, 600, 760, 0.5, 1.5]]) {
+    const segs = 180, pos = [], uv = [], idx = [];
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs, a = a0 - w / 2 + w * t;
+      for (const v of [0, 1]) { pos.push(Math.cos(a) * R, y0 + v * h, Math.sin(a) * R); uv.push(t, v); }
+      if (i < segs) { const b = i * 2; idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2); }
+    }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx);
+    const m = new T.ShaderMaterial({ vertexShader: AURORA_VERT, fragmentShader: AURORA_FRAG, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide, fog: false,
+      uniforms: { uT: { value: Math.random() * 100 }, uA: { value: k }, uC1: { value: new T.Color('#36ff96') }, uC2: { value: new T.Color('#9b52ff') } } });
+    const mesh = new T.Mesh(g, m); mesh.renderOrder = -7; mesh.frustumCulled = false; grp.add(mesh); mats.push(m);
+  }
+  sky.add(grp);
+  return mats;
+}
+// zamrzlé jezero: led (fotka Ice002, normálová mapa a drsnost), u břehu bílý navátý sníh podle hloubky
+function lapIceMaterial(wg, pos, dep) {
+  const uv = [], cl = [], snow = new T.Color('#f3f7fc'), ice = new T.Color('#bcd4e8');
+  for (let k = 0; k < dep.length; k++) {
+    uv.push(pos[k * 3] / 9, pos[k * 3 + 2] / 9);
+    // jezero je většinou zasněžené, holý černý led jen v ostrůvcích (vítr sníh odfoukal) a dál od břehu
+    const x = pos[k * 3], z = pos[k * 3 + 2], bare = smooth(0.15, 0.6, 0.5 + 0.3 * Math.sin(x * 0.021 + z * 0.013) + 0.25 * Math.sin(x * 0.057 - z * 0.044) + 0.15 * Math.sin(z * 0.11 + x * 0.02));
+    const c = snow.clone().lerp(ice, clamp((dep[k] - 0.15) / 1.6, 0, 1) * (0.12 + 0.88 * bare));
+    cl.push(c.r, c.g, c.b);
+  }
+  wg.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); wg.setAttribute('color', new T.Float32BufferAttribute(cl, 3)); wg.computeVertexNormals();
+  const rep = (t) => { if (t) { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(1, 1); t.needsUpdate = true; } return t; };
+  return new T.MeshStandardMaterial({ map: rep(photoTex('ice_d', true, 1, 1)), normalMap: rep(photoTex('ice_n', false, 1, 1)), roughnessMap: rep(photoTex('ice_r', false, 1, 1)),
+    normalScale: new T.Vector2(0.45, 0.45), vertexColors: true, color: '#f4f8fc', roughness: 0.6, metalness: 0, envMapIntensity: 1.2 });
+}
+function lapBuild(group, td, hAt, addBarrier, sky) {
+  const st = td.st, { X, Y, Z, NX, NZ, S, n } = td, rnd = mulberry32(st.seed * 5 + 11);
+  const out = { aurora: st.aurora ? lapAurora(sky) : null, warned: new Set(), iceFast: false };
+  if (!st.snowBanks) return out;
+  // výška terénu vedle cesty (jako groundAt, ale ještě bez světa W)
+  const gAt = (i, lat) => {
+    const a = Math.abs(lat), x = X[i] + NX[i] * lat, z = Z[i] + NZ[i] * lat;
+    const g = a <= HW ? Y[i] + 0.04 : a <= HW + 3.2 ? Y[i] + 0.03 - 0.53 * ((a - HW) / 3.2) : Math.max(hAt(x, z), Y[i] - 0.6 - (a - HW - 3.2) * 4);
+    return st.frozen ? Math.max(g, st.water + 0.03) : g;
+  };
+  // průřez valu: od kraje cesty (vnitřní pata, svah, hřeben, vnější svah, pata), výška kolísá podél cesty
+  const prof = [[0.25, 0], [0.55, 0.55], [0.95, 0.92], [1.35, 1.0], [1.9, 0.62], [2.7, 0]];
+  const i0 = td.startIdx + 12, i1 = td.finishIdx - 12, step = 2, mat = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.92, metalness: 0, side: T.DoubleSide });
+  for (const side of [-1, 1]) {
+    const pos = [], col = [], idx = [];
+    let rows = 0, prev = null;
+    for (let i = i0; i <= i1; i += step) {
+      const h = 1.05 + 0.45 * (0.5 + 0.5 * Math.sin(S[i] * 0.021 + side * 2 + rnd() * 0.3)) + 0.15 * Math.sin(S[i] * 0.11);
+      for (const [o, k] of prof) {
+        const lat = side * (HW + o), x = X[i] + NX[i] * lat, z = Z[i] + NZ[i] * lat, y = gAt(i, lat) + k * h - 0.04;
+        pos.push(x, y, z);
+        const w = 0.9 + 0.1 * rnd(), b = k > 0.8 ? 1 : 0.94;   // hřeben světlejší, pata do modra (stín)
+        col.push(0.9 * w * b, 0.93 * w * b, 0.98 * w);
+      }
+      if (rows) { const a = (rows - 1) * prof.length, c = rows * prof.length; for (let q = 0; q < prof.length - 1; q++) { const p0 = a + q, p1 = c + q; if (side > 0) idx.push(p0, p1, p0 + 1, p0 + 1, p1, p1 + 1); else idx.push(p0, p0 + 1, p1, p0 + 1, p1 + 1, p1); } }
+      rows++;
+      // měkký mantinel podél vnitřní strany valu
+      const bx = X[i] + NX[i] * side * (HW + 0.55), bz = Z[i] + NZ[i] * side * (HW + 0.55);
+      if (prev) addBarrier(prev[0], prev[1], bx, bz, true);
+      prev = [bx, bz];
+    }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new T.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
+    const m = new T.Mesh(g, mat); m.receiveShadow = true; m.castShadow = !IS_TOUCH; group.add(m);
+  }
+  // ledová cesta: lesklý led s prasklinami přes silnici na jezeře, na valech červené tyče s odrazkou
+  if (td.iceRuns && td.iceRuns.length) {
+    const rp = [], ru = [], ri = [];
+    for (const [, , a, b] of td.iceRuns) {
+      const base = rp.length / 3;
+      for (let i = a; i <= b; i++) { for (const c of [0, 1]) { const lat = -HW + 2 * HW * c; rp.push(X[i] + NX[i] * lat, Y[i] + 0.055, Z[i] + NZ[i] * lat); ru.push(c * 1.2, S[i] / 7); } if (i < b) { const k = base + (i - a) * 2; ri.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } }
+    }
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(rp, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(ru, 2)); g.setIndex(ri); g.computeVertexNormals();
+    const rep = (t) => { if (t) { t.wrapS = t.wrapT = T.RepeatWrapping; t.needsUpdate = true; } return t; };
+    const im = new T.MeshStandardMaterial({ map: rep(photoTex('ice_d', true, 1, 1)), normalMap: rep(photoTex('ice_n', false, 1, 1)), roughnessMap: rep(photoTex('ice_r', false, 1, 1)), color: '#f2f6fb', roughness: 0.45, metalness: 0, envMapIntensity: 1.3, normalScale: new T.Vector2(0.5, 0.5), polygonOffset: true, polygonOffsetFactor: -2 });
+    const road = new T.Mesh(g, im); road.receiveShadow = true; group.add(road);
+    const poles = []; for (const [, , a, b] of td.iceRuns) for (let i = a; i <= b; i += 10) for (const side of [-1, 1]) poles.push([i, side]);
+    if (poles.length) {
+      const pm = new T.InstancedMesh(new T.CylinderGeometry(0.035, 0.035, 1.8, 6), new T.MeshStandardMaterial({ color: '#d8261e', roughness: 0.5 }), poles.length);
+      const rm = new T.InstancedMesh(new T.CylinderGeometry(0.045, 0.045, 0.16, 8), new T.MeshStandardMaterial({ color: '#ffffff', emissive: '#ffffff', emissiveIntensity: 0.35, roughness: 0.2 }), poles.length);
+      const M = new T.Matrix4();
+      poles.forEach(([i, side], k) => { const lat = side * (HW + 1.1), x = X[i] + NX[i] * lat, z = Z[i] + NZ[i] * lat, y = gAt(i, lat) + 0.9; M.makeTranslation(x, y + 0.75, z); pm.setMatrixAt(k, M); M.makeTranslation(x, y + 1.4, z); rm.setMatrixAt(k, M); });
+      pm.castShadow = true; group.add(pm, rm);
+    }
+  }
+  return out;
+}
+function lapTick(dt) {
+  const L = W && W.lap; if (!L) return;
+  if (L.aurora) for (const m of L.aurora) m.uniforms.uT.value += dt;
+  const td = W.td; if (G.mode !== 'race' || G.phase !== 'run' || !td.iceRuns) return;
+  // varování 150 m před ledem (jednou za úsek), trofej za rychlý průjezd
+  for (const r of td.iceRuns) {
+    const d = r[0] - car.s;
+    if (d > 0 && d < 160 && !L.warned.has(r[0])) { L.warned.add(r[0]); toast('🧊 Led! Zamrzlé jezero – jemně s plynem a volantem', 2.6); Voice.say('Pozor, led!'); }
+  }
+  if (car.onIce && Math.abs(car.vf || 0) > 27.8 && !L.iceFast) { L.iceFast = true; achUnlock('ice'); }
 }
 // ---------------------------------------------------------------- DRAG RACE: čtvrt míle (402 m) proti jednomu soupeři
 // Dráha je okruh ve tvaru dlouhého úzkého oválu (startovní rovinka = dráha, protější rovinka = zpáteční cesta), takže
@@ -19693,6 +19854,7 @@ const ACH = [
   { id: 'rx', icon: '🏁', grp: 'Jízda', name: 'Rallycross', desc: 'Vyhraj rallycrossový závod', rw: { money: 1500 } },
   { id: 'driftKing', icon: '🏆', grp: 'Jízda', name: 'Král driftu', desc: 'Vyhraj drift turnaj Top 16', rw: { money: 3000 } },
   { id: 'trexRun', icon: '🦖', grp: 'Jízda', name: 'Útěk před T-rexem', desc: 'V Džungli ujeď T-rexovi (30 s honičky)', rw: { money: 2000 } },
+  { id: 'ice', icon: '🧊', grp: 'Jízda', name: 'Ledový jezdec', desc: 'V Laponsku projeď led na zamrzlém jezeře rychleji než 100 km/h', rw: { money: 1200 } },
   { id: 'volcano', icon: '🌋', grp: 'Jízda', name: 'Ohnivý křest', desc: 'Dojeď Ohnivou sopku bez zásahu lávovou bombou a bez pádu do lávy', rw: { money: 1500 } },
   { id: 'tornado', icon: '🌪️', grp: 'Jízda', name: 'Oko bouře', desc: 'Na Keni nebo v poušti projeď blíž než 20 m od tornáda', rw: { money: 1200 } },
   { id: 'copRun', icon: '🚔', grp: 'Jízda', name: 'Ujel jsi policii', desc: 'V policejní honičce dojeď do cíle bez zatčení', rw: { money: 1500 } },
@@ -23746,6 +23908,7 @@ function tickUpdate(dt) {
     if (G.cop && G.mode === 'race') copTick(dt);   // policejní honička
     if (G.torn && G.mode === 'race') tornTick(dt);   // tornádo
     if (W.vol) volTick(dt);   // sopka: kouř, popel, pára, erupce a lávové bomby
+    if (W.lap) lapTick(dt);   // Laponsko: polární záře, varování před ledem
     if (G.gp && G.mode === 'race') gpTick(dt);
     else if (WX.cfg && G.mode === 'race') wxTick(dt);   // počasí na rally
     if (G.net && G.mode === 'race') netTick(dt);
@@ -23805,7 +23968,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
