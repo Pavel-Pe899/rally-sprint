@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwt5w229';
+window.__BUILD = 'mwt78u15';
 (function () {
   function check() {
     try {
@@ -3214,6 +3214,21 @@ const STAGES = [
     trees: [['pine', 0.3], ['birch', 0.4], ['bush', 0.3]], density: 0.5, rocks: 0,
     mountains: { color: '#6f8aa2', snow: false }, props: { posts: 'none', bales: false, spectators: true },
     clouds: ['#ffffff', 0.5], grass: ['#3f6a22', '#8fb04a', 0.4],
+  },
+  {
+    // Sopka: šotolina z černé lávy na úbočí činné sopky – lávová pole s mechem, v proláklinách jezírka žhavé lávy
+    // (silnice vede po náspech mezi nimi), výtrysky páry se sírou, padající popel, rudý soumrak. Sopka na obzoru kouří
+    // a za jízdy vybuchuje: na silnici dopadají lávové bomby (viz volTick).
+    id: 'sopka', photo: { road: 'gravel', sat: 0.12, tint: '#9a8e86', terrain: 'mossrock' }, name: 'Ohnivá sopka', region: 'Sopečný ostrov · láva a erupce', surface: 'Sopečný štěrk', road: 'gravel', tod: 'Soumrak',
+    len: 5300, seed: 211, turn: 0.95, hills: 34, hillScale: 1 / 400, crests: 5, water: -5.5, seaSides: '-', tilt: [0, 0],
+    grip: 0.8, offGrip: 0.5, loose: true, lava: true, volcano: true, dustK: 0.7,
+    sky: { top: '#1d0e12', hor: '#b8502e', bottom: '#3a1c16' }, sun: { dir: [0.45, 0.2, 0.6], color: '#ff9a62', int: 2.5 },
+    hemi: { sky: '#ffa07e', ground: '#3a2620', int: 1.4 }, fog: [90, 560], exposure: 1.12,
+    ground: { a: '#4d4742', b: '#3d3935', dirt: '#5a4a40', rock: '#26221f', beach: '#2e2825' },
+    shoulder: { inner: '#423b35', outer: '#36312c' }, dust: '#655c55', waterColor: '#ff5a14',
+    trees: [['bush', 1.0]], density: 0.1, rocks: 1.5,
+    mountains: { color: '#2a1c1b', snow: false }, props: { posts: 'white', bales: false, spectators: true },
+    clouds: ['#6e4c44', 0.55], grass: ['#3e4c27', '#6c7236', 0.3],
   },
 ];
 
@@ -7307,8 +7322,9 @@ function buildWorld(td) {
           #include <fog_fragment>
         }`,
     });
-    mat.uniforms.uWindT = windTime;
-    water = new T.Mesh(wg, mat);
+    const lava = st.lava ? volLavaMaterial() : null;   // sopka: místo vody žhavá láva
+    if (lava) lava.uniforms.uWindT = windTime; else mat.uniforms.uWindT = windTime;
+    water = new T.Mesh(wg, lava || mat);
     water.position.y = WL;
     water.renderOrder = 2;
     group.add(water);
@@ -7385,7 +7401,11 @@ function buildWorld(td) {
 
   const rline = st.circuit ? buildRacingLine(td) : null;
   if (rline) { group.add(rline.mesh); if (st.road === 'tarmac') group.add(buildRubberLine(td)); }
-  return { group, td, pit: pitW, startLights, rline, cityChunks, flood: floodW, terrainAt, roadDistAt, obstacles, barriers, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
+  const vol = st.volcano ? volBuild(group, td, terrainAt, [gx0, gz0, gx1, gz1]) : null;
+  // tornádo (Keňa, poušť): postaví se skryté už teď, aby se jeho shadery přeložily při načítání, ne za jízdy
+  const torn3 = st.tornado ? tornBuild(st) : null;
+  if (torn3) { group.add(torn3.grp, torn3.dust.points, torn3.deb); tornShow(torn3, false); }
+  return { vol, torn3, group, td, pit: pitW, startLights, rline, cityChunks, flood: floodW, terrainAt, roadDistAt, obstacles, barriers, puddles, clock, treeLod, terrainTiles, tLod, pushables, pushNear: [], spectators, specBody, specHead, specFlags, specMeshes, specSet, specFlush, specLod, fires, fireMesh, flares, flareGlow, sky, water, spin, bounds: [gx0, gz0, gx1, gz1] };
 }
 
 // ---------------------------------------------------------------- auto
@@ -12550,7 +12570,7 @@ function loadStage(idx, then) {
 
 const demoSpeed = () => 14;
 function startDemo() {
-  podiumHide(); rxgClose(false); statsFlush(); $('chatBar').hidden = true; trexReset(); tornReset();
+  podiumHide(); rxgClose(false); statsFlush(); $('chatBar').hidden = true; trexReset(); tornReset(); volReset();
   driftClear(); $('driftModal').hidden = true;
   dragClear(); $('dragModal').hidden = true; derbyClear(); $('derbyModal').hidden = true; ballClear(); $('ballModal').hidden = true; copClear(); $('copModal').hidden = true;
   gpEnd();
@@ -12600,6 +12620,7 @@ function startRace() {
   else rwStart();
   trexArm();   // Džungle: T-rex čeká na náhodném místě etapy
   tornArm();   // Keňa a poušť: tornádo přejde přes silnici
+  volReset();   // sopka: první erupce za 10–16 s
   resetPushables();
   Tilt.calibrate();
   car.nos = nosTank(); car.nosOn = false; car.nosFx = 0;
@@ -12654,6 +12675,7 @@ function finishRace() {
     saveGhost(st.id, { t: G.result, d: G.rec });
   }
   if (G.champ) G.champ.times[G.champ.k] = G.result;
+  if (W.vol && !W.vol.hit && !G.net) achUnlock('volcano');   // sopka bez zásahu bombou a bez lávy
   G.recPrev = REC.map[st.id] || null;
   G.recNew = !G.net && !G.gp && recSubmit(st, G.result);
   if (!G.net) achStage(record, prev);
@@ -13686,7 +13708,7 @@ function rwStart() {
   wxEnd(); G.rwPlan = null;
   const td = W.td, st = td.st;
   // rally i okruhy při samostatné jízdě (Velká cena má vlastní počasí, rallycross, drift a výzvy jsou za sucha)
-  if (G.gp || G.net || G.rx || G.stunt || G.drift || G.drag || G.derby || G.ball || G.cop || G.mode !== 'race') return;   // drag a derby: bez počasí a předpovědi
+  if (G.gp || G.net || G.rx || G.stunt || G.drift || G.drag || G.derby || G.ball || G.cop || st.volcano || G.mode !== 'race') return;   // drag a derby; sopka má vlastní popel: bez počasí a předpovědi
   let plan = (G.weekly && G.weekly.ch.plan) || (G.champ && G.champ.wx && G.champ.wx[G.champ.k]) || rwPlan(st, saved.rallyWx || 'auto');
   if (st.circuit && plan.type === 'dust') plan.type = 'rain';
   // vrch: nahoře vždy mlha (oblačnost na hřebeni), i za jasna
@@ -16003,17 +16025,18 @@ function tornBuild(st) {
   const P = []; for (let k = 0; k < dust.max; k++) P.push({ a: Math.random() * 6.283, r: 3 + Math.random() * 13, y: Math.random() * 14, w: 1.4 + Math.random() * 1.6, u: 1 + Math.random() * 4, s: 8 + Math.random() * 14, life: Math.random() });
   // trosky: kusy hlíny, větve a kamínky na spirále
   const deb = new T.InstancedMesh(new T.DodecahedronGeometry(0.35, 0), new T.MeshStandardMaterial({ color: '#4a3a2c', roughness: 0.95 }), TORN.nDeb);
-  deb.frustumCulled = false; deb.castShadow = true;
+  deb.frustumCulled = false;
   const D = []; for (let k = 0; k < TORN.nDeb; k++) D.push({ a: Math.random() * 6.283, r: 3 + Math.random() * 10, y: Math.random() * 40, w: 1.2 + Math.random() * 1.4, u: 2 + Math.random() * 5, s: 0.4 + Math.random() * 1.4, rx: Math.random() * 6, ry: Math.random() * 6 });
   return { grp, mats: [outer.material].concat(inner ? [inner.material] : []), cloudM, dust, P, deb, D, M: new T.Matrix4(), Q: new T.Quaternion(), E: new T.Euler(), V: new T.Vector3(), S: new T.Vector3() };
 }
+function tornShow(v3, on) { v3.grp.visible = on; v3.dust.points.visible = on; v3.deb.visible = on; }
 function tornReset() {
   const X = G.torn; G.torn = null;
   if (Sound.tornOff) Sound.tornOff();
   const th = $('trexHud'); if (th && th.classList.contains('torn')) { th.classList.remove('torn'); if (!G.trex && !G.cop) th.hidden = true; }
   if (!X) return;
   tornSky(X, 0);
-  if (X.v3) { scene.remove(X.v3.grp, X.v3.dust.points, X.v3.deb); disposeGroup(X.v3.grp); X.v3.dust.geo.dispose(); X.v3.dust.mat.dispose(); X.v3.deb.geometry.dispose(); X.v3.deb.material.dispose(); }
+  if (X.v3) tornShow(X.v3, false);   // tornádo patří ke světu etapy (uklidí se s ním)
 }
 function tornArm() {
   tornReset();
@@ -16044,7 +16067,8 @@ function tornTick(dt) {
     const nx = td.NX[i] * X.side, nz = td.NZ[i] * X.side;
     X.x = X.cx + nx * 140; X.z = X.cz + nz * 140;
     X.dx = -(nx * Math.cos(a) - nz * Math.sin(a)); X.dz = -(nx * Math.sin(a) + nz * Math.cos(a));
-    X.v3 = tornBuild(td.st); scene.add(X.v3.grp, X.v3.dust.points, X.v3.deb); precompile(X.v3.grp);
+    if (!W.torn3) { W.torn3 = tornBuild(td.st); W.group.add(W.torn3.grp, W.torn3.dust.points, W.torn3.deb); }
+    X.v3 = W.torn3; tornShow(X.v3, true);
     X.phase = 'move'; X.t = 0;
     Voice.say('Pozor, tornádo! ' + (X.side > 0 ? 'Zprava.' : 'Zleva.'));
     toast(`🌪 Tornádo ${X.side > 0 ? 'zprava' : 'zleva'}! Přejde přes silnici za ${Math.round((X.sAt - car.s) / 10) * 10} m`, 3);
@@ -16093,7 +16117,7 @@ function tornTick(dt) {
   if (Sound.ctx) Sound.tornado(near, clamp((ddx * Math.cos(car.h) - ddz * Math.sin(car.h)) / (d + 1), -1, 1));
   tornHud(X, dt);
 }
-function tornReset0(X) { tornSky(X, 0); if (Sound.tornOff) Sound.tornOff(); const th = $('trexHud'); th.classList.remove('torn'); if (!G.trex && !G.cop) th.hidden = true; if (X.v3) { X.v3.grp.visible = false; X.v3.dust.points.visible = false; X.v3.deb.visible = false; } }
+function tornReset0(X) { tornSky(X, 0); if (Sound.tornOff) Sound.tornOff(); const th = $('trexHud'); th.classList.remove('torn'); if (!G.trex && !G.cop) th.hidden = true; if (X.v3) tornShow(X.v3, false); }
 function tornVisual(X, dt) {
   const V = X.v3; if (!V) return;
   V.grp.position.set(X.x, groundAtXZ(X.x, X.z) - 0.5, X.z);
@@ -16136,6 +16160,262 @@ function tornHud(X, dt) {
   const k = clamp(1 - (X.d - TORN.core) / (TORN.R * 4), 0, 1);
   $('trexBar').style.width = `${Math.round(k * 100)}%`; el.dataset.s = k > 0.7 ? 'bad' : 'warn';
   trexLayout(el, false);
+}
+// ---------------------------------------------------------------- SOPKA (etapa Ohnivá sopka)
+// Na obzoru ve směru etapy činná sopka (kužel s rýhami, rudý kráter, žhavé lávové proudy, sloup kouře), v proláklinách
+// jezírka žhavé lávy (místo vody: kůra se praskáním rozjíždí, mezi kry svítí láva), u cesty výtrysky páry se sírou, ve
+// vzduchu popel. Za jízdy sopka občas vybuchne (zaduní, kráter vzplane, kouř zhoustne) a na silnici před autem dopadají
+// lávové bomby: místo dopadu předem ukazuje rudý kruh, bomba letí s kouřovou stopou, při dopadu vybuchne a zůstane
+// žhnoucí kámen a spálenina. Zásah poškodí auto a nadhodí ho. Auto, které sjede do lávy, začne hořet a vrátí se na trať.
+const VOLC = { H: 760, first: [10, 16], every: [24, 40], T: 2.8 };
+const VOL_LAVA_FRAG = `
+uniform float uWindT; varying float vDepth; varying vec3 vWP;
+#include <fog_pars_fragment>
+vec2 vh2(vec2 p) { p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return fract(sin(p) * 43758.5453); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(vh2(i).x, vh2(i + vec2(1.0, 0.0)).x, f.x), mix(vh2(i + vec2(0.0, 1.0)).x, vh2(i + vec2(1.0, 1.0)).x, f.x), f.y); }
+// kry kůry (Voronoi): vzdálenost k hraně mezi dvěma nejbližšími středy = prasklina
+float crust(vec2 p) {
+  vec2 i = floor(p), f = fract(p); float d1 = 8.0, d2 = 8.0;
+  for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+    vec2 g = vec2(float(x), float(y)), o = vh2(i + g); o = 0.5 + 0.38 * sin(uWindT * 0.12 + 6.2831 * o);
+    vec2 r = g + o - f; float d = dot(r, r);
+    if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
+  }
+  return sqrt(d2) - sqrt(d1);
+}
+void main() {
+  vec2 p = vWP.xz / 6.0 + vec2(uWindT * 0.03, uWindT * 0.018);
+  float c = crust(p), n = vn(vWP.xz * 0.08 + uWindT * 0.04), n2 = vn(vWP.xz * 0.45 - uWindT * 0.1);
+  float crack = 1.0 - smoothstep(0.03, 0.12 + 0.07 * n, c);
+  // v dálce se praskliny slijí do rovnoměrné záře (jinak by jemný vzor zrnil)
+  crack = mix(crack, 0.22 + 0.2 * n, smoothstep(50.0, 220.0, length(cameraPosition - vWP)));
+  float deep = smoothstep(0.4, 3.5, vDepth);
+  float hot = clamp(crack * (0.55 + 0.6 * n) + deep * 0.22 * (0.4 + 0.6 * n2), 0.0, 1.0);
+  vec3 crustC = vec3(0.05, 0.034, 0.028) * (0.6 + 0.8 * n2);
+  vec3 glow = mix(vec3(0.85, 0.14, 0.01), vec3(1.0, 0.66, 0.2), hot * hot) * (1.2 + 2.2 * hot) * (0.85 + 0.15 * sin(uWindT * 1.3 + n * 9.0));
+  vec3 col = mix(crustC, glow, hot) * (0.25 + 0.75 * smoothstep(-0.05, 0.35, vDepth));   // u břehu vychladlá černá kůra
+  gl_FragColor = vec4(col, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+  #include <fog_fragment>
+}`;
+function volLavaMaterial() {
+  return new T.ShaderMaterial({
+    fog: true, uniforms: T.UniformsUtils.merge([T.UniformsLib.fog, { uWindT: { value: 0 } }]),
+    vertexShader: `
+      attribute float aDepth; varying float vDepth; varying vec3 vWP;
+      #include <fog_pars_vertex>
+      void main() {
+        vec3 transformed = position;
+        vec4 wp = modelMatrix * vec4(transformed, 1.0); vWP = wp.xyz; vDepth = aDepth;
+        vec4 mvPosition = viewMatrix * wp;
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader: VOL_LAVA_FRAG,
+  });
+}
+// popel: šedé vločky kolem kamery (jako sníh, pomaleji a víc do strany)
+function volAshMesh() {
+  const N = IS_TOUCH ? 1400 : 2400, seed = new Float32Array(N * 4), r = mulberry32(77);
+  for (let i = 0; i < N * 4; i++) seed[i] = r();
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(N * 3), 3)); g.setAttribute('aSeed', new T.BufferAttribute(seed, 4));
+  const mat = new T.ShaderMaterial({
+    uniforms: { uCam: { value: new T.Vector3() }, uT: { value: 0 }, uA: { value: 0.6 }, uScale: { value: 800 } }, transparent: true, depthWrite: false, fog: false,
+    vertexShader: `uniform vec3 uCam; uniform float uT; uniform float uScale; attribute vec4 aSeed; varying float vA; varying float vG;
+      void main() {
+        float W = 44.0, H = 26.0, spd = 0.5 + aSeed.w * 0.8;
+        vec3 p = vec3(uCam.x + mod(aSeed.x * W - uCam.x + uT * 1.4 + W * 0.5, W) - W * 0.5, uCam.y - 9.0 + mod(aSeed.y * H - uT * spd, H), uCam.z + mod(aSeed.z * W - uCam.z + uT * 0.6 + W * 0.5, W) - W * 0.5);
+        p.x += sin(uT * (0.5 + aSeed.w) + aSeed.x * 40.0) * 0.8; p.z += cos(uT * (0.4 + aSeed.y) + aSeed.z * 40.0) * 0.8;
+        vec4 mv = viewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
+        float d = -mv.z; gl_PointSize = clamp((0.05 + 0.06 * aSeed.w) * uScale / max(d, 0.4), 1.0, 26.0);
+        vA = smoothstep(38.0, 6.0, d) * smoothstep(0.4, 1.6, d); vG = aSeed.z;
+      }`,
+    fragmentShader: 'uniform float uA; varying float vA; varying float vG; void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.1, d); vec3 c = mix(vec3(0.24, 0.22, 0.21), vec3(0.5, 0.47, 0.44), vG); if (vG > 0.93) c = vec3(1.0, 0.45, 0.12); gl_FragColor = vec4(c, a * vA * uA * 0.85); }',
+  });
+  const m = new T.Points(g, mat); m.frustumCulled = false; m.renderOrder = 8;
+  return m;
+}
+function volBuild(group, td, hAt, b) {
+  const st = td.st, [gx0, gz0, gx1, gz1] = b, rnd = mulberry32(st.seed * 7 + 3);
+  const cx = (gx0 + gx1) / 2, cz = (gz0 + gz1) / 2, R = Math.max(gx1 - gx0, gz1 - gz0) / 2 + 650;
+  let dx = td.X[td.finishIdx] - td.X[td.startIdx], dz = td.Z[td.finishIdx] - td.Z[td.startIdx]; const dl = Math.hypot(dx, dz); if (dl < 50) { dx = 0; dz = -1; } else { dx /= dl; dz /= dl; }
+  const vx = cx + dx * R, vz = cz + dz * R, H = VOLC.H, rb = 1150, rr = 130;
+  // kužel: profil se zužuje (lehce prohnutý), nahoře okraj kráteru a prohlubeň; rýhy a žebra podle úhlu
+  const prof = [];
+  for (let k = 0; k <= 28; k++) { const t = k / 28; prof.push(new T.Vector2(rb + (rr - rb) * Math.pow(t, 0.6), -90 + (H + 90) * t)); }
+  prof.push(new T.Vector2(rr * 0.78, H + 10), new T.Vector2(rr * 0.5, H - 45), new T.Vector2(2, H - 55));
+  const geo = new T.LatheGeometry(prof, 120), p = geo.attributes.position, clr = [];
+  const base = col(st.mountains.color), hor = col(st.sky.hor), hot = col('#ff4a12');
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(z, x), t = clamp((y + 90) / (H + 90), 0, 1);
+    const f = 1 + (0.07 * Math.sin(a * 9 + y * 0.012) + 0.045 * Math.sin(a * 23 + y * 0.03) + 0.025 * Math.sin(a * 51)) * (1 - t * 0.6);
+    p.setXYZ(i, x * f, y, z * f);
+    const c = base.clone().lerp(hor, 0.62 - 0.3 * t).multiplyScalar(0.92 + 0.16 * Math.sin(a * 23 + y * 0.03));
+    c.lerp(hot, 0.55 * smooth(H - 110, H + 5, y) * (y > H - 30 && Math.hypot(x, z) < rr * 0.9 ? 1.6 : 1));
+    clr.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new T.Float32BufferAttribute(clr, 3));
+  const cone = new T.Mesh(geo, new T.MeshBasicMaterial({ vertexColors: true, fog: false, side: T.DoubleSide }));
+  cone.position.set(vx, 0, vz); cone.renderOrder = -4; group.add(cone);
+  const rAt = (y, a) => { const t = clamp((y + 90) / (H + 90), 0, 1); return (rb + (rr - rb) * Math.pow(t, 0.6)) * (1 + (0.07 * Math.sin(a * 9 + y * 0.012) + 0.045 * Math.sin(a * 23 + y * 0.03) + 0.025 * Math.sin(a * 51)) * (1 - t * 0.6)); };
+  // lávové proudy z okraje kráteru dolů po svahu (svítí, bez mlhy), na straně k trati
+  const lp = [], li = [], lavaM = new T.MeshBasicMaterial({ color: '#ff5a16', fog: false, side: T.DoubleSide, toneMapped: false });
+  const toward = Math.atan2(cz - vz, cx - vx);
+  for (let s = 0; s < 5; s++) {
+    let a = toward + (rnd() - 0.5) * 1.6; const len = 0.35 + rnd() * 0.35, w0 = 16 + rnd() * 10;
+    for (let k = 0; k <= 30; k++) {
+      const t = k / 30, y = H - (H + 60) * len * t; a += (rnd() - 0.5) * 0.02;
+      const r = rAt(y, a) + 3, w = w0 * (1 - 0.65 * t) / r, b0 = lp.length / 3;
+      lp.push(Math.cos(a - w) * r, y, Math.sin(a - w) * r, Math.cos(a + w) * r, y, Math.sin(a + w) * r);
+      if (k) li.push(b0 - 2, b0, b0 - 1, b0 - 1, b0, b0 + 1);
+    }
+  }
+  const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.Float32BufferAttribute(lp, 3)); lg.setIndex(li);
+  const flows = new T.Mesh(lg, lavaM); flows.position.copy(cone.position); flows.renderOrder = -3; group.add(flows);
+  // záře kráteru
+  const glow = new T.Sprite(new T.SpriteMaterial({ map: copGlowTex(), color: '#ff5a1e', transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false, opacity: 0.7 }));
+  glow.position.set(vx, H + 40, vz); glow.scale.setScalar(620); glow.renderOrder = -2; group.add(glow);
+  // sloup kouře nad kráterem: stejný vířící trychtýř jako tornádo, roztažený do výšky ~1,2 km, bez mlhy
+  const plume = tornFunnel(36, 320, 1.0, 0.1, '#3b322e', '#625750'); plume.scale.set(1, 8, 1); plume.position.set(vx, H - 25, vz); plume.renderOrder = -1;
+  plume.material.uniforms.uFog.value.set(1e6, 2e6); group.add(plume);
+  // kouř z kráteru, pára u cesty
+  const smoke = new Dust(IS_TOUCH ? 200 : 320, { gravity: -3, grow: 2.6, fade: 0.9, drag: 0.2 }); smoke.setColor('#2c2523', 1); group.add(smoke.points);
+  const steam = new Dust(IS_TOUCH ? 160 : 240, { gravity: -2.6, grow: 2.0, fade: 0.42, drag: 0.7 }); steam.setColor('#ece6df', 1); group.add(steam.points);
+  const ash = volAshMesh(); group.add(ash);
+  // výtrysky páry: žlutá síra kolem díry, kamenný lem
+  const vents = [], sulf = new T.MeshStandardMaterial({ color: '#c6b04a', roughness: 0.9, transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -2 }), hole = new T.MeshStandardMaterial({ color: '#141210', roughness: 1 });
+  for (let k = 0; k < 9; k++) {
+    const i = td.startIdx + Math.floor((0.06 + 0.9 * rnd()) * (td.finishIdx - td.startIdx)), side = rnd() < 0.5 ? -1 : 1, lat = side * (HW + 4 + rnd() * 9);
+    const x = td.X[i] + td.NX[i] * lat, z = td.Z[i] + td.NZ[i] * lat, y = hAt(x, z);
+    if (st.water != null && y < st.water + 0.6) continue;
+    const d = new T.Mesh(new T.CircleGeometry(2.6 + rnd() * 1.5, 20).rotateX(-Math.PI / 2), sulf); d.position.set(x, y + 0.06, z); d.receiveShadow = true; group.add(d);
+    const h = new T.Mesh(new T.CircleGeometry(0.55, 14).rotateX(-Math.PI / 2), hole); h.position.set(x, y + 0.08, z); group.add(h);
+    vents.push({ x, y, z, s: td.S[i], k: 0.6 + rnd() * 0.8 });
+  }
+  { const pb = new T.Mesh(new T.DodecahedronGeometry(0.75, 1), volRockMat()), pr = new T.Mesh(new T.RingGeometry(1.5, 2.1, 32).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: '#ff3a14', transparent: true, opacity: 0, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -3 }));
+    const ps = new T.Mesh(new T.CircleGeometry(2.3, 20).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#0e0b0a', roughness: 1, transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -3, depthWrite: false }));
+    pb.castShadow = true; for (const m of [pb, pr, ps]) { m.visible = false; m.position.set(td.X[td.startIdx], td.Y[td.startIdx] - 50, td.Z[td.startIdx]); group.add(m); } }
+  const V = { cone, flows, glow, plume, smoke, steam, ash, vents, cx: vx, cz: vz, top: H, t: 0, emit: 0, erupt: 0, next: 0, bombs: [], embers: [], hit: false, burnT: 0, group };
+  for (let k = 0; k < 80; k++) volSmoke(V, 0.4, 0);   // sloup kouře stojí hned po načtení
+  return V;
+}
+function volReset() {
+  const V = W && W.vol; if (!V) return;
+  for (const b of V.bombs) { V.group.remove(b.mesh, b.ring); }
+  for (const e of V.embers) { V.group.remove(e.rock, e.scorch); }
+  V.bombs.length = 0; V.embers.length = 0; V.erupt = 0; V.hit = false; V.burnT = 0;
+  V.next = VOLC.first[0] + Math.random() * (VOLC.first[1] - VOLC.first[0]);
+}
+// lávový kámen: tmavá struska a žhnoucí praskliny (barva + svítící mapa)
+let volRockTex = null;
+function volRockMat() {
+  if (!volRockTex) {
+    const r = mulberry32(19), cracks = [];
+    for (let k = 0; k < 16; k++) { let x = r() * 256, y = r() * 128; const pts = [[x, y]]; let a = r() * 6.28; for (let q = 0; q < 7; q++) { a += (r() - 0.5) * 1.4; x += Math.cos(a) * 14; y += Math.sin(a) * 9; pts.push([x, y]); } cracks.push([pts, 1.5 + r() * 3.5]); }
+    const draw = (g, w, h, glow) => {
+      g.fillStyle = glow ? '#000' : '#2b211c'; g.fillRect(0, 0, w, h);
+      if (!glow) for (let k = 0; k < 900; k++) { const v = 25 + r() * 40; g.fillStyle = `rgb(${v + 8},${v},${v - 4})`; g.fillRect(r() * w, r() * h, 2 + r() * 4, 2 + r() * 4); }
+      for (const [pts, wd] of cracks) { g.strokeStyle = glow ? '#ffb040' : '#ff6a1a'; g.lineWidth = wd; g.lineCap = 'round'; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke(); if (glow) { g.strokeStyle = 'rgba(255,90,20,.45)'; g.lineWidth = wd * 3; g.stroke(); } }
+    };
+    volRockTex = [canvasTex(256, 128, (g, w, h) => draw(g, w, h, false)), canvasTex(256, 128, (g, w, h) => draw(g, w, h, true))];
+  }
+  return new T.MeshStandardMaterial({ map: volRockTex[0], emissiveMap: volRockTex[1], emissive: '#ffffff', emissiveIntensity: 2.2, roughness: 0.9 });
+}
+function volErupt(V) {
+  V.erupt = 4.2;
+  Sound.thump(0.9, 'land'); rumble(0.7, 700); car.shake = Math.min(1, car.shake + 0.4);
+  toast('🌋 Erupce! Lávové bomby – sleduj rudé kruhy na silnici', 3); Voice.say('Erupce! Pozor na lávové bomby!');
+  // bomby: dopadnou na silnici před autem (kolem místa, kam auto za ~3 s dojede), rozestup aspoň 7 m
+  const td = W.td, n = 3 + Math.floor(Math.random() * 3), v = Math.max(14, car.vf || 0), pts = [];
+  for (let k = 0; k < n; k++) {
+    let s = 0, lat = 0, ok = false;
+    for (let t = 0; t < 20 && !ok; t++) {
+      s = car.s + v * (VOLC.T + 0.35 * k) + (Math.random() - 0.3) * 30; lat = (Math.random() * 2 - 1) * (HW + 3);
+      ok = s < td.S[td.finishIdx] - 10 && pts.every((q) => Math.hypot(q[0] - s, q[1] - lat) > 7);
+    }
+    if (!ok) continue;
+    pts.push([s, lat]);
+    const i = clamp(Math.round(s / td.ds), 0, td.n - 1), tx = td.X[i] + td.NX[i] * lat, tz = td.Z[i] + td.NZ[i] * lat, ty = groundAt(tx, tz, { i, s, lat, y: td.Y[i] });
+    const ax = V.cx - tx, az = V.cz - tz, al = Math.hypot(ax, az) || 1;
+    const mesh = new T.Mesh(new T.DodecahedronGeometry(0.75, 1), volRockMat()); mesh.castShadow = true;
+    const ring = new T.Mesh(new T.RingGeometry(1.5, 2.1, 32).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: '#ff3a14', transparent: true, opacity: 0, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -3 }));
+    ring.position.set(tx, ty + 0.07, tz); V.group.add(mesh, ring);
+    V.bombs.push({ mesh, ring, sx: tx + ax / al * 150, sy: ty + 95, sz: tz + az / al * 150, tx, ty, tz, t: -k * 0.35, T: VOLC.T });
+  }
+}
+function volBombs(V, dt) {
+  for (let k = V.bombs.length - 1; k >= 0; k--) {
+    const b = V.bombs[k]; b.t += dt;
+    const u = clamp(b.t / b.T, 0, 1);
+    b.ring.material.opacity = b.t < 0 ? 0.25 : 0.35 + 0.55 * (0.5 + 0.5 * Math.sin(b.t * 14)) * u;
+    b.ring.scale.setScalar(1.6 - 0.6 * u);
+    if (b.t < 0) { b.mesh.visible = false; continue; }
+    b.mesh.visible = true;
+    const x = b.sx + (b.tx - b.sx) * u, z = b.sz + (b.tz - b.sz) * u, y = b.sy + (b.ty - b.sy) * u + 60 * u * (1 - u);
+    b.mesh.position.set(x, y, z); b.mesh.rotation.x += dt * 5; b.mesh.rotation.y += dt * 3;
+    if (Math.random() < 0.8) dbSmoke.emit(x, y, z, 0, 0.5, 0, 1.6, 1.2);
+    if (Math.random() < 0.5) dbFire.emit(x, y, z, 0, 0.3, 0, 0.9, 0.35);
+    if (u < 1) continue;
+    // dopad: výbuch, spálenina a žhnoucí kámen; zásah auta
+    V.bombs.splice(k, 1); V.group.remove(b.ring); b.ring.geometry.dispose(); b.ring.material.dispose();
+    const ty = b.ty;
+    for (let q = 0; q < 14; q++) dbFire.emit(b.tx + (Math.random() - 0.5) * 2, ty + 0.4, b.tz + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 6, 2 + Math.random() * 4, (Math.random() - 0.5) * 6, 1.2, 0.6);
+    for (let q = 0; q < 16; q++) dbSmoke.emit(b.tx + (Math.random() - 0.5) * 3, ty + 0.5, b.tz + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 5, 1.5 + Math.random() * 3, (Math.random() - 0.5) * 5, 2.4, 2.4);
+    sparkBurst(b.tx, ty + 0.3, b.tz, 30, 1.3);
+    const d = Math.hypot(car.x - b.tx, car.z - b.tz);
+    Sound.thump(clamp(1 - d / 140, 0.08, 0.9), 'land');
+    if (G.mode === 'race' && G.phase === 'run') {
+      if (d < 3.4) {
+        V.hit = true; const nx = (b.tx - car.x) / (d || 1), nz = (b.tz - car.z) / (d || 1);
+        rdHit(20, nx, nz); car.shake = 1; rumble(1, 400);
+        if (!car.air) { car.air = true; car.airT = 0; car.airX = car.x; car.airZ = car.z; car.vy = 3.2; car.y += 0.05; }
+        car.vx -= nx * 3; car.vz -= nz * 3; car.omega += (Math.random() - 0.5) * 2.5;
+        toast('💥 Zásah lávovou bombou!', 1.8);
+      } else if (d < 8) { const k2 = 1 - d / 8; car.shake = Math.min(1, car.shake + 0.6 * k2); rumble(0.6 * k2, 200); car.vx += (car.x - b.tx) / d * 3 * k2; car.vz += (car.z - b.tz) / d * 3 * k2; }
+    }
+    const scorch = new T.Mesh(new T.CircleGeometry(2.3, 20).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: '#0e0b0a', roughness: 1, transparent: true, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -3, depthWrite: false }));
+    scorch.position.set(b.tx, ty + 0.06, b.tz); V.group.add(scorch);
+    b.mesh.position.set(b.tx, ty + 0.16, b.tz); b.mesh.scale.set(0.5, 0.36, 0.45); b.mesh.material.emissiveIntensity = 1.6;
+    V.embers.push({ rock: b.mesh, scorch, t: 0 });
+  }
+  // žhnoucí kameny pomalu chladnou a kouří, po 25 s zmizí
+  for (let k = V.embers.length - 1; k >= 0; k--) {
+    const e = V.embers[k]; e.t += dt;
+    e.rock.material.emissiveIntensity = 1.6 * Math.max(0, 1 - e.t / 16);
+    if (Math.random() < dt * 3 * (1 - e.t / 25)) dbSmoke.emit(e.rock.position.x, e.rock.position.y + 0.3, e.rock.position.z, 0, 0.8, 0, 1.2, 1.8);
+    if (e.t > 25) { V.group.remove(e.rock, e.scorch); e.rock.geometry.dispose(); e.rock.material.dispose(); e.scorch.geometry.dispose(); e.scorch.material.dispose(); V.embers.splice(k, 1); }
+  }
+}
+// kouř z kráteru (pořád, při erupci hustý, rychlý a s větrem)
+function volSmoke(V, dt, ek) {
+  V.emit += dt * (4 + 50 * ek);
+  while (V.emit > 1) { V.emit -= 1; const r = () => Math.random() - 0.5; V.smoke.emit(V.cx + r() * 70, V.top + 15, V.cz + r() * 70, 8 + r() * 8, 26 + Math.random() * 16 + 45 * ek, r() * 8, 140 + Math.random() * 100 + 90 * ek, 26 + Math.random() * 8); }
+  V.smoke.update(dt);
+}
+function volTick(dt) {
+  const V = W && W.vol; if (!V) return;
+  const st = W.td.st, run = G.mode === 'race' && G.phase === 'run';
+  V.t += dt; V.erupt = Math.max(0, V.erupt - dt);
+  const ek = V.erupt > 0 ? Math.min(1, V.erupt / 2) : 0;
+  volSmoke(V, dt, ek);
+  const sc = dust.mat.uniforms.uScale.value; V.smoke.mat.uniforms.uScale.value = sc; V.steam.update(dt); V.steam.mat.uniforms.uScale.value = sc;
+  { const u = V.plume.material.uniforms; u.uT.value = V.t * 0.5; u.uA.value = 0.85 + 0.15 * ek; u.uLean.value.set(120 + 30 * Math.sin(V.t * 0.05), 30); u.uSun.value.copy(sun.position).sub(sun.target.position).normalize(); }
+  V.glow.material.opacity = Math.min(1, 0.55 + 0.12 * Math.sin(V.t * 1.7) + 0.08 * Math.sin(V.t * 4.3) + 0.5 * ek);
+  V.glow.scale.setScalar(620 + 520 * ek);
+  const u = V.ash.material.uniforms; u.uCam.value.copy(camera.position); u.uT.value += dt; u.uA.value = 0.55 + 0.45 * ek; u.uScale.value = sc;
+  // pára z výtrysků blízko auta
+  for (const v of V.vents) { const d = Math.abs(v.s - car.s); if (d < 160 && Math.random() < dt * 14 * v.k) V.steam.emit(v.x + (Math.random() - 0.5) * 0.8, v.y + 0.4, v.z + (Math.random() - 0.5) * 0.8, (Math.random() - 0.5) * 0.8 + 0.6, 2.5 + Math.random() * 2, (Math.random() - 0.5) * 0.8, 2.4 + Math.random() * 1.6, 3 + Math.random()); }
+  if (run) { V.next -= dt; if (V.next <= 0) { volErupt(V); V.next = VOLC.every[0] + Math.random() * (VOLC.every[1] - VOLC.every[0]); } }
+  volBombs(V, dt);
+  // auto v lávě: hoří a vrátí se na trať
+  if (run && st.lava && st.water != null && car.y < st.water + 0.3 && Math.abs(car.lat) > HW) {
+    V.burnT += dt;
+    for (let q = 0; q < 3; q++) dbFire.emit(car.x + (Math.random() - 0.5) * 2, car.y + 0.6, car.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5), 2 + Math.random() * 2, (Math.random() - 0.5), 1.1, 0.5);
+    if (Math.random() < 0.6) dbSmoke.emit(car.x, car.y + 1, car.z, 0, 2.5, 0, 2, 2);
+    if (V.burnT > 0.9) { V.burnT = 0; V.hit = true; rdHit(16, Math.sin(car.h), Math.cos(car.h)); resetToTrack(true); toast('🔥 Láva! Auto začalo hořet – zpět na trati', 2.6); Voice.say('Láva! To bylo o fous.'); }
+  } else V.burnT = Math.max(0, V.burnT - dt);
+  if (Sound.ctx && G.mode === 'race' && !G.paused) Sound.tornado(0.22 + 0.55 * ek, 0);   // hluboké dunění sopky
 }
 // ---------------------------------------------------------------- DRAG RACE: čtvrt míle (402 m) proti jednomu soupeři
 // Dráha je okruh ve tvaru dlouhého úzkého oválu (startovní rovinka = dráha, protější rovinka = zpáteční cesta), takže
@@ -19413,6 +19693,7 @@ const ACH = [
   { id: 'rx', icon: '🏁', grp: 'Jízda', name: 'Rallycross', desc: 'Vyhraj rallycrossový závod', rw: { money: 1500 } },
   { id: 'driftKing', icon: '🏆', grp: 'Jízda', name: 'Král driftu', desc: 'Vyhraj drift turnaj Top 16', rw: { money: 3000 } },
   { id: 'trexRun', icon: '🦖', grp: 'Jízda', name: 'Útěk před T-rexem', desc: 'V Džungli ujeď T-rexovi (30 s honičky)', rw: { money: 2000 } },
+  { id: 'volcano', icon: '🌋', grp: 'Jízda', name: 'Ohnivý křest', desc: 'Dojeď Ohnivou sopku bez zásahu lávovou bombou a bez pádu do lávy', rw: { money: 1500 } },
   { id: 'tornado', icon: '🌪️', grp: 'Jízda', name: 'Oko bouře', desc: 'Na Keni nebo v poušti projeď blíž než 20 m od tornáda', rw: { money: 1200 } },
   { id: 'copRun', icon: '🚔', grp: 'Jízda', name: 'Ujel jsi policii', desc: 'V policejní honičce dojeď do cíle bez zatčení', rw: { money: 1500 } },
   { id: 'stunt', icon: '🤸', grp: 'Jízda', name: 'Kaskadér', desc: 'Získej 20 hvězd v kaskadérských výzvách', prog: () => [stuntTotal(), 20], rw: { livery: 'Kaskadérská' } },
@@ -23464,6 +23745,7 @@ function tickUpdate(dt) {
     if (G.trex && G.mode === 'race') trexTick(dt);
     if (G.cop && G.mode === 'race') copTick(dt);   // policejní honička
     if (G.torn && G.mode === 'race') tornTick(dt);   // tornádo
+    if (W.vol) volTick(dt);   // sopka: kouř, popel, pára, erupce a lávové bomby
     if (G.gp && G.mode === 'race') gpTick(dt);
     else if (WX.cfg && G.mode === 'race') wxTick(dt);   // počasí na rally
     if (G.net && G.mode === 'race') netTick(dt);
@@ -23523,7 +23805,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
