@@ -15,6 +15,13 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   Stažený z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
   (`packages/asset-library-files/library/lowpoly/trex.glb`, tamtéž soubor NOTICE s původem a licencí).
   Ve hře převedený do JSON (`tools/trex-to-json.mjs`), větší a se světlejšími barvami. Zvuky T-rexe jsou vlastní syntéza.
+- **3D textury povrchů (CC0 1.0, volná díla):** fotografické PBR textury s normálovými mapami z [Poly Haven](https://polyhaven.com)
+  – „Rocky Trail“ (štěrková cesta), „Rock Face 03“ (Dario Barresi a Rico Cilliers, skály), „Aerial Rocks 02“, „Dirt Aerial 02“
+  a „Aerial Beach 01“ (Rob Tuytel), „Sparse Grass“ (Amal Kumar), „Rock Boulder Cracked“ – a z [ambientCG](https://ambientcg.com)
+  („Ground 092 C“ duny, „Ice 002“ led). Staženo z GitHubu: [playcanvas/engine](https://github.com/playcanvas/engine)
+  (`examples/assets/textures`, včetně záznamu o původu) a [mrdoob/three.js](https://github.com/mrdoob/three.js)
+  (`examples/textures/ambientcg`). Zmenšené a převedené skriptem `tools/prep-tex.py`; normálové mapy štěrku, balvanu
+  a betonu dopočtené z jasu fotky.
 - **Monster truck:** model [„Free Monster Truck Model“](https://sketchfab.com/3d-models/free-monster-truck-model-96d16754451d4ca3a0b4c5252452f0b5)
   od steelcyclonestudios (Sketchfab), licence [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
   Stažený z GitHubu: [freaxnx01/game-rhyflitzer](https://github.com/freaxnx01/game-rhyflitzer)
