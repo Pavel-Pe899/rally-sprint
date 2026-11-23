@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwtsq3rv';
+window.__BUILD = 'mwtsx3hn';
 (function () {
   function check() {
     try {
@@ -1160,6 +1160,8 @@ window.__BUILD = 'mwtsq3rv';
   body.freemode #hud .hud-note, body.freemode #hud .hud-split { display: none !important; }
   .free-hud { position: absolute; left: 50%; transform: translateX(-50%); top: calc(88px + env(safe-area-inset-top, 0px)); padding: 6px 14px 7px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 200px; }
   .free-hud[hidden] { display: none; }
+  .fr-job { display: flex; align-items: center; gap: 8px; margin-top: 2px; } .fr-job i { font-style: normal; font-size: 22px; color: #3fdc86; line-height: 1; display: inline-block; transform-origin: 50% 50%; text-shadow: 0 1px 4px #000; } .fr-job i:not([hidden]) { width: 22px; text-align: center; } .fr-job i::before { content: ''; } #frArrow { rotate: -90deg; }
+  .fr-job em { font-style: normal; font-size: 12.5px; font-weight: 800; color: #ffe08a; white-space: nowrap; } .fr-job em.warn { color: #ff6a5a; }
   .free-hud b { font: italic 900 17px var(--display); color: #7fe0ff; letter-spacing: .02em; white-space: nowrap; } .free-hud span { font-size: 12px; color: #e6ebf3; white-space: nowrap; }
   @media (max-width: 600px) { .free-hud { top: calc(var(--tlb, 112px) + 62px); left: calc(12px + env(safe-area-inset-left, 0px)); transform: none; align-items: flex-start; } body.touch .free-hud { top: calc(var(--tlb, 112px) + 128px); } }
   @media (max-height: 450px) { .free-hud { top: calc(62px + env(safe-area-inset-top, 0px)); padding: 4px 10px 5px; } .free-hud b { font-size: 14px; } }
@@ -1525,7 +1527,7 @@ window.__BUILD = 'mwtsq3rv';
   </div>
   <div class="mg-pop" id="mgPop"></div>
   <!-- Ostrov: kde auto je a co najelo -->
-  <div class="free-hud panel" id="freeHud" hidden><b id="frTitle"></b><span id="frSub"></span></div>
+  <div class="free-hud panel" id="freeHud" hidden><b id="frTitle"></b><span id="frSub"></span><div class="fr-job"><i id="frArrow" hidden>➤</i><em id="frJob"></em></div></div>
   <div class="hud-note panel" id="hNote">
     <svg viewBox="-50 -50 100 100" aria-hidden="true"><path id="hNoteIcon" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"></path><path id="hNoteHead" fill="#fff"></path></svg>
     <div>
@@ -1676,7 +1678,7 @@ window.__BUILD = 'mwtsq3rv';
       <div class="act-pick" id="actPick" role="tablist"><button data-a="drag"><i aria-hidden="true">🏁</i>Drag</button><button data-a="derby"><i aria-hidden="true">💥</i>Derby</button><button data-a="ball"><i aria-hidden="true">⚽</i>Autofotbal</button><button data-a="cop"><i aria-hidden="true">🚔</i>Honička</button><button data-a="mega"><i aria-hidden="true">🛫</i>Megarampa</button><button data-a="free"><i aria-hidden="true">🏝️</i>Ostrov</button></div>
       <div class="act-card act-free">
         <div class="ac-head"><span class="ac-ic" aria-hidden="true">🏝️</span><div><b>Ostrov · volná jízda</b><small>bez času a bez cíle · tvoje auto z garáže</small></div></div>
-        <p class="ac-help">Silnice vede z <b>přístavního městečka</b> po pobřeží kolem celého ostrova k <b>vyhlídce</b> na kopci. Jezdit se dá i terénem: přes louky, pláže a kopce (tráva tu brzdí míň). Najdeš <b>maják</b> na mysu, molo s loďkami a pláže se slunečníky. Když zajedeš do moře, auto se vrátí na silnici. Konec jízdy: pauza → Menu.</p>
+        <p class="ac-help">Silnice vede z <b>přístavního městečka</b> po pobřeží kolem celého ostrova k <b>vyhlídce</b> na kopci. Jezdit se dá i terénem: přes louky, pláže a kopce (tráva tu brzdí míň). Najdeš <b>maják</b> na mysu, molo s loďkami a pláže se slunečníky. Když zajedeš do moře, auto se vrátí na silnici. <b>Zakázky:</b> žlutý sloup světla u pošty = 📦 balík, modrý = 🚕 cestující. Zastav v kruhu a dovez je na adresu (zelený sloup, šipka v panelu) včas – taxi platí víc za klidnou jízdu. Konec jízdy: pauza → Menu.</p>
         <div class="ac-stats" id="freeStats"></div>
         <button class="btn primary ac-go" id="bFreeGo"><span class="t">▶ Na ostrov</span></button>
       </div>
@@ -25236,6 +25238,7 @@ function freeGo() {
     const td = W.td; if (!td.st.free) return;
     G.free = { t: 0, dist: 0, top: 0, air: 0, hudT: 0, px: null, pz: null };
     startRace();
+    jobSetup(G.free);
     wxEnd();
     document.body.classList.add('freemode');
     hud.stage.textContent = 'Ostrov · volná jízda';
@@ -25247,6 +25250,7 @@ function freeGo() {
 }
 function freeClear() {
   const F = G.free; G.free = null;
+  const ID = ISLE.dress; if (ID && ID.mk) { for (const m of Object.values(ID.mk)) m.visible = false; ID.person.visible = false; }
   document.body.classList.remove('freemode');
   const h = $('freeHud'); if (h) h.hidden = true;
   if (F && F.dist > 50) { const s = saved.freeStats || {}; saved.freeStats = { km: +((s.km || 0) + F.dist / 1000).toFixed(2), top: Math.max(s.top || 0, Math.round(F.top)), runs: (s.runs | 0) + 1 }; persist(); }
@@ -25258,16 +25262,18 @@ function freeTick(dt) {
   F.px = car.x; F.pz = car.z;
   F.top = Math.max(F.top, Math.hypot(car.vx, car.vz) * 3.6);
   if (car.air && car.hAbove > 0.3) F.air += dt;
+  jobTick(dt, F);
   freeHud(dt);
 }
 function freeHud(dt) {
   const F = G.free, el = $('freeHud'); if (!el) return;
   const show = !!F && G.mode === 'race' && (G.phase === 'run' || G.phase === 'countdown');
   el.hidden = !show; if (!show) return;
-  F.hudT -= dt; if (F.hudT > 0) return; F.hudT = 0.25;
+  F.hudT -= dt; if (F.hudT > 0) return; F.hudT = 0.1;
   const off = Math.abs(car.lat) > HW + 2.5, place = isleWhere(car.x, car.z);
   $('frTitle').textContent = place;
-  $('frSub').textContent = `${(F.dist / 1000).toFixed(1).replace('.', ',')} km · max ${Math.round(F.top)} km/h${off ? ' · terén' : ''}`;
+  $('frSub').textContent = `${(F.dist / 1000).toFixed(1).replace('.', ',')} km · max ${Math.round(F.top)} km/h${off ? ' · terén' : ''}${F.jobs && F.jobs.done ? ` · zakázky ${F.jobs.done} (+${moneyStr(F.jobs.earned)})` : ''}`;
+  jobHud(F);
 }
 // kde na ostrově auto je (pro panel): městečko, přístav, maják, vyhlídka, pobřeží podle světové strany, vnitrozemí
 function isleWhere(x, z) {
@@ -25280,7 +25286,8 @@ function isleWhere(x, z) {
 function freeMenu() {
   const el = $('freeStats'); if (!el) return;
   const s = saved.freeStats || {}, id = roadCarId();
-  el.innerHTML = `<div><small>Auto</small><b>${CAR_TYPES[id].name}</b></div><div><small>Najeto na ostrově</small><b>${(s.km || 0).toFixed(1).replace('.', ',')} km</b><em>${s.runs | 0} výletů</em></div><div><small>Nejvyšší rychlost</small><b>${s.top ? s.top + ' km/h' : '–'}</b></div>`;
+  const j = saved.freeJobs || {};
+  el.innerHTML = `<div><small>Zakázky</small><b>📦 ${j.courier | 0} · 🚕 ${j.taxi | 0}</b><em>+${moneyStr(j.earned | 0)}</em></div><div><small>Najeto na ostrově</small><b>${(s.km || 0).toFixed(1).replace('.', ',')} km</b><em>${s.runs | 0} výletů</em></div><div><small>Nejvyšší rychlost</small><b>${s.top ? s.top + ' km/h' : '–'}</b></div>`;
 }
 // ---- výbava ostrova: přístavní městečko (pastelové domy s okenicemi a taškovými střechami), molo s loďkami,
 // maják na mysu, slunečníky a lehátka na plážích
@@ -25392,7 +25399,102 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
     D.places.push({ n: '🔭 Vyhlídka', x, z, r: 110 });
   }
   ISLE.dress = D; D.td = td;
+  jobSites(group, td, hAt);   // kurýr a taxi: adresy, pošta, sloupy světla, cestující
   return D;
+}
+// ---- Kurýr a taxi na ostrově: zakázky během volné jízdy. Žlutý sloup světla u pošty = balík, modrý = cestující;
+// zastav v kruhu (pod 25 km/h) a doruč na adresu (zelený sloup) do časového limitu. Taxi: ťukance a tvrdé skoky
+// kazí náladu cestujícího a ubírají spropitné.
+const JOB_SITES = ['Hotel Pláž', 'Kemp Palma', 'Rybárna U Mola', 'Vila Racek', 'Kavárna Vyhlídka', 'Penzion Mušle', 'Statek Olivy', 'Škola', 'Pekárna Maják', 'Vinný sklep', 'Surf škola', 'Zahradnictví'];
+function jobMarker(group, col, label) {
+  const g = new T.Group();
+  const beamT = canvasTex(32, 128, (c, w, h) => { const gr = c.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); });
+  const beam = new T.Mesh(new T.CylinderGeometry(4.2, 4.6, 34, 24, 1, true).translate(0, 17, 0), new T.MeshBasicMaterial({ color: col, map: beamT, transparent: true, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending, toneMapped: false }));
+  const ring = new T.Mesh(new T.TorusGeometry(5, 0.28, 8, 48).rotateX(Math.PI / 2).translate(0, 0.35, 0), new T.MeshBasicMaterial({ color: col, toneMapped: false }));
+  const tag = canvasTex(256, 96, (c, w, h) => { c.fillStyle = 'rgba(10,14,20,.82)'; c.fillRect(0, 0, w, h); c.fillStyle = col; c.fillRect(0, h - 10, w, 10); c.fillStyle = '#ffffff'; c.font = '900 54px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, w / 2, h / 2 - 4); });
+  const sp = new T.Sprite(new T.SpriteMaterial({ map: tag, depthTest: false, toneMapped: false })); sp.scale.set(6, 2.25, 1); sp.position.y = 7.5; sp.renderOrder = 5;
+  g.add(beam, ring, sp); g.visible = false; group.add(g);
+  return g;
+}
+function jobPerson(group) {
+  const g = new T.Group(), sk = new T.MeshStandardMaterial({ color: '#e7b58f', roughness: 0.8 });
+  g.add(new T.Mesh(new T.BoxGeometry(0.42, 0.85, 0.26).translate(0, 0.43, 0), new T.MeshStandardMaterial({ color: '#2b3a55' })));
+  g.add(new T.Mesh(new T.BoxGeometry(0.52, 0.66, 0.3).translate(0, 1.18, 0), new T.MeshStandardMaterial({ color: '#e23b2e' })));
+  g.add(new T.Mesh(new T.SphereGeometry(0.17, 12, 10).translate(0, 1.68, 0), sk));
+  const arm = new T.Mesh(new T.BoxGeometry(0.12, 0.6, 0.12).translate(0, 0.3, 0), sk); arm.position.set(0.32, 1.42, 0); arm.rotation.z = 2.6; g.add(arm);   // mává
+  g.add(new T.Mesh(new T.BoxGeometry(0.5, 0.36, 0.22).translate(-0.42, 0.18, 0), new T.MeshStandardMaterial({ color: '#7a5a3c' })));   // kufr
+  g.children.forEach((c) => { c.castShadow = true; }); g.visible = false; group.add(g); g.userData.arm = arm;
+  return g;
+}
+// místa zakázek: adresy podél silnice (vedle krajnice), pošta v městečku
+function jobSites(group, td, hAt) {
+  const D = ISLE.dress, out = [], n = JOB_SITES.length, i0 = td.startIdx + 120, i1 = td.finishIdx - 10;
+  for (let k = 0; k < n; k++) {
+    const i = Math.round(i0 + ((i1 - i0) * (k + 0.5)) / n), sd = k % 2 ? 1 : -1, x = td.X[i] + td.NX[i] * sd * (HW + 6), z = td.Z[i] + td.NZ[i] * sd * (HW + 6);
+    out.push({ n: JOB_SITES[k], i, x, z, y: hAt(x, z) });
+  }
+  const ip = td.startIdx + 18, post = { n: 'Pošta', i: ip, x: td.X[ip] + td.NX[ip] * (HW + 5.5), z: td.Z[ip] + td.NZ[ip] * (HW + 5.5) }; post.y = hAt(post.x, post.z);
+  D.sites = out; D.post = post;
+  D.mk = { post: jobMarker(group, '#ffc419', 'POŠTA'), taxi: jobMarker(group, '#33b5ff', 'TAXI'), dest: jobMarker(group, '#3fdc86', 'CÍL') };
+  D.person = jobPerson(group);
+}
+function jobPlace(m, p) { m.position.set(p.x, p.y, p.z); m.visible = true; }
+function jobSetup(F) {
+  const D = ISLE.dress; if (!D || !D.sites) return;
+  F.job = null; F.jobs = { done: 0, earned: 0 }; F.taxiAt = D.sites[(Math.random() * D.sites.length) | 0]; F.shake0 = 0;
+  jobIdle(F);
+}
+function jobIdle(F) {
+  const D = ISLE.dress;
+  jobPlace(D.mk.post, D.post); jobPlace(D.mk.taxi, F.taxiAt); D.mk.dest.visible = false;
+  D.person.position.set(F.taxiAt.x + 2.2, F.taxiAt.y, F.taxiAt.z); D.person.rotation.y = W.td.HD[F.taxiAt.i] + Math.PI / 2; D.person.visible = true;
+}
+function jobStart(F, kind, from) {
+  const D = ISLE.dress, td = W.td, far = D.sites.filter((s) => s !== from && Math.abs(td.S[s.i] - td.S[from.i]) > 450);
+  const dest = far[(Math.random() * far.length) | 0] || D.sites[0], dist = Math.abs(td.S[dest.i] - td.S[from.i]);
+  F.job = { kind, from, dest, dist, t: 0, limit: Math.round(dist / 18 + 25), mood: 1, hits: 0 };
+  D.mk.post.visible = D.mk.taxi.visible = false; jobPlace(D.mk.dest, dest);
+  if (kind === 'taxi') D.person.visible = false;
+  Sound.beep(880, 0.15); UIS.click('main');
+  toast(kind === 'taxi' ? `🚕 Cestující nastoupil · cíl: ${dest.n}` : `📦 Balík naložen · adresa: ${dest.n}`, 2.4);
+}
+function jobTick(dt, F) {
+  const D = ISLE.dress; if (!D || !D.sites || !F.jobs) return;
+  const spd = Math.hypot(car.vx, car.vz), near = (p, r) => Math.hypot(car.x - p.x, car.z - p.z) < r;
+  if (D.person.visible) D.person.userData.arm.rotation.z = 2.6 + Math.sin(performance.now() / 160) * 0.35;
+  const J = F.job;
+  if (!J) {
+    if (spd < 7 && near(D.post, 6.5)) jobStart(F, 'courier', D.post);
+    else if (spd < 7 && near(F.taxiAt, 6.5)) jobStart(F, 'taxi', F.taxiAt);
+    return;
+  }
+  J.t += dt;
+  if (J.kind === 'taxi') {   // ťukance a tvrdé dopady kazí náladu
+    if (car.shake - F.shake0 > 0.3) { J.mood = Math.max(0, J.mood - 0.18); J.hits++; if (J.hits === 1 || J.hits % 3 === 0) toast(['Hej, opatrně!', 'Au! To bylo tvrdé.', 'Řídíte jako na rallye…'][J.hits % 3], 1.5); }
+  }
+  F.shake0 = car.shake;
+  if (J.t > J.limit) { toast(J.kind === 'taxi' ? '⏱ Cestující vystoupil, nestihl jsi to' : '⏱ Zásilka nedoručena včas', 2.4); Sound.beep(330, 0.4); F.job = null; if (J.kind === 'taxi') F.taxiAt = D.sites[(Math.random() * D.sites.length) | 0]; jobIdle(F); return; }
+  if (near(J.dest, 7.5) && spd < 7) {
+    const left = Math.max(0, J.limit - J.t), base = J.kind === 'taxi' ? 120 + J.dist * 0.3 : 150 + J.dist * 0.25, tip = J.kind === 'taxi' ? left * 4 * J.mood : left * 5;
+    const pay = Math.round((base + tip) / 10) * 10;
+    saved.money = (saved.money | 0) + pay; F.jobs.done++; F.jobs.earned += pay;
+    const s = saved.freeJobs || {}; saved.freeJobs = { courier: (s.courier | 0) + (J.kind === 'courier' ? 1 : 0), taxi: (s.taxi | 0) + (J.kind === 'taxi' ? 1 : 0), earned: (s.earned | 0) + pay }; persist();
+    UIS.coin(); Sound.fanfare(false);
+    toast(J.kind === 'taxi' ? `🚕 Dovezeno: ${J.dest.n} · +${moneyStr(pay)}${J.mood > 0.8 ? ' · spokojený cestující' : J.mood < 0.4 ? ' · cestující se třese' : ''}` : `📦 Doručeno: ${J.dest.n} · +${moneyStr(pay)}`, 2.8);
+    F.job = null;
+    if (J.kind === 'taxi') { const opts = D.sites.filter((x) => x !== J.dest); F.taxiAt = opts[(Math.random() * opts.length) | 0]; }
+    jobIdle(F);
+  }
+}
+// panel: cíl, vzdálenost, zbývající čas a šipka (nahoru = dopředu)
+function jobHud(F) {
+  const D = ISLE.dress, J = F.job, ar = $('frArrow'), jl = $('frJob'); if (!ar || !jl) return;
+  const tgt = J ? J.dest : null;
+  if (!J) { ar.hidden = true; jl.textContent = D && D.post ? `📦 pošta ${Math.round(Math.hypot(car.x - D.post.x, car.z - D.post.z))} m · 🚕 cestující ${Math.round(Math.hypot(car.x - F.taxiAt.x, car.z - F.taxiAt.z))} m` : ''; return; }
+  const dx = tgt.x - car.x, dz = tgt.z - car.z, rel = wrapAngle(Math.atan2(dx, dz) - car.h), left = Math.max(0, J.limit - J.t);
+  ar.hidden = false; ar.style.transform = `rotate(${(-rel).toFixed(3)}rad)`;
+  jl.textContent = `${J.kind === 'taxi' ? '🚕' : '📦'} ${tgt.n} · ${Math.round(Math.hypot(dx, dz))} m · ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}${J.kind === 'taxi' ? ' · nálada ' + Math.round(J.mood * 100) + ' %' : ''}`;
+  jl.className = left < 10 ? 'warn' : '';
 }
 function isleTick(dt) {
   const D = ISLE.dress; if (!D) return;
@@ -26146,7 +26248,7 @@ if (hot) { try { hot.snapshot(() => ({ stageIdx: G.sel })); } catch (e) { /* nic
 if (hot && hot.ready) hot.ready(boot); else boot(hot ? hot.data || {} : {});
 
 // pro ladění
-window.__rally = { ISLE, isleH, isleWhere, freeGo, freeClear, freeTick, freeMenu, get free() { return G.free; }, MEGA, MEGA_PTS, megaY, megaDist, megaZofD, megaTables, megaGo, megaClear, megaFinish, megaTick, megaTouch, megaLip, megaMenu, megaScore, get mega() { return G.mega; }, PAINT_FIN, STICKERS, CUSTOM_LIV, paintDef, paintSan, paintLv, paintSet, paintRandom, paintSideTex, paintTopTex, roverModel, carLocked, MOON, moonCraters, get gNow() { return gNow; }, QUAKE, QZ, quakeArm, quakeTick, quakeReset, quakeDy, get quake() { return G.quake; }, AVAL, avalArm, avalTick, avalReset, get aval() { return G.aval; }, UFO, ufoArm, ufoTick, ufoReset, ufoCover, get ufo() { return G.ufo; }, eventsArm, lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
+window.__rally = { jobStart, jobTick, JOB_SITES, ISLE, isleH, isleWhere, freeGo, freeClear, freeTick, freeMenu, get free() { return G.free; }, MEGA, MEGA_PTS, megaY, megaDist, megaZofD, megaTables, megaGo, megaClear, megaFinish, megaTick, megaTouch, megaLip, megaMenu, megaScore, get mega() { return G.mega; }, PAINT_FIN, STICKERS, CUSTOM_LIV, paintDef, paintSan, paintLv, paintSet, paintRandom, paintSideTex, paintTopTex, roverModel, carLocked, MOON, moonCraters, get gNow() { return gNow; }, QUAKE, QZ, quakeArm, quakeTick, quakeReset, quakeDy, get quake() { return G.quake; }, AVAL, avalArm, avalTick, avalReset, get aval() { return G.aval; }, UFO, ufoArm, ufoTick, ufoReset, ufoCover, get ufo() { return G.ufo; }, eventsArm, lapTick, get lap() { return W && W.lap; }, VOLC, volTick, volErupt, volReset, get vol() { return W && W.vol; }, get torn() { return G.torn; }, TORN, tornArm, tornTick, tornReset, tornBuild, startDemo, get cop() { return G.cop; }, COP, COP_DIFF, copGo, copClear, copFinish, copTick, copStage, copMenu, copDrive, copCollide, copPuncture, actStageIdx, get ball() { return G.ball; }, BALL, BALL_DIFF, ballGo, ballStep, ballHit, ballBound, ballAi, ballGoal, ballEnd, ballClear, ballKickoff, get derby() { return G.derby; }, DERBY, DERBY_DIFF, derbyGo, derbyCar, derbyStep, derbyCollide, derbyWall, derbyHurt, derbyAi, derbyClear, derbyFinish, actSel, actPick, rdDent, get drag() { return G.drag; }, renderMenu, garRender, useCar, decalOwned, DRAG, DRAG_DIFF, dragGo, dragSpec, dragCar, dragStep, dragShift, dragGrade, dragR, dragClear, VID, vidStart, vidStop, vidType, DAILY, dailyInfo, dailyPick, dailyGrant, dailySpin, openDaily, dayKey, TREX, trexArm, trexTick, trexReset, trexBuild, trexMirrorOn, GPU, gpuParse, gpuRender, gpuHelpHtml, gpuHelpOpen, DB, DRIFT, DTR, DW, DP, driftReadInput, driftWheelRead, driftWallHit, driftTick, driftInput, driftHub, driftRun, driftTrain, driftDuel, driftTour, driftBracket, driftQualDone, driftSpec, driftLv, driftClear, PERF, perfSet, rxAiPerf, edDelete, audioCtx, HUB, GAR, menuView, menuTab, openGarage, garBuy, hubRender, rxIntroStart, rxIntroEnd, rxDirtSetup, rxGlowSetup, RXG, RX_CUP, RX_CARS, rxCarId, rxCarStats, rxCupOpen, rxCupRes, rxCupResult, rxgClose, rxgPage, RXJ, rxJokerPath, rxJokerC, rxJokerW, RX_DIFF, rxSimLap, rxRacingLine, openRx, rxGo, get RX_LAPS() { return RX_LAPS; }, T, MIR, mirrorWanted, LENS, glassTick, stats, statsHtml, statsFlush, teleHtml, loadTele, TELE_DS, openTrophies, tutShow, crowdNearness, tunnelAt, ENGINE_CHAR, netChatSend, netChatRecv, netSeriesAdd, netSeriesHtml, netFromUrl, netInviteUrl, NET_CHAT, careerSponsorOffers, SPONSORS, TILT_SENS, TILT_DZ, rxStart, rxTick, rxLap, rxRows, inJoker, rxGravel, stuntDefs, stuntStart, stuntTick, stuntStars, openStunts, TY, tyReset, tyTick, tyHit, tyChange, tyGrip, tyApply, medalTimes, wallPenalty, WALL_PEN, ED, edProcess, edCheck, edStage, edRegister, edEncode, edDecode, edFromUrl, edGo, openEditor, LIVERIES_N: LIVERIES.length, get CAREER_N() { return CAREER_CAL.length; }, wkId, wkChallenge, wkStart, wkEnd, wkFinish, wkBoard, wkFromUrl, openWeekly, WK, ACH, achUnlock, achHas, achStage, achTick, openTrophies, helmPaint, helmPreview, HELMETS, helmetCur, liveryOwned, DECALS, rwPlan, rwForecast, rwStart, rwGrip, rwFogAt, RTYRE, RW_CHOICES, wxTick, wxEnd, cockpitUpdate, updateCarVisual, RD, rdHit, rdLand, rdApply, rdReset, openService, rdAny, gpStratPlan, tyreCol, SC, scIncident, scDeploy, scTick, trackLimits, flagShow, setupGet, setupSave, setupFx, setupAdvice, openSetup, Tilt, rumble, layoutEdit, layoutApply, replayStart, replayEnd, photoStart, photoEnd, photoSave, careerNew, careerAward, careerTable, openCareer, careerGo, careerMult, applyTod, ghostEncode, ghostDecode, duelLoad, duelSave, duelFromUrl, loadGhost, saveGhost, PODIUM, podiumShow, podiumHide, DMG, dmgHit, dmgGrip, cockpitBuild, buildModelCar, LIVERIES, renderCarShot, ensureCarModel, setLivery, cockpit, shopPrice, SHOP_FREE, renderShopThumb, shopPrev, get scene() { return scene; }, gpMateBusy: () => gpMateBusy(), gpPitMenu, WX, SHOP_ITEMS, shopLv, shopBuy, openShop, UIS, gpCanPit: () => gpCanPit(), gpWetGrip: () => gpWetGrip(), updateFauna, CAR_TYPES, carType, safeSpeedAhead, carDynamics, TIRE, resetPushables, readInput, Tilt, Sound, Voice, groundAtXZ, keys, touchKeys, finishRace, setPaused, loadStage, noteText, saved, consts: { HW, VMAX, NOS_TANK, NOS_VMAX }, G, car, tracks, updatePushables, get post() { return post; }, RXT, get postClean() { return post0Clean; }, camGuard, camBad, RS_CLEAN_GLSL, camera, get car3d() { return car3d; }, autoBrakeAssist, placeCar, camReset: () => { camS.init = false; }, buildTrackData, buildWorld, applyStage, STAGES, get W() { return W; }, startRace, resetToTrack, autopilot, physics, renderer, updateRacingLine, racingLine, lineLapTimeOpt, f1Acc, NET, REC, get resizeCount() { return resizeCount; }, gp: { wetGrip: () => gpWetGrip(), start: (o = {}) => gpStart({ noQuali: true, ...o }), startQuali: gpStart, qualiTime: (sk) => gpQualiTime(sk, Math.random), end: gpEnd, tick: gpTick, lap: gpLap, requestPit: gpRequestPit, pilot: gpPitPilot, LAPS: GP_LAPS, profile: gpProfile, AI: GP_AI, standings: gpStandings, openTeams, F1_TEAMS, PIT_STOP_T, crewUpdate: gpCrewUpdate } };
 })();
 
 </script>
