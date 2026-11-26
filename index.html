@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwxxowa8';
+window.__BUILD = 'mwxzhtkf';
 (function () {
   function check() {
     try {
@@ -142,6 +142,7 @@ window.__BUILD = 'mwxxowa8';
   .btn small { font-family: var(--body); font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; opacity: .75; }
   .btn.ghost { background: rgba(255, 255, 255, .06); color: var(--fg); border: 1px solid var(--line); }
   .btn:active { transform: translateY(1px); }
+  .pressed { filter: brightness(1.35); transform: scale(.96); transition: transform .05s, filter .05s; }
   .settings { display: flex; flex-direction: column; gap: 10px; }
   .cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px; }
   .car-pick { text-align: left; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255, 255, 255, .035); color: inherit; cursor: pointer; font: inherit; }
@@ -2001,6 +2002,7 @@ window.__BUILD = 'mwxxowa8';
     <div class="toggles">
         <button class="tog" id="tQuality">Grafika: <b id="tQualityVal"></b></button>
         <button class="tog" id="tAutoQ">Automatická grafika</button>
+        <button class="tog" id="tUiSnd">Zvuk tlačítek</button>
         <button class="tog" id="tBattery">Úspora baterie (30 FPS)</button>
         <button class="tog" id="tGpuHelp">Jak hrát na výkonné grafické kartě…</button>
     </div>
@@ -9864,7 +9866,7 @@ for (const ev of ['pointerdown', 'touchend', 'keydown']) document.addEventListen
 // Zvuk klepnutí v menu, lobby, výběrech a výsledcích (ne na ovládání za jízdy). Má vlastní AudioContext, protože
 // motor se rozjíždí až na startu; krátký cvak pro běžná tlačítka, dvojtón pro hlavní.
 const UIS = {
-  ctx: null, last: 0,
+  ctx: null, last: 0, pressT: 0,
   tone(t, f0, f1, dur, vol, type) {
     const c = this.ctx, o = c.createOscillator(), g = c.createGain();
     o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
@@ -9872,8 +9874,8 @@ const UIS = {
     o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.02);
   },
   click(kind) {
-    if (!saved.sound) return;
-    const now = performance.now(); if (now - this.last < 40) return; this.last = now;
+    if (saved.uiSound === false) return;   // zvuk tlačítek má vlastní přepínač (hraje i při vypnutém zvuku hry)
+    const now = performance.now(); if (now - this.last < 40 || now - this.pressT < 1200) return; this.last = now;
     try {
       if (!this.ctx) { this.ctx = audioCtx(); if (!this.ctx) return; }
       const c = this.ctx; if (c.state === 'suspended') c.resume().catch(() => {});
@@ -9956,12 +9958,20 @@ document.addEventListener('pointerover', (e) => {
   if (el && el !== UIS.lastHover) { UIS.lastHover = el; UIS.hover(); }
 }, true);
 setInterval(() => { try { const m = document.getElementById('menu'); UIS.ambient(!!(m && !m.hidden && G.mode === 'menu')); } catch (e) { /* nic */ } }, 600);
-document.addEventListener('click', (e) => {
-  const el = e.target && e.target.closest ? e.target.closest('button, summary, [role=button], .stage, .car-pick, .livery, .team, .tpick, .net-pl, #diagLine') : null;
-  if (!el || el.disabled || el.closest('#touch') || el.classList.contains('tbtn')) return;
-  if (el.closest('#hud') && !el.closest('.hud-btns')) return;
-  UIS.click(el.classList.contains('btn') && !el.classList.contains('ghost') ? 'main' : /^(bNetClose|bTeamOk|bQuit|rMenu)$/.test(el.id) || el.classList.contains('ghost') ? 'back' : 'tap');
+// odezva tlačítek: zvuk a zmáčknutí už při dotyku (pointerdown), ne až po puštění – i když hra zrovna počítá, je hned jasné, že klik prošel
+const uiEl = (e) => {
+  const el = e.target && e.target.closest ? e.target.closest('button, summary, [role=button], .stage, .car-pick, .livery, .team, .tpick, .net-pl, #diagLine, .tile') : null;
+  if (!el || el.disabled || el.closest('#touch') || el.classList.contains('tbtn')) return null;
+  if (el.closest('#hud') && !el.closest('.hud-btns')) return null;
+  return el;
+};
+const uiKind = (el) => el.classList.contains('btn') && !el.classList.contains('ghost') ? 'main' : /^(bNetClose|bTeamOk|bQuit|rMenu)$/.test(el.id) || el.classList.contains('ghost') ? 'back' : 'tap';
+document.addEventListener('pointerdown', (e) => {
+  const el = uiEl(e); if (!el || e.button > 0) return;
+  el.classList.add('pressed'); setTimeout(() => el.classList.remove('pressed'), 220);
+  if (UIS.ctx && UIS.ctx.state === 'running') { UIS.pressT = 0; UIS.click(uiKind(el)); UIS.pressT = performance.now(); }   // zvuk hned; při kliknutí se už neopakuje
 }, true);
+document.addEventListener('click', (e) => { const el = uiEl(e); if (el) UIS.click(uiKind(el)); }, true);   // klávesnice a první dotyk (zvuk ještě nesmí hrát před prvním klepnutím)
 // charakter motoru podle auta: výška tónu, tónová clona, rezonance (frekvence, zesílení v dB), hlasitost
 const ENGINE_CHAR = {
   bmw: { pitch: 1, lp: 1, f: 220, g: 2, vol: 1 },          // řadový čtyřválec, ostrý
@@ -25052,7 +25062,7 @@ function renderMenu() {
   tg('tFog', !!saved.rallyFog); tg('tTornado', saved.tornado !== false); tg('tAval', saved.avalanche !== false); tg('tUfo', saved.ufo !== false); tg('tQuake', saved.quake !== false); tg('tABS', !!saved.asABS); tg('tDmg', saved.damage !== false); tg('tESP', !!saved.asESP); tg('tLineC', !!saved.rlineCorners); tg('tRumble', saved.rumble !== false);
   tg('tVoice', saved.voice); tg('tSound', saved.sound); tg('tAuto', saved.autoGas); tg('tBrake', saved.autoBrake); tg('tGhost', saved.ghost); tg('tLine', saved.rline !== false); tg('tTilt', saved.tilt);
   renderVoiceInfo();
-  $('tQualityVal').textContent = Q().name; tg('tAutoQ', saved.autoQ !== false); tg('tBattery', !!saved.battery);
+  $('tQualityVal').textContent = Q().name; tg('tAutoQ', saved.autoQ !== false); tg('tUiSnd', saved.uiSound !== false); tg('tBattery', !!saved.battery);
   $('tHandlingVal').textContent = HP().name;
   $('tTiltSensVal').textContent = (TILT_SENS[saved.tiltSens] || TILT_SENS.mid).n; $('tTiltDzVal').textContent = (TILT_DZ[saved.tiltDz] || TILT_DZ.mid).n; $('tMirrorVal').textContent = saved.mirror === false ? 'vypnuté' : 'zapnuté'; $('tPerfVal').textContent = PERF.on ? 'zapnutý (F8)' : 'vypnutý (F8)';
   $('tScaleVal').textContent = saved.paceScale === 'mild1' ? '1 rychlá · 6 ostrá (McRae)' : '1 ostrá · 6 rychlá';
@@ -25063,6 +25073,7 @@ $('tSound').onclick = () => { saved.sound = !saved.sound; Sound.setOn(saved.soun
 $('tAuto').onclick = () => { saved.autoGas = !saved.autoGas; persist(); renderMenu(); };
 $('tBrake').onclick = () => { saved.autoBrake = !saved.autoBrake; persist(); renderMenu(); };
 $('tGhost').onclick = () => { saved.ghost = !saved.ghost; persist(); renderMenu(); };
+$('tUiSnd').onclick = () => { saved.uiSound = saved.uiSound === false; persist(); renderMenu(); UIS.pressT = 0; UIS.click('tap'); };
 $('tAutoQ').onclick = () => { saved.autoQ = saved.autoQ === false; persist(); renderMenu(); toast(saved.autoQ ? 'Grafika se sama sníží, když hra nestíhá' : 'Automatická grafika vypnutá', 1.6); };
 $('tBattery').onclick = () => { saved.battery = !saved.battery; persist(); applyQuality(); renderMenu(); toast(saved.battery ? '🔋 Úspora baterie: 30 snímků za sekundu, nižší rozlišení' : 'Úspora baterie vypnutá', 1.8); };
 $('tLine').onclick = () => { saved.rline = saved.rline === false; persist(); renderMenu(); };
@@ -25928,7 +25939,7 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
       const w = 8 + rnd() * 4, d = 8 + rnd() * 3, h = 6 + ((rnd() * 3) | 0) * 2.8, off = hw + 6 + d / 2 + row * 14 + rnd() * 2;
       const x = X[i] + NX[i] * sd * off, z = Z[i] + NZ[i] * sd * off, gy = hAt(x, z);
       if (gy < 1.2 || roadDistAt(x, z) < hw + 4 + d / 2 || Math.hypot(x - chx, z - chz) < 22 || isleNearBranch(td, x, z, w * 0.6 + 2, hAt) || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
-      houses.push({ x, z, y: Math.min(gy, Y[i]) - 0.6, w, d, h: h + Math.max(0, gy - Y[i]), a: td.HD[i], c: PAL[(rnd() * PAL.length) | 0] });
+      houses.push({ x, z, y: Math.min(gy, Y[i]) - 0.6, w, d, h: h + Math.max(0, gy - Y[i]), a: td.HD[i], c: PAL[(rnd() * PAL.length) | 0], fx: -NX[i] * sd, fz: -NZ[i] * sd });
     }
     // vesnice na konci odboček: domy kolem návsi (cesty nechávají volné); u vinice a kempu stavení
     D.wallT = wallT;
@@ -25941,19 +25952,57 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
         const w = 7 + rnd() * 3, d = 7 + rnd() * 2.5, h = 5.4 + ((rnd() * 2) | 0) * 2.8, x = vx + Math.sin(a) * rr, z = vz + Math.cos(a) * rr;
         const gy = hAt(x, z), lo = Math.min(gy, hAt(x - w / 2, z - d / 2), hAt(x + w / 2, z + d / 2), hAt(x - w / 2, z + d / 2), hAt(x + w / 2, z - d / 2));
         if (lo < 1.6 || roadDistAt(x, z) < hw + 6 + d / 2 || isleNearBranch(td, x, z, w * 0.6 + 2.5, hAt) || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
-        houses.push({ x, z, y: lo - 0.5, w, d, h: h + (gy - lo), a: a + Math.PI, c: PAL[(rnd() * PAL.length) | 0] });
+        houses.push({ x, z, y: lo - 0.5, w, d, h: h + (gy - lo), a: a + Math.PI, c: PAL[(rnd() * PAL.length) | 0], fx: -Math.sin(a), fz: -Math.cos(a) });
       }
       D.places.push({ n: (vil ? '🏡 ' : b.name.startsWith('Vin') ? '🍇 ' : '⛺ ') + b.name, x: vx, z: vz, r: vil ? 90 : 55 });
     }
-    const walls = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), new T.MeshStandardMaterial({ map: wallT, roughness: 0.85, emissiveMap: D.winT, emissive: '#ffcf7a', emissiveIntensity: 0 }), houses.length);
-    (D.winMats = D.winMats || []).push(walls.material);
-    const roofs = new T.InstancedMesh(new T.ConeGeometry(0.75, 1, 4, 1).rotateY(Math.PI / 4).translate(0, 0.5, 0), stdM('#ffffff', { roughness: 0.7 }), houses.length);
-    houses.forEach((o, k) => {
-      walls.setMatrixAt(k, m4.compose(vP.set(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.a, 0)), vS.set(o.w, o.h + 0.6, o.d))); walls.setColorAt(k, new T.Color(o.c));
-      roofs.setMatrixAt(k, m4.compose(vP.set(o.x, o.y + o.h + 0.6, o.z), q, vS.set(o.w * 1.08, 2.6 + o.w * 0.12, o.d * 1.08))); roofs.setColorAt(k, new T.Color(['#c0673d', '#b45a36', '#cf7a4a', '#a9553a'][(rnd() * 4) | 0]));
+    // typy domů: 0 valbová střecha, 1 sedlová, 2 moderní s plochou střechou, 3 vyšší měšťanský dům se sedlovou střechou
+    houses.forEach((o) => { const r = rnd(); o.t = o.h > 11 ? (r < 0.55 ? 3 : 1) : r < 0.32 ? 0 : r < 0.7 ? 1 : 2; if (o.t === 3) o.h += 2.8; });
+    const classic = houses.filter((o) => o.t !== 2), modern = houses.filter((o) => o.t === 2), hip = houses.filter((o) => o.t === 0), gab = houses.filter((o) => o.t === 1 || o.t === 3);
+    const box1 = new T.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+    const modT = canvasTex(256, 256, (g, w, h) => {
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#c9c4ba'; g.fillRect(0, 118, w, 8);   // římsa mezi patry
+      for (const y of [28, 150]) { g.fillStyle = '#26323c'; g.fillRect(18, y, 220, 64); g.fillStyle = '#e9eef2'; for (let k = 0; k < 5; k++) g.fillRect(18 + k * 55, y, 4, 64); g.fillRect(18, y + 62, 220, 4); }
+      g.fillStyle = '#9a7552'; g.fillRect(0, 0, 14, h); g.fillRect(w - 14, 0, 14, h);   // dřevěný obklad na rozích
+      g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(0, h - 12, w, 12);
+    });
+    const modWinT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); for (const y of [28, 150]) for (let k = 0; k < 4; k++) { if ((k + y) % 3 === 0) continue; g.fillStyle = k % 2 ? '#ffe7b8' : '#ffd79a'; g.fillRect(22 + k * 55, y + 2, 51, 58); } });
+    const walls = new T.InstancedMesh(box1, new T.MeshStandardMaterial({ map: wallT, roughness: 0.85, emissiveMap: D.winT, emissive: '#ffcf7a', emissiveIntensity: 0 }), Math.max(1, classic.length));
+    const wallsM = new T.InstancedMesh(box1, new T.MeshStandardMaterial({ map: modT, roughness: 0.6, metalness: 0.05, emissiveMap: modWinT, emissive: '#ffd890', emissiveIntensity: 0 }), Math.max(1, modern.length));
+    (D.winMats = D.winMats || []).push(walls.material, wallsM.material);
+    const roofs = new T.InstancedMesh(new T.ConeGeometry(0.75, 1, 4, 1).rotateY(Math.PI / 4).translate(0, 0.5, 0), stdM('#ffffff', { roughness: 0.7 }), Math.max(1, hip.length));
+    const prism = new T.CylinderGeometry(0.5774, 0.5774, 1, 3, 1).rotateX(-Math.PI / 2).translate(0, 0.2887, 0).scale(1, 1 / 0.866, 1).toNonIndexed(); prism.computeVertexNormals();   // sedlová střecha: trojboký hranol, hřeben podél domu
+    const gables = new T.InstancedMesh(prism, stdM('#ffffff', { roughness: 0.7 }), Math.max(1, gab.length));
+    const ROOFC = ['#c0673d', '#b45a36', '#cf7a4a', '#a9553a', '#5b5f66', '#3f4a52', '#7a4a3a', '#4f6b5a'];
+    const trim = [];   // drobné díly z kvádrů: sokl, atika, komín, dveře, stříška, balkon
+    const tb = (x, y, z, a, sx, sy, sz, c) => trim.push([x, y, z, a, sx, sy, sz, c]);
+    const fill = (im, list, fn) => { list.forEach((o, k) => { fn(o, k); }); im.count = list.length; im.computeBoundingSphere(); };
+    fill(walls, classic, (o, k) => { walls.setMatrixAt(k, m4.compose(vP.set(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.a, 0)), vS.set(o.w, o.h + 0.6, o.d))); walls.setColorAt(k, new T.Color(o.c)); });
+    fill(wallsM, modern, (o, k) => { wallsM.setMatrixAt(k, m4.compose(vP.set(o.x, o.y, o.z), q.setFromEuler(e.set(0, o.a, 0)), vS.set(o.w, o.h + 0.6, o.d))); wallsM.setColorAt(k, new T.Color(['#f4f4f2', '#e6e3dc', '#d9dde0', '#ece4d6'][(rnd() * 4) | 0])); });
+    fill(roofs, hip, (o, k) => { o.rh = 2.6 + o.w * 0.12; roofs.setMatrixAt(k, m4.compose(vP.set(o.x, o.y + o.h + 0.6, o.z), q.setFromEuler(e.set(0, o.a, 0)), vS.set(o.w * 1.08, o.rh, o.d * 1.08))); roofs.setColorAt(k, new T.Color(ROOFC[(rnd() * ROOFC.length) | 0])); });
+    fill(gables, gab, (o, k) => { o.rh = 2.2 + o.w * 0.16; gables.setMatrixAt(k, m4.compose(vP.set(o.x, o.y + o.h + 0.6, o.z), q.setFromEuler(e.set(0, o.a, 0)), vS.set(o.w * 1.1, o.rh, o.d * 1.08))); gables.setColorAt(k, new T.Color(ROOFC[(rnd() * ROOFC.length) | 0])); });
+    houses.forEach((o) => {
+      const ca = Math.cos(o.a), sa = Math.sin(o.a), top = o.y + o.h + 0.6;
+      const L = (lx, lz) => [o.x + ca * lx + sa * lz, o.z - sa * lx + ca * lz];   // místní souřadnice domu -> svět
+      tb(o.x, o.y, o.z, o.a, o.w + 0.16, 0.95, o.d + 0.16, '#7d7a73');   // kamenný sokl
+      if (o.t === 2) tb(o.x, top, o.z, o.a, o.w + 0.3, 0.45, o.d + 0.3, '#b9b6ae');   // atika ploché střechy
+      else if (rnd() < 0.65) { const [cx, cz] = L(o.w * 0.22 * (rnd() < 0.5 ? -1 : 1), o.d * 0.22); tb(cx, top + o.rh * 0.3, cz, o.a, 0.75, o.rh * 0.45 + 1.3, 0.75, rnd() < 0.5 ? '#8c4a36' : '#6e6a66'); }   // komín
+      const flx = o.fx * ca - o.fz * sa, flz = o.fx * sa + o.fz * ca, half = Math.abs(flx) * o.w / 2 + Math.abs(flz) * o.d / 2, fa = Math.atan2(o.fx, o.fz);
+      const px = o.x + o.fx * half, pz = o.z + o.fz * half, gy = o.y + 0.6;
+      tb(px + o.fx * 0.06, gy, pz + o.fz * 0.06, fa, 1.3, 2.5, 0.14, rnd() < 0.5 ? '#5a3a22' : '#3d4f5e');   // dveře
+      tb(px + o.fx * 0.5, gy + 2.7, pz + o.fz * 0.5, fa, 1.9, 0.14, 1.0, '#e8e4dc');   // stříška nad dveřmi
+      if (o.h >= 8.4 && rnd() < 0.55) {   // balkon v patře
+        const by = o.y + (o.h + 0.6) * 0.6, sx = Math.cos(fa) * (o.w * 0.28) * (rnd() < 0.5 ? -1 : 1), sz = -Math.sin(fa) * (o.w * 0.28);
+        const bx = px + o.fx * 0.6 + (Math.abs(flx) > 0.5 ? 0 : sx), bz = pz + o.fz * 0.6 + (Math.abs(flx) > 0.5 ? 0 : sz);
+        tb(bx, by, bz, fa, 2.8, 0.2, 1.2, '#efece6'); tb(bx + o.fx * 0.58, by + 0.2, bz + o.fz * 0.58, fa, 2.8, 0.9, 0.07, '#33363a');
+      }
       addObstacle(o.x, o.z, Math.min(o.w, o.d) * 0.55, true);
     });
-    walls.castShadow = walls.receiveShadow = roofs.castShadow = true; walls.computeBoundingSphere(); roofs.computeBoundingSphere(); group.add(walls, roofs);
+    const trimM = new T.InstancedMesh(box1, stdM('#ffffff', { roughness: 0.8 }), Math.max(1, trim.length));
+    fill(trimM, trim, (t, k) => { trimM.setMatrixAt(k, m4.compose(vP.set(t[0], t[1], t[2]), q.setFromEuler(e.set(0, t[3], 0)), vS.set(t[4], t[5], t[6]))); trimM.setColorAt(k, new T.Color(t[7])); });
+    for (const im of [walls, wallsM, roofs, gables, trimM]) { im.castShadow = true; im.receiveShadow = true; }
+    trimM.castShadow = !qLowish(); group.add(walls, wallsM, roofs, gables, trimM); D.houseTypes = [hip.length, gab.length, modern.length, houses.filter((o) => o.t === 3).length];
     D.houses = houses.length; D.housePts = houses.map((o) => [o.x, o.z, Math.max(o.w, o.d)]);
     ISLE_TOWNS.forEach((t) => { const i = Math.round(td.startIdx + span0 * t.f); D.places.push({ n: '🏘 ' + t.n, x: X[i], z: Z[i], r: 190 }); });
     const i0 = td.startIdx + 40; D.places.push({ n: '🏘 Přístavní městečko', x: X[i0], z: Z[i0], r: 230 });
@@ -26127,6 +26176,47 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
       const g = new T.Group(); g.add(new T.Mesh(new T.CylinderGeometry(2.6, 2.8, 0.7, 20).translate(0, 0.35, 0), stdM('#cfc6b4')), new T.Mesh(new T.CylinderGeometry(2.3, 2.3, 0.1, 20).translate(0, 0.62, 0), stdM('#3d86b8', { roughness: 0.1, metalness: 0.2 })), new T.Mesh(new T.CylinderGeometry(0.3, 0.4, 1.8, 10).translate(0, 1.2, 0), stdM('#cfc6b4')));
       g.children.forEach((c) => { c.castShadow = true; }); g.position.set(x, gy - 0.1, z); group.add(g); addObstacle(x, z, 2.8, true);
     }
+  }
+  // 8) lesy ve vnitrozemí (smrky jako na Šumavě, mezi nimi listnáče) a palmy na plážích
+  {
+    const qT = Math.max(0.15, Q().trees || 1), pts = [], palms = [];
+    const free = (x, z, r) => roadDistAt(x, z) > hw + r && !isleNearBranch(td, x, z, r, hAt) && !D.housePts.some(([hx, hz, w]) => Math.hypot(hx - x, hz - z) < w * 0.7 + r);
+    const centers = [];
+    for (let t = 0; t < 400 && centers.length < 7; t++) {
+      const a = rnd() * Math.PI * 2, r = ISLE.R * (0.25 + rnd() * 0.55), x = Math.sin(a) * r, z = Math.cos(a) * r;
+      if (hAt(x, z) < 8 || roadDistAt(x, z) < 35 || centers.some((c) => Math.hypot(c[0] - x, c[1] - z) < 160)) continue;
+      centers.push([x, z, 60 + rnd() * 60]);
+    }
+    for (const [cx, cz, cr] of centers) {
+      const n = Math.round(170 * qT);
+      for (let k = 0; k < n; k++) {
+        const a = rnd() * Math.PI * 2, r = cr * Math.sqrt(rnd()), x = cx + Math.sin(a) * r, z = cz + Math.cos(a) * r, y = hAt(x, z);
+        if (y < 3 || !free(x, z, 4)) continue;
+        pts.push([x, y, z, 0.75 + rnd() * 0.6, rnd() < 0.78 ? 0 : 1]);
+      }
+    }
+    D.forests = centers.map(([x, z, r]) => ({ x, z, r }));
+    for (let t = 0; t < 900 && palms.length < Math.round(70 * qT); t++) {   // palmy těsně nad vodou na pobřeží
+      const a = rnd() * Math.PI * 2; let r = coastR(a) - 70; const ux = Math.sin(a), uz = Math.cos(a);
+      while (r < coastR(a) + 30 && hAt(ux * r, uz * r) > 2.6) r += 3;
+      const x = ux * (r - 4 - rnd() * 10), z = uz * (r - 4 - rnd() * 10), y = hAt(x, z);
+      if (y < 0.9 || y > 4 || !free(x, z, 3)) continue;
+      palms.push([x, y, z, 0.8 + rnd() * 0.5, rnd() * Math.PI * 2]);
+    }
+    const spr = pts.filter((p) => !p[4]), dec = pts.filter((p) => p[4]);
+    const trunkG = new T.CylinderGeometry(0.16, 0.3, 4, 6).translate(0, 2, 0), needle = stdM('#2f5233', { roughness: 0.9 }), leaf = stdM('#4f7f3a', { roughness: 0.85 }), bark = stdM('#5b4532', { roughness: 0.95 });
+    const sprG = [new T.ConeGeometry(2.4, 4.2, 7).translate(0, 4.6, 0), new T.ConeGeometry(1.8, 3.6, 7).translate(0, 6.8, 0), new T.ConeGeometry(1.15, 3, 7).translate(0, 8.8, 0)];
+    const decG = new T.IcosahedronGeometry(2.6, 0).scale(1, 0.85, 1).translate(0, 5.4, 0);
+    const inst = (geo, mat, list, sc = (p) => p[3]) => { if (!list.length) return; const im = new T.InstancedMesh(geo, mat, list.length); list.forEach((p, k) => { const s1 = sc(p); im.setMatrixAt(k, m4.compose(vP.set(p[0], p[1] - 0.2, p[2]), q.setFromEuler(e.set(0, (p[0] * 7.1 + p[2] * 3.3) % 6.28, 0)), vS.set(s1, s1, s1))); }); im.castShadow = !qLowish(); im.receiveShadow = true; im.computeBoundingSphere(); group.add(im); };
+    inst(trunkG, bark, pts); for (const g of sprG) inst(g, needle, spr); inst(decG, leaf, dec);
+    // palma: zahnutý kmen ze tří článků a koruna z listů
+    const pTrunk = new T.CylinderGeometry(0.17, 0.26, 7, 6, 4, true); { const P = pTrunk.attributes.position; for (let k = 0; k < P.count; k++) { const yy = P.getY(k) + 3.5; P.setX(k, P.getX(k) + 0.045 * yy * yy); P.setY(k, yy); } pTrunk.computeVertexNormals(); }
+    const fronds = new T.ConeGeometry(3.4, 1.4, 7, 1, true).translate(2.2, 7.0, 0);   // deštník listů na vrcholu zahnutého kmene
+    inst(pTrunk, stdM('#8b6f4e', { roughness: 0.9 }), palms, (p) => p[3]);
+    inst(fronds, stdM('#3f8a3a', { roughness: 0.8, side: T.DoubleSide }), palms, (p) => p[3]);
+    for (const p of pts) addObstacle(p[0], p[2], 0.55 * p[3], true);
+    for (const p of palms) addObstacle(p[0], p[2], 0.4, true);
+    D.trees = pts.length; D.palms = palms.length;
   }
   ISLE.dress = D; D.td = td;
   jobSites(group, td, hAt, addObstacle);   // kurýr a taxi: adresy, pošta, sloupy světla, cestující
@@ -26351,12 +26441,18 @@ function isleLife(F) {
   for (let k = 0; k < nC; k++) { const dir = k % 2 ? 1 : -1, c = { s: a + ((b - a) * (k + rnd() * 0.6)) / nC, dir, v: 0, vT: 11 + rnd() * 5, stop: 0, col: LIFE_COLS[k % LIFE_COLS.length] }; L.body.setColorAt(k, new T.Color(c.col)); L.cars.push(c); }
   // chodci: chodník podél silnice ve městech, chodí sem a tam, před autem uskočí
   const span = td.finishIdx - td.startIdx, towns = [[Math.max(4, td.startIdx - 50), td.startIdx + 190], ...ISLE_TOWNS.map((t) => { const c = Math.round(td.startIdx + span * t.f); return [c - 70, c + 70]; })], nP = 30;
-  L.torso = IM(new T.BoxGeometry(0.46, 0.66, 0.28).translate(0, 1.15, 0), stdM('#ffffff', { roughness: 0.8 }), nP);
-  L.legs = IM(new T.BoxGeometry(0.4, 0.82, 0.24).translate(0, 0.41, 0), stdM('#ffffff', { roughness: 0.8 }), nP);
-  L.headP = IM(new T.SphereGeometry(0.15, 10, 8).translate(0, 1.66, 0), stdM('#e7b58f', { roughness: 0.7 }), nP);
+  // chodci z oblých dílů: trup, hlava s vlasy, ruce a nohy zvlášť (při chůzi se kývají)
+  const cloth = stdM('#ffffff', { roughness: 0.8 });
+  L.torso = IM(new T.CapsuleGeometry(0.19, 0.36, 4, 10).scale(1.15, 1, 0.75).translate(0, 1.2, 0), cloth, nP);
+  L.legs = IM(new T.CapsuleGeometry(0.085, 0.66, 3, 8).translate(0, -0.45, 0), cloth, nP); L.legR = IM(L.legs.geometry, cloth, nP);
+  L.armL = IM(new T.CapsuleGeometry(0.06, 0.48, 3, 8).translate(0, -0.3, 0), cloth, nP); L.armR = IM(L.armL.geometry, cloth, nP);
+  L.headP = IM(new T.SphereGeometry(0.14, 12, 10).translate(0, 1.72, 0), stdM('#ffffff', { roughness: 0.7 }), nP);
+  L.hair = IM(new T.SphereGeometry(0.152, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.56).rotateX(-0.4).translate(0, 1.735, -0.012), stdM('#ffffff', { roughness: 0.9 }), nP);
+  const SKIN = ['#f1c7a4', '#e7b58f', '#c98e66', '#9c6b4a', '#6e4a33', '#f6d6bd'], HAIR = ['#2a1d14', '#5a3a22', '#c9a15a', '#1a1a1a', '#8a8a8a', '#a1452b'];
   for (let k = 0; k < nP; k++) { const [i0, i1] = towns[k % towns.length], p = { i0, i1, s: i0 + rnd() * (i1 - i0), dir: rnd() < 0.5 ? 1 : -1, side: rnd() < 0.5 ? 1 : -1, lat: HW + 2.4 + rnd() * 1.2, v: 1.1 + rnd() * 0.6, ph: rnd() * 6, dodge: 0 };
-    L.torso.setColorAt(k, new T.Color(LIFE_COLS[(k * 3) % LIFE_COLS.length])); L.legs.setColorAt(k, new T.Color(['#2b3a55', '#3a3a3a', '#5a4632', '#1f4e79'][k % 4])); L.peds.push(p); }
-  for (const m of [L.body, L.torso, L.legs]) m.instanceColor.needsUpdate = true;
+    L.torso.setColorAt(k, new T.Color(LIFE_COLS[(k * 3) % LIFE_COLS.length])); const pc = new T.Color(['#2b3a55', '#3a3a3a', '#5a4632', '#1f4e79', '#6b6f45', '#d9d4c8'][k % 6]), tc = new T.Color(LIFE_COLS[(k * 3) % LIFE_COLS.length]);
+    L.legs.setColorAt(k, pc); L.legR.setColorAt(k, pc); L.armL.setColorAt(k, tc); L.armR.setColorAt(k, tc); L.headP.setColorAt(k, new T.Color(SKIN[(rnd() * SKIN.length) | 0])); L.hair.setColorAt(k, new T.Color(HAIR[(rnd() * HAIR.length) | 0])); L.peds.push(p); }
+  for (const m of [L.body, L.torso, L.legs, L.legR, L.armL, L.armR, L.headP, L.hair]) m.instanceColor.needsUpdate = true;
   scene.add(L.g); precompile(L.g);
   F.life = L; F.tod = 0.1; F.todT = 0;
   // policejní auta pro hledanost se postaví a připraví hned (skrytá), ne až při první hvězdičce
@@ -26371,6 +26467,7 @@ function isleLifeClear(F) {
   if (F && F.todOn && W && W.td.st.free) { skyMix(W.td.st, GP_TOD.sunset.st, ISLE_NIGHT, 0, 0); G.todSun = null; headSpot.intensity = 0; }
   if (D) { for (const m of D.winMats || []) m.emissiveIntensity = 0; if (D.lampM) D.lampM.emissiveIntensity = 0; }
 }
+const PED_AX = new T.Vector3(1, 0, 0), PED_QX = new T.Quaternion(), PED_QQ = new T.Quaternion();
 function isleLifeTick(dt, F) {
   const L = F.life, td = W.td; if (!L) return;
   const X = td.X, Z = td.Z, Y = td.Y, NX = td.NX, NZ = td.NZ, HD = td.HD, n = td.n, m4 = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler(), v = new T.Vector3(), one = new T.Vector3(1, 1, 1), w = new T.Vector3();
@@ -26407,9 +26504,12 @@ function isleLifeTick(dt, F) {
     const lat = p.side * (p.lat + p.dodge * 3.2), [x, , z] = at(p.s, lat), y = W.terrainAt(x, z), t = (D0 => D0)(F.t * 6 + p.ph);
     const h = hd + (p.dir < 0 ? Math.PI : 0) + (p.dodge > 0.2 ? p.side * 1.2 : 0), bob = near ? 0 : Math.abs(Math.sin(t)) * 0.05;
     q.setFromEuler(e.set(0, h, 0)); m4.compose(v.set(x, y + bob, z), q, one);
-    L.torso.setMatrixAt(k, m4); L.headP.setMatrixAt(k, m4); L.legs.setMatrixAt(k, m4.compose(v.set(x, y, z), q, w.set(1, near ? 1 : 0.92 + Math.abs(Math.cos(t)) * 0.08, 1)));
+    L.torso.setMatrixAt(k, m4); L.headP.setMatrixAt(k, m4); L.hair.setMatrixAt(k, m4);
+    const sw = near ? 0 : Math.sin(t) * 0.5;   // kývání nohou a rukou při chůzi (kloub v kyčli a v rameni)
+    const limb = (im, lx, ly, ang) => { PED_QX.setFromAxisAngle(PED_AX, ang); PED_QQ.copy(q).multiply(PED_QX); w.set(lx, ly, 0).applyQuaternion(q); im.setMatrixAt(k, m4.compose(v.set(x + w.x, y + bob + w.y, z + w.z), PED_QQ, one)); };
+    limb(L.legs, -0.11, 0.9, sw); limb(L.legR, 0.11, 0.9, -sw); limb(L.armL, -0.29, 1.5, -sw * 0.8 + (p.dodge > 0.2 ? -1.2 : 0)); limb(L.armR, 0.29, 1.5, sw * 0.8 + (p.dodge > 0.2 ? -1.2 : 0));
   });
-  for (const m of [L.body, L.cab, L.whl, L.head, L.tail, L.torso, L.legs, L.headP]) m.instanceMatrix.needsUpdate = true;
+  for (const m of [L.body, L.cab, L.whl, L.head, L.tail, L.torso, L.legs, L.legR, L.armL, L.armR, L.headP, L.hair]) m.instanceMatrix.needsUpdate = true;
   isleTod(dt, F);
   wantTick(dt, F);
 }
