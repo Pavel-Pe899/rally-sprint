@@ -28,6 +28,11 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   (`assets/src/free_monster_truck_model.glb`, nezměněný originál je v `web/assets/src/monster.glb`).
   Změny (`tools/prep-monster.mjs`): zvětšený na skutečnou velikost, kola rozdělená do čtyř uzlů, odstraněný znak
   na bocích korby, materiály s kovem a leskem, zjednodušená geometrie (177 tisíc → 38 tisíc trojúhelníků).
+- **Auta v provozu na ostrově:** modely sedan, sportovní sedan, SUV, luxusní SUV, taxi, dodávka a rozvozová dodávka
+  z [Car Kit](https://kenney.nl/assets/car-kit) od [Kenney](https://kenney.nl), licence
+  [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (volné dílo). Staženo z GitHubu:
+  [netnetdev/net-forge](https://github.com/netnetdev/net-forge) (`packages/asset-library-files/library/lowpoly`,
+  seznam balíčků a licencí v `NOTICE`). `tools/traffic-to-json.mjs` je převádí do čitelného JSON (`web/assets/traffic.json`).
 - **Bugatti Chiron:** model „Bugatti Chiron 2017“ od Boba Kimaniho (Kimz Auto), sdílený na
   [Blend Swap](https://blendswap.com/blend/32484) (apexmesh) pod licencí CC BY-NC (Creative Commons Uveďte původ – Neužívejte komerčně), jak ji uvádí Blend Swap:
   **jen nekomerční použití** (stejně jako u G 63). Webovou verzi (rovné auto ve skutečné velikosti, kola a křídlo zvlášť,
