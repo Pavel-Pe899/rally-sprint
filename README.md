@@ -28,6 +28,9 @@ repozitáři autora, sem se nahrává jen hotová stránka. Hra je nekomerční 
   (`assets/src/free_monster_truck_model.glb`, nezměněný originál je v `web/assets/src/monster.glb`).
   Změny (`tools/prep-monster.mjs`): zvětšený na skutečnou velikost, kola rozdělená do čtyř uzlů, odstraněný znak
   na bocích korby, materiály s kovem a leskem, zjednodušená geometrie (177 tisíc → 38 tisíc trojúhelníků).
+- **Pickup s korbou na ostrově:** model `vehicle-truck` ze [Starter Kit Racing](https://github.com/KenneyNL/Starter-Kit-Racing)
+  od [Kenney](https://kenney.nl), licence MIT (Copyright (c) 2023 Kenney). Staženo z GitHubu (KenneyNL/Starter-Kit-Racing, `models/`).
+  Převod: `tools/pickup-to-json.mjs` → `web/assets/pickup.json`.
 - **Budovy a příroda na ostrově:** domy (building a–h), stromy, palmy, keře, květiny a kameny od [Kenney](https://kenney.nl),
   licence [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Staženo z GitHubu: [netnetdev/net-forge](https://github.com/netnetdev/net-forge)
   (`packages/asset-library-files/library/lowpoly`, licence balíčků v `NOTICE`). Převod: `tools/props-to-json.mjs` → `web/assets/props.json`.
