@@ -16,7 +16,7 @@
 // kontrola nové verze: hra přidaná na plochu (a mezipaměť GitHub Pages) by jinak mohla dlouho běžet ve staré verzi.
 // Při spuštění a při návratu do aplikace se stáhne version.txt (bez mezipaměti); je-li jiná, stránka se načte znovu
 // (jen mimo závod a nejvýš jednou za minutu).
-window.__BUILD = 'mwybng8q';
+window.__BUILD = 'mwykglhs';
 (function () {
   function check() {
     try {
@@ -11536,7 +11536,8 @@ function physics0(dt, inp) {
   const rp = projectRoad(car.x, car.z, car.idx);
   car.idx = rp.i; car.s = rp.s; car.lat = rp.lat;
   const al = Math.abs(rp.lat);
-  const surf = al <= HW + 0.4 || inPitArea(td, rp.s, rp.lat) || inJoker(td, rp.s, rp.lat) ? 'road' : al <= HW + SHOULDER_W() ? 'shoulder' : 'off';
+  let surf = al <= HW + 0.4 || inPitArea(td, rp.s, rp.lat) || inJoker(td, rp.s, rp.lat) ? 'road' : al <= HW + SHOULDER_W() ? 'shoulder' : 'off';
+  if (surf === 'off' && st.free) { const nb = isleNearBranch(td, car.x, car.z, 0.4); if (nb) surf = nb.b.kind === 'dirt' ? 'shoulder' : 'road'; else if ((ISLE.tun || ISLE.decks) && isleSpecY(car.x, car.z) != null) surf = 'road'; }   // ostrov: odbočky, dálnice, mosty a tunel jsou silnice
   car.surf = surf;
   let grip = surf === 'road' ? st.grip : surf === 'shoulder' ? st.grip * 0.86 : st.offGrip;
   // led na zamrzlém jezeře (silnice v úseku ledu nebo jezero mimo ni): pneumatiky s hroty drží, ale méně než na sněhu
@@ -26116,7 +26117,7 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
       if (rnd() < 0.18) continue;
       const w = 8 + rnd() * 4, d = 8 + rnd() * 3, h = 6 + ((rnd() * 3) | 0) * 2.8, off = hw + 6 + d / 2 + row * 14 + rnd() * 2;
       const x = X[i] + NX[i] * sd * off, z = Z[i] + NZ[i] * sd * off, gy = hAt(x, z);
-      if (gy < 1.2 || roadDistAt(x, z) < hw + 4 + d / 2 || Math.hypot(x - chx, z - chz) < 22 || isleNearBranch(td, x, z, w * 0.6 + 2, hAt) || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
+      if (gy < 1.2 || roadDistAt(x, z) < hw + 4 + d / 2 || Math.hypot(x - chx, z - chz) < 22 || isleNearBranch(td, x, z, w * 0.6 + 2, hAt) || houses.some((o) => Math.hypot(o.x - x, o.z - z) < Math.hypot(o.w, o.d) / 2 + Math.hypot(w, d) / 2 + 1.5)) continue;
       houses.push({ x, z, y: Math.min(gy, Y[i]) - 0.6, w, d, h: h + Math.max(0, gy - Y[i]), a: td.HD[i], c: PAL[(rnd() * PAL.length) | 0], fx: -NX[i] * sd, fz: -NZ[i] * sd });
     }
     // vesnice na konci odboček: domy kolem návsi (cesty nechávají volné); u vinice a kempu stavení
@@ -26129,7 +26130,7 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
         const a = vil ? (k / cnt) * Math.PI * 2 + rnd() * 0.22 : rnd() * Math.PI * 2, rr = vil ? 17 + (k % 2) * 14 + rnd() * 4 : 10 + rnd() * 3;
         const w = 7 + rnd() * 3, d = 7 + rnd() * 2.5, h = 5.4 + ((rnd() * 2) | 0) * 2.8, x = vx + Math.sin(a) * rr, z = vz + Math.cos(a) * rr;
         const gy = hAt(x, z), lo = Math.min(gy, hAt(x - w / 2, z - d / 2), hAt(x + w / 2, z + d / 2), hAt(x - w / 2, z + d / 2), hAt(x + w / 2, z - d / 2));
-        if (lo < 1.6 || roadDistAt(x, z) < hw + 6 + d / 2 || isleNearBranch(td, x, z, w * 0.6 + 2.5, hAt) || houses.some((o) => Math.hypot(o.x - x, o.z - z) < (o.w + w) * 0.55)) continue;
+        if (lo < 1.6 || roadDistAt(x, z) < hw + 6 + d / 2 || isleNearBranch(td, x, z, w * 0.6 + 2.5, hAt) || houses.some((o) => Math.hypot(o.x - x, o.z - z) < Math.hypot(o.w, o.d) / 2 + Math.hypot(w, d) / 2 + 1.5)) continue;
         houses.push({ x, z, y: lo - 0.5, w, d, h: h + (gy - lo), a: a + Math.PI, c: PAL[(rnd() * PAL.length) | 0], fx: -Math.sin(a), fz: -Math.cos(a) });
       }
       D.places.push({ n: (vil ? '🏡 ' : b.name.startsWith('Vin') ? '🍇 ' : '⛺ ') + b.name, x: vx, z: vz, r: vil ? 90 : 55 });
@@ -26146,8 +26147,26 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
       g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(0, h - 12, w, 12);
     });
     const modWinT = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); for (const y of [28, 150]) for (let k = 0; k < 4; k++) { if ((k + y) % 3 === 0) continue; g.fillStyle = k % 2 ? '#ffe7b8' : '#ffd79a'; g.fillRect(22 + k * 55, y + 2, 51, 58); } });
-    const walls = new T.InstancedMesh(box1, new T.MeshStandardMaterial({ map: wallT, roughness: 0.85, emissiveMap: D.winT, emissive: '#ffcf7a', emissiveIntensity: 0 }), Math.max(1, classic.length));
-    const wallsM = new T.InstancedMesh(box1, new T.MeshStandardMaterial({ map: modT, roughness: 0.6, metalness: 0.05, emissiveMap: modWinT, emissive: '#ffd890', emissiveIntensity: 0 }), Math.max(1, modern.length));
+    // stěny: dlaždice = 2 okna × 2 patra (asi 6 × 6,4 m); UV se v shaderu násobí měřítkem instance, takže okna mají stejnou velikost na malém i velkém domě
+    const tileWall = (draw) => { const t = canvasTex(256, 256, draw); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 4; return t; };
+    const plaster = (g, w, h) => { g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, h); for (let k = 0; k < 900; k++) { const v = 228 + Math.random() * 27; g.fillStyle = `rgba(${v},${v},${v - 6},.35)`; g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 3, 2 + Math.random() * 3); } };
+    const cWall = tileWall((g, w, h) => { plaster(g, w, h); for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) { const x = 34 + c * 128, y = 22 + r * 128;
+        g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(x - 3, y - 3, 66, 90); g.fillStyle = '#f4f1ea'; g.fillRect(x - 6, y - 6, 72, 6); g.fillRect(x - 8, y + 80, 76, 8);
+        g.fillStyle = '#2b3946'; g.fillRect(x, y, 60, 80); g.fillStyle = 'rgba(160,200,230,.35)'; g.fillRect(x + 4, y + 4, 22, 30); g.fillStyle = '#f4f1ea'; g.fillRect(x + 28, y, 4, 80); g.fillRect(x, y + 36, 60, 4);
+        g.fillStyle = '#3f7a5a'; g.fillRect(x - 22, y, 18, 80); g.fillRect(x + 64, y, 18, 80); g.strokeStyle = 'rgba(0,0,0,.25)'; for (let k = 0; k < 9; k++) { g.beginPath(); g.moveTo(x - 22, y + 6 + k * 9); g.lineTo(x - 4, y + 6 + k * 9); g.moveTo(x + 64, y + 6 + k * 9); g.lineTo(x + 82, y + 6 + k * 9); g.stroke(); } }
+      g.fillStyle = 'rgba(0,0,0,.07)'; g.fillRect(0, 124, w, 6); });
+    const cWin = tileWall((g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); [[0, 0], [1, 1], [1, 0]].forEach(([r, c], k) => { g.fillStyle = k % 2 ? '#ffe2a8' : '#ffd08a'; g.fillRect(34 + c * 128, 22 + r * 128, 60, 80); }); });
+    const mWall = tileWall((g, w, h) => { plaster(g, w, h); g.fillStyle = '#c9c4ba'; g.fillRect(0, 118, w, 10); for (const y of [20, 148]) { g.fillStyle = '#26323c'; g.fillRect(14, y, 228, 80); g.fillStyle = 'rgba(160,200,230,.3)'; g.fillRect(18, y + 4, 100, 30); g.fillStyle = '#e9eef2'; for (let k = 0; k < 5; k++) g.fillRect(14 + k * 56, y, 4, 80); g.fillRect(14, y + 78, 228, 4); } });
+    const mWin = tileWall((g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); for (const y of [20, 148]) for (let k = 0; k < 4; k++) { if ((k + y) % 3 === 0) continue; g.fillStyle = k % 2 ? '#ffe7b8' : '#ffd79a'; g.fillRect(18 + k * 56, y + 2, 52, 76); } });
+    const tiled = (m) => { m.onBeforeCompile = (sh) => { sh.vertexShader = sh.vertexShader.replace('#include <uv_vertex>', `#ifdef USE_INSTANCING
+      vec3 tS = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
+      vec2 uvS = vec2(uv.x * (abs(normal.x) > 0.5 ? tS.z : tS.x) / 6.0, uv.y * tS.y / 6.4);
+      #else
+      vec2 uvS = uv;
+      #endif
+      ` + T.ShaderChunk.uv_vertex.replace(/\bMAP_UV\b/g, 'uvS').replace(/\bEMISSIVEMAP_UV\b/g, 'uvS')); }; m.customProgramCacheKey = () => 'isle-tiled-wall'; return m; };
+    const walls = new T.InstancedMesh(box1, tiled(new T.MeshStandardMaterial({ map: cWall, roughness: 0.85, emissiveMap: cWin, emissive: '#ffcf7a', emissiveIntensity: 0 })), Math.max(1, classic.length));
+    const wallsM = new T.InstancedMesh(box1, tiled(new T.MeshStandardMaterial({ map: mWall, roughness: 0.6, metalness: 0.05, emissiveMap: mWin, emissive: '#ffd890', emissiveIntensity: 0 })), Math.max(1, modern.length));
     (D.winMats = D.winMats || []).push(walls.material, wallsM.material);
     const roofs = new T.InstancedMesh(new T.ConeGeometry(0.75, 1, 4, 1).rotateY(Math.PI / 4).translate(0, 0.5, 0), stdM('#ffffff', { roughness: 0.7 }), Math.max(1, hip.length));
     const prism = new T.CylinderGeometry(0.5774, 0.5774, 1, 3, 1).rotateX(-Math.PI / 2).translate(0, 0.2887, 0).scale(1, 1 / 0.866, 1).toNonIndexed(); prism.computeVertexNormals();   // sedlová střecha: trojboký hranol, hřeben podél domu
@@ -26164,6 +26183,7 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
       const ca = Math.cos(o.a), sa = Math.sin(o.a), top = o.y + o.h + 0.6;
       const L = (lx, lz) => [o.x + ca * lx + sa * lz, o.z - sa * lx + ca * lz];   // místní souřadnice domu -> svět
       tb(o.x, o.y, o.z, o.a, o.w + 0.16, 0.95, o.d + 0.16, '#7d7a73');   // kamenný sokl
+      if (o.t !== 2) tb(o.x, top - 0.35, o.z, o.a, o.w + 0.35, 0.4, o.d + 0.35, '#efe9dc');   // římsa pod střechou
       if (o.t === 2) tb(o.x, top, o.z, o.a, o.w + 0.3, 0.45, o.d + 0.3, '#b9b6ae');   // atika ploché střechy
       else if (rnd() < 0.65) { const [cx, cz] = L(o.w * 0.22 * (rnd() < 0.5 ? -1 : 1), o.d * 0.22); tb(cx, top + o.rh * 0.3, cz, o.a, 0.75, o.rh * 0.45 + 1.3, 0.75, rnd() < 0.5 ? '#8c4a36' : '#6e6a66'); }   // komín
       const flx = o.fx * ca - o.fz * sa, flz = o.fx * sa + o.fz * ca, half = Math.abs(flx) * o.w / 2 + Math.abs(flz) * o.d / 2, fa = Math.atan2(o.fx, o.fz);
@@ -26265,16 +26285,18 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
       g.fillStyle = '#5c7a3a'; g.fillRect(w / 2 - 5, 0, 10, h); g.fillStyle = '#f2f2f2'; for (const x of [6, w / 2 - 9, w / 2 + 7, w - 8]) g.fillRect(x, 0, 2.5, h); for (const x of [w * 0.27, w * 0.73]) for (let y = 0; y < h; y += 64) g.fillRect(x - 1.2, y, 2.5, 30); });
     texH.wrapS = texH.wrapT = T.RepeatWrapping; const mH = new T.MeshStandardMaterial({ map: texH, roughness: 0.85, ...po });
     for (const b of BR) {
-      const P = b.pts, n = P.length, pos = new Float32Array(n * 6), uv = new Float32Array(n * 4), idx = []; let v = 0;
+      // body po 2 m, napříč 5 bodů: pás kopíruje trojúhelníky terénu a nikde se nepropadá (dřív jen 2 body napříč → „rozbitá“ cesta)
+      const P = []; for (let k = 0; k < b.pts.length - 1; k++) { const p0 = b.pts[k], p1 = b.pts[k + 1], L2 = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), m = Math.max(1, Math.ceil(L2 / 2)); for (let j = 0; j < m; j++) P.push([p0[0] + ((p1[0] - p0[0]) * j) / m, p0[1] + ((p1[1] - p0[1]) * j) / m]); } P.push(b.pts[b.pts.length - 1]);
+      const n = P.length, NC = 5, pos = new Float32Array(n * NC * 3), uv = new Float32Array(n * NC * 2), idx = []; let v = 0;
       for (let k = 0; k < n; k++) {
-        const a = P[Math.max(0, k - 1)], c = P[Math.min(n - 1, k + 1)], tx = c[0] - a[0], tz = c[1] - a[1], tl = Math.hypot(tx, tz) || 1, nx = tz / tl, nz = -tx / tl;
+        const a = P[Math.max(0, k - 2)], c = P[Math.min(n - 1, k + 2)], tx = c[0] - a[0], tz = c[1] - a[1], tl = Math.hypot(tx, tz) || 1, nx = tz / tl, nz = -tx / tl;
         if (k) v += Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]);
-        for (let sI = 0; sI < 2; sI++) {
-          const sd = sI ? 1 : -1, x = P[k][0] + nx * sd * b.w / 2, z = P[k][1] + nz * sd * b.w / 2;
-          let y = hAt(x, z) + 0.1; if (b.i >= 0 && k < 3) y = Math.max(y, Y[b.i] + 0.03);   // napojení na hlavní silnici
-          pos.set([x, y, z], (k * 2 + sI) * 3); uv.set([sI, v / (b.w * 2.2)], (k * 2 + sI) * 2);
+        for (let sI = 0; sI < NC; sI++) {
+          const f = sI / (NC - 1), off = (f - 0.5) * b.w, x = P[k][0] + nx * off, z = P[k][1] + nz * off;
+          let y = Math.max(hAt(x, z), hAt(x + 1, z), hAt(x - 1, z), hAt(x, z + 1), hAt(x, z - 1)) + 0.16; if (b.i >= 0 && v < 10) y = Math.max(y, Y[b.i] + 0.03);   // napojení na hlavní silnici
+          pos.set([x, y, z], (k * NC + sI) * 3); uv.set([f, v / (b.w * 2.2)], (k * NC + sI) * 2);
         }
-        if (k) { const q0 = (k - 1) * 2; idx.push(q0, q0 + 2, q0 + 1, q0 + 1, q0 + 2, q0 + 3); }
+        if (k) for (let sI = 0; sI < NC - 1; sI++) { const q0 = (k - 1) * NC + sI, q1 = k * NC + sI; idx.push(q0, q1, q0 + 1, q0 + 1, q1, q1 + 1); }
       }
       const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.BufferAttribute(uv, 2)); geo.setIndex(idx); geo.computeVertexNormals();
       const m = new T.Mesh(geo, b.kind === 'dirt' ? mD : b.kind === 'hwy' ? mH : mA); m.receiveShadow = true; group.add(m);
@@ -26587,13 +26609,15 @@ function isleDress(group, td, hAt, roadDistAt, addObstacle) {
 
     // --- lanovka z úpatí Medvědí hory k vysílači
     { const mt = BR.find((b) => b.serp);
-      if (mt && D.mtTop) { const A = mt.foot, B = [D.mtTop.x - 25, D.mtTop.z - 10], L = Math.hypot(B[0] - A[0], B[1] - A[1]), N = Math.max(3, Math.round(L / 140)), pts = [], ang = Math.atan2(B[0] - A[0], B[1] - A[1]);
-        for (let k = 0; k <= N; k++) { const f = k / N, x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f, y = hAt(x, z) + (k === 0 || k === N ? 9 : 16); pts.push(new T.Vector3(x, y, z)); if (k && k < N) { const pole = new T.Mesh(new T.CylinderGeometry(0.35, 0.6, 16, 8).translate(0, 8, 0), stdM('#8d949b', { metalness: 0.6 })); pole.position.set(x, y - 16, z); group.add(sh(pole)); addObstacle(x, z, 0.8, true); } }
+      if (mt && D.mtTop) { const A = mt.foot, B = [D.mtTop.x - 25, D.mtTop.z - 10], L = Math.hypot(B[0] - A[0], B[1] - A[1]), N = Math.max(4, Math.round(L / 60)), pts = [], ang = Math.atan2(B[0] - A[0], B[1] - A[1]);
+        for (let k = 0; k <= N; k++) { const f = k / N, x = A[0] + (B[0] - A[0]) * f, z = A[1] + (B[1] - A[1]) * f; pts.push(new T.Vector3(x, hAt(x, z) + (k === 0 || k === N ? 9 : 14), z)); }
+        for (let it = 0; it < 6; it++) for (let k = 0; k < N; k++) { const a = pts[k], b2 = pts[k + 1]; for (let j = 1; j < 6; j++) { const f = j / 6, x = a.x + (b2.x - a.x) * f, z = a.z + (b2.z - a.z) * f, need = hAt(x, z) + 7 - (a.y + (b2.y - a.y) * f); if (need > 0) { if (k) a.y += need; if (k + 1 < N) b2.y += need; } } }
+        const poleM = stdM('#8d949b', { metalness: 0.6, roughness: 0.4 });
+        for (let k = 1; k < N; k++) { const p = pts[k], gy = hAt(p.x, p.z), hh = p.y - gy, pole = new T.Group(); pole.add(new T.Mesh(new T.CylinderGeometry(0.35, 0.75, hh, 8).translate(0, hh / 2, 0), poleM), new T.Mesh(new T.BoxGeometry(4.5, 0.4, 0.5).translate(0, hh, 0), poleM)); pole.position.set(p.x, gy, p.z); pole.rotation.y = ang + Math.PI / 2; group.add(sh(pole)); addObstacle(p.x, p.z, 0.9, true); }
         for (const k of [0, N]) { const sx = pts[k].x + Math.cos(ang) * 8, sz = pts[k].z - Math.sin(ang) * 8; put(grp(bx(10, 9, 8, '#7a5a3a'), bx(11, 0.8, 9, '#4a3324', null, 9)), sx, sz, ang); addObstacle(sx, sz, 5, true); }
-        group.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: '#222222' })));
-        const curve = new T.CatmullRomCurve3(pts, false, 'centripetal'), cabs = [];
-        for (let k = 0; k < 4; k++) { const c = grp(bx(2.2, 2.2, 2.4, k % 2 ? '#d1342f' : '#f2c230', null, -3.4), cyl(0.06, 0.06, 1.2, '#333333', 6, -1.2)); group.add(sh(c)); cabs.push({ c, f: k / 4 }); }
-        anim.push((dt) => { for (const o of cabs) { o.f = (o.f + dt * 0.012) % 1; const f = o.f < 0.5 ? o.f * 2 : 2 - o.f * 2; o.c.position.copy(curve.getPointAt(f)); } });
+        const curve = new T.CatmullRomCurve3(pts, false, 'centripetal'), cabs = []; group.add(new T.Mesh(new T.TubeGeometry(curve, N * 12, 0.09, 5, false), stdM('#2a2a2a', { metalness: 0.6 })));
+        for (let k = 0; k < 4; k++) { const c = grp(bx(2.2, 2.2, 2.4, k % 2 ? '#d1342f' : '#f2c230', null, -3.6), bx(2.3, 0.25, 2.5, '#2a2a2a', null, -1.45), cyl(0.06, 0.06, 1.5, '#333333', 6, -1.5)); group.add(sh(c)); cabs.push({ c, f: k / 4 }); }
+        anim.push((dt) => { for (const o of cabs) { o.f = (o.f + dt * 0.012) % 1; const f = o.f < 0.5 ? o.f * 2 : 2 - o.f * 2; o.c.position.copy(curve.getPointAt(f)); o.c.rotation.y = ang; } });
         D.places.push({ n: '🚡 Lanovka', x: A[0], z: A[1], r: 40 }); } }
 
     // --- zábavní park: ruské kolo, horská dráha, kolotoč, brána
@@ -26786,7 +26810,7 @@ function isleBranches(td, hAt) {
     let p1 = tgt;
     if (!p1) { let d = dist; do { p1 = [X[i] + NX[i] * side * d + tx * bend * d * 0.4, Z[i] + NZ[i] * side * d + tz * bend * d * 0.4]; d -= 10; } while (d > 40 && hAt(p1[0], p1[1]) < 1.8); }
     const L = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), c = [p0[0] + NX[i] * side * L * 0.5 + tx * bend * L * 0.25, p0[1] + NZ[i] * side * L * 0.5 + tz * bend * L * 0.25];
-    const pts = bez(p0, c, p1), b = { name, kind, i, pts, len: lenOf(pts), w: kind === 'dirt' ? 3.8 : 5.6, end: p1 };
+    const pts = bez(p0, c, p1), b = { name, kind, i, pts, len: lenOf(pts), w: kind === 'dirt' ? 4.4 : 7.2, end: p1 };
     out.push(b); return b;
   };
   const span = td.finishIdx - td.startIdx, at = (f) => Math.round(td.startIdx + span * f);
@@ -27145,7 +27169,7 @@ function wantTick(dt, F) {
     o.x += Math.sin(o.h) * o.v * dt; o.z += Math.cos(o.h) * o.v * dt;
     if (d < 2.7) { const nx = (car.x - o.x) / (d || 1), nz = (car.z - o.z) / (d || 1); car.vx += nx * 2.2; car.vz += nz * 2.2; o.x -= nx * (2.7 - d); o.z -= nz * (2.7 - d); o.v *= 0.6; car.shake = Math.min(1, car.shake + 0.25); }
     const c3 = o.c3; if (!c3) continue;
-    const y = groundAtXZ(o.x, o.z); c3.root.position.set(o.x, y, o.z);   // výška silnice (ne terénu pod ní – jinak by se auto propadalo) c3.root.rotation.set(0, o.h, 0);
+    const y = groundAtXZ(o.x, o.z); c3.root.position.set(o.x, y, o.z); c3.root.rotation.set(0, o.h, 0);   // výška silnice (ne terénu pod ní – jinak by se auto propadalo)
     c3.blob.position.set(o.x, y + 0.06, o.z); c3.blob.rotation.set(-Math.PI / 2, o.h, 0, 'YXZ'); c3.glowG.position.set(o.x, y + 0.12, o.z);
     o.spin = (o.spin || 0) + o.v / 0.33 * dt; for (const w of c3.wheels || []) if (w.spin) w.spin.rotation.x = o.spin;
     copFlash(c3, Wn.t + o.ph, 1);
